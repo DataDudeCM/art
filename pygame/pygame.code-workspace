@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "..\\..\\..\\MyWebCode\\processingJs"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "processingJs"
+	}
+}
