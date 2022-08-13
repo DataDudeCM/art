@@ -21,7 +21,7 @@ PADDING = 1
 BKCOLOR = pygame.Color('White')
 running = True
 drawing = True #True if drawing in a loop
-clearscreen = True #True if the screen should clear in each loop
+clearscreen = False #True if the screen should clear in each loop
 
 #Setup screen
 pyG1 = pyGEnv()
