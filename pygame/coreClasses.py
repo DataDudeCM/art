@@ -14,6 +14,8 @@ class myPalette():
             self.pal.append(pygame.Color("#90caf9")) 
             self.pal.append(pygame.Color("#42A5F5"))
             self.pal.append(pygame.Color("#2979FF"))
+        if palette == 'Blacks':
+            self.pal.append(pygame.Color("#191919")) 
         if palette == 'TheBlues':
             self.pal.append(pygame.Color("#BEE6FF")) #light blue
             self.pal.append(pygame.Color("#2D82B5")) #powder blue
@@ -42,6 +44,48 @@ class myPalette():
             self.pal.append(pygame.Color("#C4A35A")) #Ochre
             self.pal.append(pygame.Color("#C66B3D")) #Burnt Sienna
             self.pal.append(pygame.Color("#E5E5dc")) #light gray
+        if palette == 'BlueGray':
+            self.pal.append(pygame.Color("#1b3af1")) #Navy
+            self.pal.append(pygame.Color("#0541be")) #Ochre
+            self.pal.append(pygame.Color("#8d8686")) #Burnt Sienna
+            self.pal.append(pygame.Color("#f2f2f2")) #light gray
+            self.pal.append(pygame.Color("#0d0d0d")) #light gray
+        if palette == 'MonoGray':
+            self.pal.append(pygame.Color("#d2d3c8")) #Navy
+            self.pal.append(pygame.Color("#838683")) #Ochre
+            self.pal.append(pygame.Color("#525b5e")) #Burnt Sienna
+            self.pal.append(pygame.Color("#3f4749")) #light gray
+            self.pal.append(pygame.Color("#272b2c")) #light gray
+        if palette == 'CoffeeGray':
+            self.pal.append(pygame.Color("#3f3f3d")) #Dark Gray
+            self.pal.append(pygame.Color("#585957")) #Light Gray
+            self.pal.append(pygame.Color("#5a2e13")) #Espresso
+            self.pal.append(pygame.Color("#0c0c0a")) #Black
+            self.pal.append(pygame.Color("#25261f")) #Light Black
+        if palette == 'Seattle':
+            self.pal.append(pygame.Color("#2fa146")) #Green
+            self.pal.append(pygame.Color("#72b863")) #LightGreen
+            self.pal.append(pygame.Color("#0071ab")) #SlateBlue
+            self.pal.append(pygame.Color("#192221")) #Black
+            self.pal.append(pygame.Color("#f0f0ee")) #Off White
+        if palette == 'RedTeal':
+            self.pal.append(pygame.Color("#fa190d")) #Red
+            self.pal.append(pygame.Color("#e2e1e4")) #Offwhite
+            self.pal.append(pygame.Color("#1c6770")) #DarkTeal
+            self.pal.append(pygame.Color("#203e4f")) #DarkBlueGray
+            self.pal.append(pygame.Color("#000000")) #PureBlack
+        if palette == 'Basics':
+            self.pal.append(pygame.Color("#0071ab")) #Blue
+            self.pal.append(pygame.Color("#fe0a40")) #Red
+            self.pal.append(pygame.Color("#fcd303")) #Yellow
+            self.pal.append(pygame.Color("#7dd863")) #Green
+            self.pal.append(pygame.Color("#000000")) #PureBlack
+        if palette == 'MutedBasics':
+            self.pal.append(pygame.Color("#1284a4")) #Blue
+            self.pal.append(pygame.Color("#e8436c")) #Red
+            self.pal.append(pygame.Color("#f1ca67")) #Yellow
+            self.pal.append(pygame.Color("#08cf9f")) #Green
+            self.pal.append(pygame.Color("#073b45")) #PureBlack
         self.lenpal = len(self.pal)
 
 
