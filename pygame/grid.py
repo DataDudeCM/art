@@ -7,6 +7,15 @@ from datetime import date, datetime
 from random import randint, random
 import math
 
+"""
+Ideas:
++add dispersion using x position
+-add dispersion from any direction
+-add dispersion using spherical
++add texture to the solid filled objects - add to alpha surface then blit
++add random portion of the texture to each cell drawn
+-add image to the solid filled objects or the outlined objects
+"""
 
 #Global variables
 WIDTH = 1000
@@ -14,9 +23,9 @@ HEIGHT = WIDTH # code currently assumes squares
 XC = int(WIDTH/2)
 YC = int(HEIGHT/2)
 MARGIN = 50
-RES = 4 # resolution of the grid: 4 means 4x4
+RES = 8 # resolution of the grid: 4 means 4x4
 #CELLSIZE = 175 #175 is 4 boxes in screen of 800 with margin of 50
-CELLSIZE = int((WIDTH - MARGIN*2)/RES)
+cellsize = int((WIDTH - MARGIN*2)/RES)
 PADDING = 1
 BKCOLOR = pygame.Color('LightGray')
 running = True
@@ -33,13 +42,22 @@ text = font.render('cmARTcreations.com - (c) 2022', True, pygame.Color('Black'))
 textRect = text.get_rect()
 textRect.center = (WIDTH - 120, HEIGHT - MARGIN+10)
 
+textureimg = pygame.image.load('textures/metal1.jpg').convert()
+textureimg = pygame.transform.scale(textureimg,(WIDTH-MARGIN*2-PADDING*2,HEIGHT-MARGIN*2-PADDING*2))
+textureimg.set_alpha(60)
+
 ##########################
 # define functions here
 ##########################
-def drawbox(x,y,w,p,depth):
+def drawbox(surf,x,y,w,p,depth):
     """Draws recursive shapes within a box"""
     depth = depth - 1
-    if depth == 0 or random() <= .4: #40% of time don't go deeper
+    #drawprob = (x/(WIDTH-MARGIN) * y/(HEIGHT-MARGIN)) + .1
+    mousepos = pygame.mouse.get_pos()
+    drawprob = remap(0,HEIGHT,.1,1,mousepos[1])
+    rectprob = 1
+    godeeperprob = .75
+    if depth == 0 or random() <= (1-godeeperprob): #40% of time don't go deeper
         cellcenter = [x+int(w/2),y+int(w/2)]
         if random() <= 0.1: #25% of time don't fill objects
             if w <= 40:
@@ -48,27 +66,36 @@ def drawbox(x,y,w,p,depth):
                 bw = 2
         else:
             bw = 0
-        if random() <= .8: #draw 80% of the time
-            if random() > .25: #75% of the time draw squares
-                pygame.draw.rect(pyG1.screen,mypal.pal[randint(0,mypal.lenpal-1)],(x+p,y+p,w-p*2,w-p*2),bw)
+        if random() <= drawprob: #use .8 if 80% no matter the position
+            if random() <= rectprob: #75% of the time draw squares
+                pygame.draw.rect(surf,mypal.pal[randint(0,mypal.lenpal-1)],(x+p,y+p,w-p*2,w-p*2),bw)
             else:
-                pygame.draw.circle(pyG1.screen,mypal.pal[randint(0,mypal.lenpal-1)],cellcenter,math.floor((w-p*2)/2),bw)
+                pygame.draw.circle(surf,mypal.pal[randint(0,mypal.lenpal-1)],cellcenter,math.floor((w-p*2)/2),bw)
+            surf.blit(textureimg,(x+p,y+p),(randint(0,WIDTH-MARGIN*2-w),randint(0,HEIGHT-MARGIN*2-w),w,w))
     else: 
         """Draw 4 shapes at next level down"""
         w = int(w/2)
         if w > 2: #ensure it will be big enough to see
-            drawbox(x,y,w,p,depth)
-            drawbox(x+w,y,w,p,depth)
-            drawbox(x,y+w,w,p,depth)
-            drawbox(x+w,y+w,w,p,depth)
+            drawbox(surf,x,y,w,p,depth)
+            drawbox(surf,x+w,y,w,p,depth)
+            drawbox(surf,x,y+w,w,p,depth)
+            drawbox(surf,x+w,y+w,w,p,depth)
 
 def draw():
     #Primary draw routine
-    for y in range(MARGIN, WIDTH-MARGIN*2, CELLSIZE):
-        for x in range(MARGIN, HEIGHT-MARGIN*2, CELLSIZE):
-            drawbox(x,y,CELLSIZE,PADDING,randint(2,6))
+    global cellsize
+    mousepos = pygame.mouse.get_pos()
+    newres = int(remap(0,WIDTH,2,16,mousepos[0]))
+    cellsize = int((WIDTH - MARGIN*2)/newres)
+    boxsurf = pygame.Surface((WIDTH,HEIGHT), pygame.SRCALPHA)
+    boxsurf.fill(BKCOLOR)
+    for y in range(MARGIN, WIDTH-MARGIN*2, cellsize):
+        for x in range(MARGIN, HEIGHT-MARGIN*2, cellsize):
+            maxdepth = 6
+            #maxdepth = 2+int(6*(1-x/(WIDTH-MARGIN)) * (1-y/(HEIGHT-MARGIN))) #more dense in lower right
+            drawbox(boxsurf,x,y,cellsize,PADDING,randint(2,maxdepth))
+    pyG1.screen.blit(boxsurf,(0,0))
     pyG1.screen.blit(text,textRect)
-    #pygame.draw.line(pyG1.screen,pygame.Color('Black'),(MARGIN,HEIGHT-MARGIN+12),(WIDTH-200,HEIGHT-MARGIN+12))
     pygame.display.flip()
     return
 
