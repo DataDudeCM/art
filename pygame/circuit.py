@@ -23,17 +23,11 @@ HEIGHT = WIDTH # code currently assumes squares
 XC = int(WIDTH/2)
 YC = int(HEIGHT/2)
 MARGIN = 50
-RES = 8 # resolution of the grid: 4 means 4x4
-#CELLSIZE = 175 #175 is 4 boxes in screen of 800 with margin of 50
-cellsize = int((WIDTH - MARGIN*2)/RES)
-PADDING = 1
 BKCOLOR = pygame.Color('White')
 running = True
 drawing = True #True if drawing in a loop
 clearscreen = True #True if the screen should clear in each loop
 texture = False
-mixedup = True
-disperse = False
 
 #Setup screen
 pyG1 = pyGEnv()
@@ -45,73 +39,59 @@ text = font.render('cmARTcreations.com - (c) 2022', True, pygame.Color('Black'))
 textRect = text.get_rect()
 textRect.center = (WIDTH - 120, HEIGHT - MARGIN+10)
 
-textureimg = pygame.image.load('textures/Britt.jpg').convert()
-textureimg = pygame.transform.scale(textureimg,(WIDTH-MARGIN-PADDING,HEIGHT-MARGIN-PADDING)) #not sure why this doesn't require 2 margin widths
+textureimg = pygame.image.load('textures/metal1.jpg').convert()
+textureimg = pygame.transform.scale(textureimg,(WIDTH,HEIGHT)) #not sure why this doesn't require 2 margin widths
 opaque = False
-textureimg.set_alpha(60) #
+textureimg.set_alpha(40) #
 
 ##########################
 # define functions here
 ##########################
-def drawbox(surf,x,y,w,p,depth):
-    """Draws recursive shapes within a box"""
-    depth = depth - 1
-    #drawprob = (x/(WIDTH-MARGIN) * y/(HEIGHT-MARGIN)) + .1
-    mousepos = pygame.mouse.get_pos()
-    if disperse: #need a better formula
-        dist = math.sqrt(((x - XC) ** 2) + ((y - YC) ** 2)) - WIDTH/4
-        drawprob = remap(0,WIDTH*.5,1,0,dist)
-    else:
-        drawprob = remap(0,HEIGHT,.1,1,mousepos[1])
-    rectprob = 1
-    godeeperprob = .75
-    textureprob = .75 # probability that a shape has the texture image applied
-    if depth == 0 or random() <= (1-godeeperprob): #40% of time don't go deeper
-        cellcenter = [x+int(w/2),y+int(w/2)]
-        if random() < 0: #25% of time don't fill objects
-            if w <= 40:
-                bw = 1
-            else:
-                bw = 2
-        else:
-            bw = 0
-        if random() <= drawprob: #use .8 if 80% no matter the position
-            if random() <= rectprob: #75% of the time draw squares
-                pygame.draw.rect(surf,mypal.pal[randint(0,mypal.lenpal-1)],(x+p,y+p,w-p*2,w-p*2),bw)
-            else:
-                pygame.draw.circle(surf,mypal.pal[randint(0,mypal.lenpal-1)],cellcenter,math.floor((w-p*2)/2),bw)
-            if texture == True and random() <= textureprob: #could remove the texture variable and just set to 0 textureprob
-                if mixedup:
-                    surf.blit(textureimg,(x+p,y+p),(randint(0,WIDTH-MARGIN*2-(w-p*2)),randint(0,HEIGHT-MARGIN*2-(w-p*2)),w-p*2,w-p*2))
-                else:
-                    surf.blit(textureimg,(x+p,y+p),(x+p,y+p,w-p*2,w-p*2))
-    else: 
-        """Draw 4 shapes at next level down"""
-        w = int(w/2)
-        if w > 2: #ensure it will be big enough to see
-            drawbox(surf,x,y,w,p,depth)
-            drawbox(surf,x+w,y,w,p,depth)
-            drawbox(surf,x,y+w,w,p,depth)
-            drawbox(surf,x+w,y+w,w,p,depth)
+def checkoff(point):
+    off = False
+    if (point.x < 0):
+        point.x = WIDTH
+        off = True
+    if (point.x > WIDTH):
+        point.x = 0
+        off = True
+    if (point.y < 0):
+        point.y = HEIGHT
+        off = True
+    if (point.y > HEIGHT):
+        point.y = 0
+        off = True
+    return off, point
+    
+def drawcircuit(surf):
+    point = pygame.Vector2(randint(0,WIDTH),randint(0,HEIGHT))
+    lastpoint = point
+    pygame.draw.circle(surf,mypal.pal[randint(0,mypal.lenpal-1)],point,8,4)
+    dir = pygame.Vector2(0,1).rotate(randint(0,360))
+    maxmag = 100
+    for segment in range(100):
+        if random() <= .6:
+            dir = dir.rotate(randint(0,3)*90)
+        point = point + dir * randint(10,maxmag)
+        off, point = checkoff(point)
+        if not off:
+            pygame.draw.line(surf,pygame.Color('Black'),lastpoint,point, 4)
+        pygame.draw.circle(surf,mypal.pal[randint(0,mypal.lenpal-1)],point,9)
+        lastpoint = point
 
 def draw():
     #Primary draw routine
-    global cellsize
-    mousepos = pygame.mouse.get_pos()
-    newres = int(remap(0,WIDTH,2,16,mousepos[0]))
     if opaque:
         textureimg.set_alpha(255)
     else:
         textureimg.set_alpha(80)
-    cellsize = int((WIDTH - MARGIN*2)/newres)
-    boxsurf = pygame.Surface((WIDTH,HEIGHT), pygame.SRCALPHA)
-    boxsurf.fill(BKCOLOR)
-    for y in range(MARGIN, HEIGHT-MARGIN*2, cellsize):
-        for x in range(MARGIN, WIDTH-MARGIN*2, cellsize):
-            maxdepth = 4
-            #maxdepth = 2+int(6*(1-x/(WIDTH-MARGIN)) * (1-y/(HEIGHT-MARGIN))) #more dense in lower right
-            drawbox(boxsurf,x,y,cellsize,PADDING,randint(2,maxdepth))
-    pyG1.screen.blit(boxsurf,(0,0))
+    surf = pygame.Surface((WIDTH,HEIGHT), pygame.SRCALPHA)
+    surf.fill(BKCOLOR)
+    surf.blit(textureimg,(0,0)) # add the background
+
+    drawcircuit(surf)
+
+    pyG1.screen.blit(surf,(0,0))
     pyG1.screen.blit(text,textRect)
     pygame.display.flip()
     return
