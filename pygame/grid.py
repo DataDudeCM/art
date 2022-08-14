@@ -31,6 +31,9 @@ BKCOLOR = pygame.Color('LightGray')
 running = True
 drawing = True #True if drawing in a loop
 clearscreen = True #True if the screen should clear in each loop
+texture = False
+mixedup = True
+disperse = False
 
 #Setup screen
 pyG1 = pyGEnv()
@@ -42,9 +45,10 @@ text = font.render('cmARTcreations.com - (c) 2022', True, pygame.Color('Black'))
 textRect = text.get_rect()
 textRect.center = (WIDTH - 120, HEIGHT - MARGIN+10)
 
-textureimg = pygame.image.load('textures/metal1.jpg').convert()
-textureimg = pygame.transform.scale(textureimg,(WIDTH-MARGIN*2-PADDING*2,HEIGHT-MARGIN*2-PADDING*2))
-textureimg.set_alpha(60)
+textureimg = pygame.image.load('textures/mila.jpg').convert()
+textureimg = pygame.transform.scale(textureimg,(WIDTH-MARGIN-PADDING,HEIGHT-MARGIN-PADDING)) #not sure why this doesn't require 2 margin widths
+opaque = False
+textureimg.set_alpha(60) #
 
 ##########################
 # define functions here
@@ -54,12 +58,17 @@ def drawbox(surf,x,y,w,p,depth):
     depth = depth - 1
     #drawprob = (x/(WIDTH-MARGIN) * y/(HEIGHT-MARGIN)) + .1
     mousepos = pygame.mouse.get_pos()
-    drawprob = remap(0,HEIGHT,.1,1,mousepos[1])
+    if disperse: #need a better formula
+        dist = math.sqrt(((x - XC) ** 2) + ((y - YC) ** 2)) - WIDTH/4
+        drawprob = remap(0,WIDTH*.5,1,0,dist)
+    else:
+        drawprob = remap(0,HEIGHT,.1,1,mousepos[1])
     rectprob = 1
     godeeperprob = .75
+    textureprob = .75 # probability that a shape has the texture image applied
     if depth == 0 or random() <= (1-godeeperprob): #40% of time don't go deeper
         cellcenter = [x+int(w/2),y+int(w/2)]
-        if random() <= 0.1: #25% of time don't fill objects
+        if random() < 0: #25% of time don't fill objects
             if w <= 40:
                 bw = 1
             else:
@@ -71,7 +80,11 @@ def drawbox(surf,x,y,w,p,depth):
                 pygame.draw.rect(surf,mypal.pal[randint(0,mypal.lenpal-1)],(x+p,y+p,w-p*2,w-p*2),bw)
             else:
                 pygame.draw.circle(surf,mypal.pal[randint(0,mypal.lenpal-1)],cellcenter,math.floor((w-p*2)/2),bw)
-            surf.blit(textureimg,(x+p,y+p),(randint(0,WIDTH-MARGIN*2-w),randint(0,HEIGHT-MARGIN*2-w),w,w))
+            if texture == True and random() <= textureprob: #could remove the texture variable and just set to 0 textureprob
+                if mixedup:
+                    surf.blit(textureimg,(x+p,y+p),(randint(0,WIDTH-MARGIN*2-(w-p*2)),randint(0,HEIGHT-MARGIN*2-(w-p*2)),w-p*2,w-p*2))
+                else:
+                    surf.blit(textureimg,(x+p,y+p),(x+p,y+p,w-p*2,w-p*2))
     else: 
         """Draw 4 shapes at next level down"""
         w = int(w/2)
@@ -86,12 +99,16 @@ def draw():
     global cellsize
     mousepos = pygame.mouse.get_pos()
     newres = int(remap(0,WIDTH,2,16,mousepos[0]))
+    if opaque:
+        textureimg.set_alpha(255)
+    else:
+        textureimg.set_alpha(80)
     cellsize = int((WIDTH - MARGIN*2)/newres)
     boxsurf = pygame.Surface((WIDTH,HEIGHT), pygame.SRCALPHA)
     boxsurf.fill(BKCOLOR)
-    for y in range(MARGIN, WIDTH-MARGIN*2, cellsize):
-        for x in range(MARGIN, HEIGHT-MARGIN*2, cellsize):
-            maxdepth = 6
+    for y in range(MARGIN, HEIGHT-MARGIN*2, cellsize):
+        for x in range(MARGIN, WIDTH-MARGIN*2, cellsize):
+            maxdepth = 4
             #maxdepth = 2+int(6*(1-x/(WIDTH-MARGIN)) * (1-y/(HEIGHT-MARGIN))) #more dense in lower right
             drawbox(boxsurf,x,y,cellsize,PADDING,randint(2,maxdepth))
     pyG1.screen.blit(boxsurf,(0,0))
@@ -123,6 +140,18 @@ while running:
         #If user presses 'f' then toggle whether the drawing function continues
         if event.type == KEYDOWN and event.key == pygame.K_BACKSPACE:
             drawing = not drawing
+        if event.type == KEYDOWN and event.key == pygame.K_o: #opaque texture
+            opaque = not opaque
+        if event.type == KEYDOWN and event.key == pygame.K_t:
+            texture = not texture
+        if event.type == KEYDOWN and event.key == pygame.K_d:
+            disperse = not disperse
+        if event.type == KEYDOWN and event.key == pygame.K_w:
+            BKCOLOR = pygame.Color('LightGray')
+        if event.type == KEYDOWN and event.key == pygame.K_b:
+            BKCOLOR = pygame.Color('Black')
+        if event.type == KEYDOWN and event.key == pygame.K_m:
+            mixedup = not mixedup
         if event.type == KEYDOWN and event.key == pygame.K_s:
             dt = datetime.now()
             pygame.image.save(pyG1.screen,'images/' + 'grid_' + dt.strftime("%Y%m%d_%H%M%S") + '.jpg')
