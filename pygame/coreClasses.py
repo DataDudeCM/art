@@ -86,6 +86,17 @@ class myPalette():
             self.pal.append(pygame.Color("#f1ca67")) #Yellow
             self.pal.append(pygame.Color("#08cf9f")) #Green
             self.pal.append(pygame.Color("#073b45")) #PureBlack
+        if palette == 'TheBeach':
+            self.pal.append(pygame.Color("#efe2d8")) #light beige
+            self.pal.append(pygame.Color("#f0d7c3")) #Red
+            self.pal.append(pygame.Color("#eec08e")) #Yellow
+            self.pal.append(pygame.Color("#a6c19f")) #Green
+            self.pal.append(pygame.Color("#08cf9f")) #PureBlack
+            self.pal.append(pygame.Color("#569e89")) #PureBlack
+            self.pal.append(pygame.Color("#68a1d9")) #Green
+            self.pal.append(pygame.Color("#cde0d5")) #PureBlack
+
+
         self.lenpal = len(self.pal)
 
 
@@ -139,21 +150,26 @@ class Particle():
         self.pos += self.vel
         #check for off screen
         if (self.pos.x < 0):
-            self.pos.x = self.width
-        if (self.pos.x > self.width):
+            self.pos.x = self.width - 1
+        if (self.pos.x >= self.width):
             self.pos.x = 0
             
         if (self.pos.y < 0):
-            self.pos.y = self.height
-        if (self.pos.y > self.height):
+            self.pos.y = self.height - 1
+        if (self.pos.y >= self.height):
             self.pos.y = 0
 
-    def display(self,surf,transp = True):
-        if transp == True:
-            pygame.draw.circle(surf,self.color[0:3] + (40,),self.pos,self.radius)
+    def display(self,surf,transp = True, colorover = pygame.Color('White')):
+        if colorover == pygame.Color('White'):
+            if transp == True:
+                pygame.draw.circle(surf,self.color[0:3] + (40,),self.pos,self.radius)
+            else:
+                pygame.draw.circle(surf,self.color,self.pos,self.radius)
+                #pygame.draw.circle(surf,pygame.Color('Black'),self.pos,self.radius,1) #adds outline circle
         else:
-            pygame.draw.circle(surf,self.color,self.pos,self.radius)
-            #pygame.draw.circle(surf,pygame.Color('Black'),self.pos,self.radius,1) #adds outline circle
-    
+            if transp == True:
+                pygame.draw.circle(surf,colorover[0:3] + (40,),self.pos,self.radius)
+            else:
+                pygame.draw.circle(surf,colorover,self.pos,self.radius)
 
 

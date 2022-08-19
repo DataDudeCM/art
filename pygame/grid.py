@@ -38,14 +38,14 @@ disperse = False
 #Setup screen
 pyG1 = pyGEnv()
 pyG1.createScreen(WIDTH,HEIGHT,BKCOLOR)
-mypal = myPalette('CoffeeGray')
+mypal = myPalette('TheBeach')
 pygame.font.init()
 font = pygame.font.SysFont('Arial',12)
 text = font.render('cmARTcreations.com - (c) 2022', True, pygame.Color('Black'))
 textRect = text.get_rect()
 textRect.center = (WIDTH - 120, HEIGHT - MARGIN+10)
 
-textureimg = pygame.image.load('textures/Britt.jpg').convert()
+textureimg = pygame.image.load('textures/beach1.jpg').convert()
 textureimg = pygame.transform.scale(textureimg,(WIDTH-MARGIN-PADDING,HEIGHT-MARGIN-PADDING)) #not sure why this doesn't require 2 margin widths
 opaque = False
 textureimg.set_alpha(60) #

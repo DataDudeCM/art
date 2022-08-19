@@ -7,11 +7,16 @@ from corefuncs import *
 import time
 from datetime import date, datetime
 from random import randint
+import math
 
 ##########################
 # define functions here
 ##########################
 def draw():
+    global counter, dislimit
+    counter += 1
+    if counter % 100 == 0 and dislimit > 40:
+        dislimit = dislimit - 20
     #Primary draw routine
     #Use pyG1.surface to enable transparency and alpha color parm
 
@@ -32,19 +37,20 @@ def draw():
                         #stroke([208,100,55,map(dis,0,dislimit,80,0)])
                         transp = remap(0,dislimit,100,0,dis)
                         if (cirtype == 1):
-                            pygame.draw.circle(surf, a.color[0:3] + (transp,), [a.pos.x,a.pos.y],dis/2,1)
+                            pygame.draw.circle(surf, pixels[(math.floor(a.pos.x) + math.floor(a.pos.y) * WIDTH)][0:3] + (transp,), [a.pos.x,a.pos.y],dis/2,1)
                         #if (type == 2)
                         #    pygame.draw.circle(surf, p5.Vector.lerp(particles[a].V,particles[b].V,0.5).x,p5.Vector.lerp(particles[a].V,particles[b].V,0.5).y, + 
                         #    dis)
                     #Draw lines relative to distance
                     transp = remap(0,dislimit,255,0,dis)
                     #pygame.draw.line(surf, a.color[0:3] + (transp,), [a.pos.x,a.pos.y], [b.pos.x,b.pos.y],1)
-                    pygame.draw.line(surf, (0,0,0) + (transp,), [a.pos.x,a.pos.y], [b.pos.x,b.pos.y],1) #black lines
+                    pygame.draw.line(surf, pixels[(math.floor(a.pos.x) + math.floor(a.pos.y) * WIDTH)][0:3] + (transp,), [a.pos.x,a.pos.y], [b.pos.x,b.pos.y],1) #black lines
 
     pyG1.screen.blit(surf,[0,0])
     surf = pygame.Surface((WIDTH,HEIGHT),SRCALPHA)
     for p in particles:
-        p.display(surf, False)
+        c = pixels[(math.floor(p.pos.x) + math.floor(p.pos.y) * WIDTH)]
+        p.display(surf, False,c)
     pyG1.screen.blit(surf,[0,0])
     pygame.display.flip()
     return
@@ -56,7 +62,7 @@ HEIGHT =1136
 running = True
 drawing = True #True if drawing in a loop
 clearscreen = False #True if the screen should clear in each loop
-nump = 100
+nump = 200
 particles = []
 palname = 'TheBeach'
 bkgcolor = 'Black'
@@ -66,11 +72,21 @@ usenoise = False
 dislimit = 200
 circles=True
 cirtype = 1
-radius = 4
+radius = 2
+counter = 0
 
 #Setup screen
 pyG1 = pyGEnv()
 pyG1.createScreen(WIDTH,HEIGHT,bkgcolor)
+
+img = pygame.image.load('textures/bri2.jpg').convert()
+img = pygame.transform.scale(img,(WIDTH,HEIGHT))
+
+pixels = []
+for y in range(HEIGHT):
+    for x in range(WIDTH):
+        pixels.append(img.get_at((x,y)))
+print(len(pixels))
 
 for p in range(nump):
     particles.append(Particle(WIDTH,HEIGHT,particlecol.pal[randint(0,particlecol.lenpal-1)],palname,radius,2))
@@ -103,6 +119,8 @@ while running:
             drawing = not drawing
         if event.type == KEYDOWN and event.key == pygame.K_n:
             usenoise = not usenoise
+        if event.type == KEYDOWN and event.key == pygame.K_c:
+            circles = not circles
         if event.type == KEYDOWN and event.key == pygame.K_r:
             for p in particles:
                 p.resetNoise()

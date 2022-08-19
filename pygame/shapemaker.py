@@ -21,8 +21,8 @@ recthmax = 100
 #Setup screen
 pyG1 = pyGEnv()
 pyG1.createScreen(WIDTH,HEIGHT,'White')
-rectcol = myPalette('Khaki')
-circlecol = myPalette('Khaki')
+rectcol = myPalette('MutedBasics')
+circlecol = myPalette('MutedBasics')
 
 def makeShape():
     #Add something to change the transparency

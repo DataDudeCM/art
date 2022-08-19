@@ -32,7 +32,7 @@ drawing = True #True if drawing in a loop
 clearscreen = False #True if the screen should clear in each loop
 nump = 500
 particles = []
-palname = 'TheBlues'
+palname = 'TheBeach'
 particlecol = myPalette(palname)
 noise = PerlinNoise(1,1)
 
