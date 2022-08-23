@@ -96,10 +96,7 @@ class myPalette():
             self.pal.append(pygame.Color("#68a1d9")) #Green
             self.pal.append(pygame.Color("#cde0d5")) #PureBlack
 
-
         self.lenpal = len(self.pal)
-
-
 
 class pyGEnv():
     """
@@ -120,56 +117,3 @@ class pyGEnv():
         self.h2 = self.height / 2 #screen height / 2
         self.screen = pygame.display.set_mode((w,h))
         self.screen.fill(bgcolor)
-
-class Particle():
-    def __init__(self, width, height, color, palname, r=2, s=2):
-        self.width = width
-        self.height = height
-        self.radius = r #size of circle
-        self.color = color
-        self.palette = myPalette(palname)
-        self.noise = PerlinNoise(octaves=8, seed=2)
-        self.pos = pygame.Vector2(int(randint(0,self.width)), int(randint(0,self.height)))
-        self.speed = 1+random()*s
-        self.vel = pygame.Vector2(0,1).rotate(randint(0,360))*self.speed
-        self.o = 0
-
-    def resetNoise(self):
-        self.o += 1 
-        self.noise = PerlinNoise(octaves = self.o % 10, seed=2)
-
-    def applyNoise(self,noise):
-        mousepos = pygame.mouse.get_pos()     
-        noiseFactor = self.width
-        n = noise([self.pos.x/noiseFactor,self.pos.y/noiseFactor,mousepos[0]/noiseFactor])
-        angle = remap(-1,1,0,2*math.pi,n)
-        #self.color = self.palette.pal[math.floor(math.degrees(angle)/90)]
-        self.vel = pygame.Vector2(math.cos(angle),math.sin(angle))*self.speed
-
-    def move(self):
-        self.pos += self.vel
-        #check for off screen
-        if (self.pos.x < 0):
-            self.pos.x = self.width - 1
-        if (self.pos.x >= self.width):
-            self.pos.x = 0
-            
-        if (self.pos.y < 0):
-            self.pos.y = self.height - 1
-        if (self.pos.y >= self.height):
-            self.pos.y = 0
-
-    def display(self,surf,transp = True, colorover = pygame.Color('White')):
-        if colorover == pygame.Color('White'):
-            if transp == True:
-                pygame.draw.circle(surf,self.color[0:3] + (40,),self.pos,self.radius)
-            else:
-                pygame.draw.circle(surf,self.color,self.pos,self.radius)
-                #pygame.draw.circle(surf,pygame.Color('Black'),self.pos,self.radius,1) #adds outline circle
-        else:
-            if transp == True:
-                pygame.draw.circle(surf,colorover[0:3] + (40,),self.pos,self.radius)
-            else:
-                pygame.draw.circle(surf,colorover,self.pos,self.radius)
-
-
