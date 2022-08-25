@@ -22,9 +22,13 @@ class Particle():
         self.maxY = self.height - margin
         self.radius = r #size of circle
         self.color = color
+        self.maxvel = 2
         self.pos = pygame.Vector2(x, y)
-        self.vel = pygame.Vector2(randint(-3,3),randint(-3,3))
-        self.damping = 0.0005
+        self.vel = pygame.Vector2(randint(-self.maxvel,self.maxvel),randint(-self.maxvel,self.maxvel))
+        if self.vel == (0,0):
+            self.vel = pygame.Vector2(1,1)
+        #self.vel = pygame.Vector2(0,self.maxvel)
+        self.damping = 0.01
 
     def move(self):
         self.pos += self.vel
@@ -44,17 +48,23 @@ class Particle():
 
         self.vel *= (1-self.damping)
 
-    def display(self,surf,transp = True, colorover = pygame.Color('White')):
-        if colorover == pygame.Color('White'): #if color not passed in use particle color
-            if transp == True:
-                pygame.draw.circle(surf,self.color[0:3] + (40,),self.pos,self.radius)
-            else:
-                pygame.draw.circle(surf,self.color,self.pos,self.radius)
-                #pygame.draw.circle(surf,pygame.Color('Black'),self.pos,self.radius,1) #adds outline circle
+    def display(self,surf,transp = True):
+        if transp == True:
+            pygame.draw.circle(surf,self.color[0:3] + (40,),self.pos,self.radius)
         else:
-            if transp == True:
-                pygame.draw.circle(surf,colorover[0:3] + (40,),self.pos,self.radius)
-            else:
-                pygame.draw.circle(surf,colorover,self.pos,self.radius)
+            pygame.draw.circle(surf,self.color,self.pos,self.radius)
+
+class Attractor():
+    def __init__(self, x,y, r=200):
+        self.pos = pygame.Vector2(x,y)
+        self.radius = r
+
+    def attract(self,particle):
+        d = pygame.math.Vector2.magnitude(self.pos - particle.pos)
+        if (d > 0 and d < self.radius):
+            s = d/self.radius
+            f = 1 / pow(s, 1) - 1
+            f = f / self.radius *.5
+            particle.vel += (self.pos - particle.pos) * f
 
 

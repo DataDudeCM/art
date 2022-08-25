@@ -3,7 +3,7 @@ from perlin_noise import PerlinNoise
 import pygame
 from pygame.locals import *
 from coreClasses import pyGEnv, myPalette
-from particle import Particle
+from particle import Particle, Attractor
 from corefuncs import *
 import time
 from datetime import date, datetime
@@ -17,6 +17,8 @@ def draw():
     #Use pyG1.surface to enable transparency and alpha color parm
     surf = pygame.Surface((WIDTH,HEIGHT),SRCALPHA)
     for p in particle:
+        for a in range(numa):
+            attractor[a].attract(p)
         p.move()
         p.display(surf, False)
     pyG1.screen.blit(surf,[0,0])
@@ -25,19 +27,21 @@ def draw():
 
 #Global variables
 #640 x 1136 for reels
-WIDTH = 640
-HEIGHT =1136
-MARGIN = 0
+WIDTH = 800
+HEIGHT =800
+MARGIN = 5
 running = True
 drawing = True #True if drawing in a loop
-clearscreen = True #True if the screen should clear in each loop
-nump = 100
+clearscreen = False #True if the screen should clear in each loop
+nump = 500
+numa = 10
 particle = []
+attractor = []
 palname = 'PinkGray'
 bkgcolor = 'Black'
 particlecol = myPalette(palname)
 
-radius = 3
+radius = 2
 
 #Setup screen
 pyG1 = pyGEnv()
@@ -46,7 +50,12 @@ pyG1.createScreen(WIDTH,HEIGHT,bkgcolor)
 #Create the particles
 for p in range(nump):
     particle.append(Particle(WIDTH,HEIGHT,MARGIN,randint(0,WIDTH), randint(0,HEIGHT), particlecol.pal[randint(0,particlecol.lenpal-1)],radius,2))
-    #particle[p].damping = 0
+    #particle.append(Particle(WIDTH,HEIGHT,MARGIN,randint(0,WIDTH), randint(0,HEIGHT), pygame.Color('White'),radius,2))
+    particle[p].damping = 0.01
+
+for a in range(numa):
+    attractor.append(Attractor(randint(0,WIDTH), randint(0,HEIGHT),1200))
+
 
 
 ###########################
@@ -61,7 +70,7 @@ while running:
 
         #Draw stuff - will execute at least once 
         draw()
-        #pyG1.clock.tick(60) #set framerate
+        pyG1.clock.tick(60) #set framerate
         #to draw only once uncomment next line
         #drawing = not drawing
 
