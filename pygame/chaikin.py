@@ -9,35 +9,34 @@ from random import randint
 ##########################
 # define functions here
 ##########################
+
 def draw():
     #Primary draw routine
     #Use pyG1.surface to enable transparency and alpha color parm
     index = 0
     points=[]
     for x in range(0,WIDTH,40):
-        points.append((x,pyG1.h2+randint(-100,100)))
+        points.append(pygame.Vector2(x,pyG1.h2+randint(-200,200)))
         index +=1
-    pygame.draw.lines(pyG1.screen, linecolor.pal[3], False, points, width=1)
-
+    #pygame.draw.lines(pyG1.screen, linecolor.pal[3], False, points, width=1)
+    surf = pygame.Surface((WIDTH,HEIGHT),SRCALPHA)
+    chaikin(surf, points,.25,10,linecolor.pal[randint(0,linecolor.lenpal-1)])
+    pyG1.screen.blit(surf,(0,0))
     pygame.display.flip()
     return
-
-def pointdistance(x1,y1,x2,y2):
-    d = math.sqrt(math.sq(x2-x1)+math.sq(y2-y1))
-    return d
 
 #Global variables
 WIDTH = 800
 HEIGHT = 800
 running = True
-drawing = False #True if drawing in a loop
+drawing = True #True if drawing in a loop
 clearscreen = False #True if the screen should clear in each loop
 linecolor = myPalette('Khaki')
+bkgcolor = 'White'
 
 #Setup screen
 pyG1 = pyGEnv()
-pyG1.createScreen(WIDTH,HEIGHT,'White')
-draw()
+pyG1.createScreen(WIDTH,HEIGHT,bkgcolor)
 
 ###########################
 #      Main Program
@@ -47,12 +46,12 @@ while running:
     if drawing:
         #clearscreen
         if clearscreen:
-            pyG1.screen.fill(pyG1.WHITE) #alternatively fill with a background image
+            pyG1.screen.fill(bkgcolor) #alternatively fill with a background image
 
         #Draw stuff - will execute at least once 
         draw()
         pyG1.clock.tick(10) #set framerate
-        #to draw only once uncomment next line
+        #to draw only once uncomment shapearr line
         #drawing = not drawing
 
     #Wait for user to close screen

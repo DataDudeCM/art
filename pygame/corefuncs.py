@@ -33,6 +33,58 @@ def remap(i_min: float, i_max: float, o_min: float, o_max: float, v: float) -> f
     """
     return lerp(o_min, o_max, inv_lerp(i_min, i_max, v))
 
+def chaikin_cut(a, b, ratio):
+    x = 0.0
+    y = 0.0
+    n = []
+    if (ratio > 0.5):
+        ratio = 1 - ratio
+    x = lerp(a.x, b.x, ratio)
+    y = lerp(a.y, b.y, ratio)
+    n.append(pygame.Vector2(x,y))
+    x = lerp(b.x, a.x, ratio)
+    y = lerp(b.y, a.y, ratio)
+    n.append(pygame.Vector2(x,y))
+    
+    return n
+    
+#for interior vertices, split into two new vertices
+def chaikin(surf, s, ratio, iterations, color, close = False):
+    shapearr = []
+    if (iterations == 0):
+        return s
+    shapelen = len(s)
+    num_corners= shapelen #get number of elements in array
+    
+    if (not close):
+        num_corners = shapelen - 1
+        
+    for i in range(num_corners):
+        a = s[i]
+        b = s[(i+1) % shapelen]
+        n = chaikin_cut(a,b, ratio)
+        if (not close and i == 0):
+            shapearr.append(a)
+            shapearr.append(n[1])
+        elif (not close and i == (num_corners - 1)):
+            shapearr.append(n[0])
+            shapearr.append(b)
+        else:
+            shapearr.append(n[0])
+            shapearr.append(n[1])
+
+    #shape(shapearr,0,0)
+ 
+    if iterations == 1:
+        col = color
+        w = 2
+        pygame.draw.lines(surf,col, False, shapearr,w)
+    else:
+        col = color[0:3] + (50,)
+        w = 0
+        pygame.draw.polygon(surf, col, shapearr,w)
+    return chaikin(surf, shapearr, ratio, iterations - 1, color)
+
 def drawline(screen, polycolor, point1, point2, maxdepth, linewidth):
     #splits a line into maxdepth segments and adds roughness
     maxdepth = maxdepth - 1
