@@ -15,12 +15,13 @@ def draw():
     #Use pyG1.surface to enable transparency and alpha color parm
     index = 0
     points=[]
-    for x in range(0,WIDTH,40):
+    for x in range(0,WIDTH+40,40):
         points.append(pygame.Vector2(x,pyG1.h2+randint(-200,200)))
         index +=1
     #pygame.draw.lines(pyG1.screen, linecolor.pal[3], False, points, width=1)
     surf = pygame.Surface((WIDTH,HEIGHT),SRCALPHA)
-    chaikin(surf, points,.25,10,linecolor.pal[randint(0,linecolor.lenpal-1)])
+    """ Pass Surface, List of points, ratio, num iterations, color """
+    chaikin(surf, points,.25,8,linecolor.pal[randint(0,linecolor.lenpal-1)])
     pyG1.screen.blit(surf,(0,0))
     pygame.display.flip()
     return
