@@ -49,7 +49,7 @@ def chaikin_cut(a, b, ratio):
     return n
     
 #for interior vertices, split into two new vertices
-def chaikin(surf, s, ratio, iterations, color, drawpoly = False, close = False):
+def chaikin(surf, s, ratio, iterations, color, linew = 2, drawpoly = False, close = False):
     shapearr = []
     if (iterations == 0):
         return s
@@ -77,13 +77,13 @@ def chaikin(surf, s, ratio, iterations, color, drawpoly = False, close = False):
  
     if iterations == 1:
         col = color
-        w = 2
+        w = linew
         pygame.draw.lines(surf,col, False, shapearr,w)
     elif drawpoly:
-        col = color[0:3] + (50,)
+        col = color[0:3] + (40,)
         w = 0
         pygame.draw.polygon(surf, col, shapearr,w)
-    return chaikin(surf, shapearr, ratio, iterations - 1, color)
+    return chaikin(surf, shapearr, ratio, iterations - 1, color, linew)
 
 def drawline(screen, polycolor, point1, point2, maxdepth, linewidth):
     #splits a line into maxdepth segments and adds roughness

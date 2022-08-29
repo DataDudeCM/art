@@ -96,7 +96,7 @@ while running:
                 bkgcolor = 'Black'
         if event.type == KEYDOWN and event.key == pygame.K_s:
             dt = datetime.now()
-            pygame.image.save(pyG1.screen,'images/' + 'perlin_lattice_' + dt.strftime("%Y%m%d_%H%M%S") + '.jpg')
+            pygame.image.save(pyG1.screen,'images/' + 'attractor_' + dt.strftime("%Y%m%d_%H%M%S") + '.jpg')
         #if event.type == KEYDOWN and pygame.K_BACKSPACE:
          #   drawing = not drawing
 

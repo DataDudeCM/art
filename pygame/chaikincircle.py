@@ -4,7 +4,7 @@ from coreClasses import pyGEnv, myPalette
 from corefuncs import *
 import time
 import math
-from random import randint
+from random import randint, random
 from datetime import date, datetime
 
 ##########################
@@ -12,45 +12,48 @@ from datetime import date, datetime
 ##########################
 
 def draw():
+    global bigang
+    bigang += .05
     #Primary draw routine
     #Use pyG1.surface to enable transparency and alpha color parm
     index = 0
     mousepos = pygame.mouse.get_pos()
-    r = int(mousepos[0])+1
+    bigr = int(mousepos[0])+1
+    r = int(mousepos[1]/2)+1
     points=[]
-    numpts = 100
+    numpts = 4 # 2 = flower, more points creates dense ball
     """
     for x in range(0,WIDTH+40,40):
         points.append(pygame.Vector2(x,pyG1.h2+randint(-200,200)))
         index +=1
     """
     for i in range(numpts):
-        ang = randint(0,360)
-        x = pyG1.w2 + math.cos(ang)*r
-        y = pyG1.height*.2 - math.sin(ang)*r
+        ang = random()*math.pi*2
+        x = pyG1.w2+math.cos(bigang % (math.pi*2))*bigr + math.cos(ang)*r
+        y = pyG1.h2-math.sin(bigang % (math.pi*2))*bigr - math.sin(ang)*r
         points.append(pygame.Vector2(x,y))
     for i in range(numpts):
-        ang = randint(0,360)
-        x = pyG1.w2 + math.cos(ang)*r
-        y = pyG1.height*.8 - math.sin(ang)*r
+        ang = random()*math.pi*2
+        x = pyG1.w2+math.cos((bigang % (math.pi*2)) + math.pi)*bigr + math.cos(ang)*r
+        y = pyG1.h2-math.sin((bigang % (math.pi*2)) + math.pi)*bigr - math.sin(ang)*r
         points.append(pygame.Vector2(x,y))
     surf = pygame.Surface((WIDTH,HEIGHT),SRCALPHA)
     """ Pass Surface, List of points, ratio, num iterations, color """
-    chaikin(surf, points,.25,6,linecolor.pal[randint(0,linecolor.lenpal-1)],1,True)
+    chaikin(surf, points,.25,8,linecolor.pal[randint(0,linecolor.lenpal-1)],1,True)
     pyG1.screen.blit(surf,(0,0))
     pygame.display.flip()
     return
 
 #Global variables
-#WIDTH = 1500
-#HEIGHT = 1000
-WIDTH = 640
-HEIGHT = 1136
+#640 x 1136 for reels; 2000 x 1400 for large screen
+WIDTH = 2000
+HEIGHT = 1400
 running = True
 drawing = True #True if drawing in a loop
 clearscreen = False #True if the screen should clear in each loop
-linecolor = myPalette('Seattle')
+linecolor = myPalette('TheBlues')
 bkgcolor = 'Black'
+bigang = 0
 
 #Setup screen
 pyG1 = pyGEnv()
