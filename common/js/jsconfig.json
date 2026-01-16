@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "es6"
+  },
+  "include": [
+    "../../archive/js/*.js",
+    "../../archive/js/**/*.js",
+    "c:\\Users\\CHRIS\\.vscode\\extensions\\samplavigne.p5-vscode-1.2.15\\p5types\\global.d.ts"
+, "artrect.js"  ]
+}

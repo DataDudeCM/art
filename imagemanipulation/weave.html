@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Weave Explorer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #controls {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+        }
+        #gridSliderContainer, #patternSelectorContainer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #gridSlider, #patternSelector {
+            width: 200px;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Weaver</h1>
+    <div id="controls">
+        <label for="imageUpload1">Image 1:</label>
+        <input type="file" id="imageUpload1" accept="image/*">
+        
+        <label for="imageUpload2">Image 2:</label>
+        <input type="file" id="imageUpload2" accept="image/*">
+
+        <div id="gridSliderContainer">
+            <label for="gridSlider">Grid Cells per Row/Column:</label>
+            <input type="range" id="gridSlider" min="2" max="50" value="10">
+            <span id="gridValue">10</span>
+        </div>
+
+        <div id="patternSelectorContainer">
+            <label for="patternSelector">Weave Pattern:</label>
+            <select id="patternSelector">
+                <option value="alternating">Alternating (Checkerboard)</option>
+                <option value="random">Random</option>
+                <option value="perlin">Perlin Noise</option>
+            </select>
+        </div>
+    </div>
+    <script src="js/weave.js"></script>
+</body>
+</html>

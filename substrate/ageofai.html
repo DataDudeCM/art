@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The AI Inflection Point: An Interactive Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lexend:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral Harmony -->
+    <!-- Application Structure Plan: The application is structured as a four-part narrative journey down a single page, with a sticky side navigation for quick access. This user-centric design guides individuals from understanding the 'Problem' (The Wake-Up Call), to seeing the 'Evidence' (Disruption Dashboard), diagnosing the 'Core Issue' (The Skills Gap), and finally receiving a 'Solution' (Your Action Plan). This flow was chosen over a linear report structure to make the information more personal, digestible, and empowering. By allowing users to interact with data relevant to their industry and explore skills at their own pace, the application fosters active learning rather than passive reading, ultimately aiming to turn anxiety into action. -->
+    <!-- Visualization & Content Choices: 
+        - The Wake-Up Call: Goal: Inform/Urgency. Method: Large, impactful stats and text. Interaction: N/A. Justification: Immediately grabs attention with the core warning.
+        - Disruption Dashboard: Goal: Compare/Inform. Method: Interactive buttons and a dynamic Chart.js bar chart. Interaction: Clicking an industry button updates the chart and related text with specific data points and case studies. Justification: Transforms a static table into a personalized, exploratory tool, making the data more relevant to the user. Library: Chart.js (Canvas).
+        - The Skills Gap: Goal: Organize/Compare. Method: Interactive tabbed lists. Interaction: Clicking a skill category reveals the de-valued vs. in-demand skills with a smooth transition. Justification: Makes the abstract concept of the "Great Skills Mismatch" tangible and easy to explore. Library: HTML/CSS/JS.
+        - Your Action Plan: Goal: Organize/Guide. Method: A tabbed interface breaking down the 4-step plan. Interaction: Clicking tabs reveals detailed steps, resources, and an actionable learning roadmap. Justification: Deconstructs dense recommendations into manageable, step-by-step guidance, encouraging user action. Library: HTML/CSS/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFCFB;
+            color: #383737;
+        }
+        h1, h2, h3 {
+            font-family: 'Lexend', sans-serif;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+        }
+        .nav-link.active {
+            color: #D35400;
+            transform: rotate(180deg) scale(1.1);
+        }
+        .section-fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .section-fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .skill-content {
+            transition: opacity 0.5s ease-in-out, max-height 0.5s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .skill-content.active {
+            max-height: 500px;
+            opacity: 1;
+        }
+        .action-tab-content {
+            transition: opacity 0.5s ease;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+    </style>
+</head>
+<body class="bg-[#FDFCFB]">
+
+    <div class="flex">
+        <!-- Sticky Sidebar Navigation -->
+        <nav class="sticky top-0 h-screen w-20 md:w-28 bg-[#F8F7F4] flex flex-col items-center justify-center space-y-16 py-8 border-r border-gray-200">
+            <a href="#hero" data-section="hero" class="nav-link text-gray-500 hover:text-[#D35400] text-sm font-semibold active">The Warning</a>
+            <a href="#dashboard" data-section="dashboard" class="nav-link text-gray-500 hover:text-[#D35400] text-sm font-semibold">The Disruption</a>
+            <a href="#skills" data-section="skills" class="nav-link text-gray-500 hover:text-[#D35400] text-sm font-semibold">The Mismatch</a>
+            <a href="#plan" data-section="plan" class="nav-link text-gray-500 hover:text-[#D35400] text-sm font-semibold">The Plan</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 sm:p-8 md:p-12">
+            <!-- Section 1: The Wake-Up Call -->
+            <section id="hero" class="min-h-screen flex flex-col justify-center items-center text-center section-fade-in">
+                <div class="max-w-4xl mx-auto">
+                    <h1 class="text-4xl md:text-6xl font-bold text-[#2C3E50]">The AI Inflection Point</h1>
+                    <p class="mt-4 text-lg md:text-xl text-gray-600">A stark warning from Anthropic CEO Dario Amodei signals a "white-collar bloodbath" is not a distant threat, but an imminent reality. This isn't a forecast of doom, but a fire alarm demanding your attention.</p>
+                    <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-xl shadow-md border border-gray-100">
+                            <p class="text-5xl md:text-7xl font-bold text-[#D35400]">10-20%</p>
+                            <p class="mt-2 text-lg text-gray-700">Projected Unemployment</p>
+                            <p class="mt-4 text-sm text-gray-500">A potential surge to levels unseen since the Great Depression within the next 1-5 years.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-xl shadow-md border border-gray-100">
+                            <p class="text-5xl md:text-7xl font-bold text-[#D35400]">50%</p>
+                            <p class="mt-2 text-lg text-gray-700">Entry-Level Job Loss</p>
+                            <p class="mt-4 text-sm text-gray-500">Half of all white-collar entry-level roles are at risk of automation as AI's capabilities rise.</p>
+                        </div>
+                    </div>
+                    <p class="mt-12 text-md text-gray-500">The greatest risk isn't being replaced by an algorithm, but by a peer who has mastered leveraging AI. This guide is your bridge across the disruption chasm.</p>
+                </div>
+            </section>
+
+            <!-- Section 2: The Disruption Dashboard -->
+            <section id="dashboard" class="min-h-screen py-20 section-fade-in">
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-bold text-center text-[#2C3E50]">The Disruption Dashboard</h2>
+                    <p class="mt-4 text-lg text-center text-gray-600 max-w-3xl mx-auto">AI's impact is not theoretical; it's here. Explore how different white-collar professions are already being transformed. Click an industry below to see how AI is delivering measurable productivity gains and fundamentally altering the nature of work.</p>
+                    
+                    <div class="mt-12 flex flex-wrap justify-center gap-4">
+                        <button class="industry-btn bg-white hover:bg-[#E57373] hover:text-white text-gray-800 font-semibold py-3 px-6 border border-gray-200 rounded-lg shadow-sm transition-all duration-300" data-industry="customer_service">Customer Service</button>
+                        <button class="industry-btn bg-white hover:bg-[#E57373] hover:text-white text-gray-800 font-semibold py-3 px-6 border border-gray-200 rounded-lg shadow-sm transition-all duration-300" data-industry="software">Software Development</button>
+                        <button class="industry-btn bg-white hover:bg-[#E57373] hover:text-white text-gray-800 font-semibold py-3 px-6 border border-gray-200 rounded-lg shadow-sm transition-all duration-300" data-industry="legal">Legal Profession</button>
+                        <button class="industry-btn bg-white hover:bg-[#E57373] hover:text-white text-gray-800 font-semibold py-3 px-6 border border-gray-200 rounded-lg shadow-sm transition-all duration-300" data-industry="marketing">Marketing & Design</button>
+                    </div>
+
+                    <div class="mt-12 bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100">
+                        <h3 id="dashboard-title" class="text-2xl font-semibold text-[#2C3E50] text-center mb-6">Select an Industry to See Its Transformation</h3>
+                        <div class="chart-container">
+                            <canvas id="industryChart"></canvas>
+                        </div>
+                        <div id="dashboard-text" class="mt-8 text-gray-700 prose max-w-none">
+                           <p class="text-center">The evidence from front-line industries provides undeniable proof of the speed and scale of AI-driven change. The metrics above show how AI is not a future concept but a present-day force for efficiency.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: The Great Skills Mismatch -->
+            <section id="skills" class="min-h-screen py-20 section-fade-in">
+                <div class="max-w-5xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-bold text-center text-[#2C3E50]">Navigating the Great Skills Mismatch</h2>
+                    <p class="mt-4 text-lg text-center text-gray-600 max-w-3xl mx-auto">The real threat isn't AI, but the widening gap between the skills companies need and the skills the workforce has. Routine cognitive work is being devalued, replaced by a new triad of AI literacy, specialized expertise, and uniquely human capabilities. Explore the shift below.</p>
+                    
+                    <div class="mt-12">
+                         <div class="flex justify-center border-b border-gray-200">
+                            <button data-skill="technical" class="skill-tab-btn py-4 px-6 block hover:text-[#D35400] focus:outline-none text-[#D35400] border-b-2 font-medium border-[#D35400]">Technical</button>
+                            <button data-skill="cognitive" class="skill-tab-btn py-4 px-6 block hover:text-[#D35400] focus:outline-none text-gray-500 font-medium">Cognitive</button>
+                            <button data-skill="social" class="skill-tab-btn py-4 px-6 block hover:text-[#D35400] focus:outline-none text-gray-500 font-medium">Social & Emotional</button>
+                        </div>
+
+                        <div id="technical-content" class="skill-content active p-6">
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 class="font-bold text-xl text-red-500 mb-3">De-Valued Skills 📉</h4>
+                                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                        <li>Routine data entry</li>
+                                        <li>Basic, boilerplate coding</li>
+                                        <li>Manual software testing</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-xl text-green-500 mb-3">In-Demand Skills 📈</h4>
+                                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                        <li>AI/Machine Learning Expertise</li>
+                                        <li>Advanced Data Literacy & Analysis</li>
+                                        <li>Prompt Engineering</li>
+                                        <li>MLOps (Machine Learning Operations)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="cognitive-content" class="skill-content p-6">
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 class="font-bold text-xl text-red-500 mb-3">De-Valued Skills 📉</h4>
+                                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                        <li>Information recall & summarization</li>
+                                        <li>Following standard operating procedures</li>
+                                        <li>Basic research and fact-finding</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-xl text-green-500 mb-3">In-Demand Skills 📈</h4>
+                                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                        <li>Analytical & Critical Thinking</li>
+                                        <li>Complex Problem-Solving</li>
+                                        <li>Systems Thinking</li>
+                                        <li>Curiosity & Lifelong Learning</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="social-content" class="skill-content p-6">
+                           <div class="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 class="font-bold text-xl text-red-500 mb-3">De-Valued Skills 📉</h4>
+                                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                        <li>Simple task coordination</li>
+                                        <li>Following rigid instructions</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-xl text-green-500 mb-3">In-Demand Skills 📈</h4>
+                                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                        <li>Creativity & Originality</li>
+                                        <li>Emotional Intelligence & Empathy</li>
+                                        <li>Leadership & Social Influence</li>
+                                        <li>Collaboration & Teamwork</li>
+                                        <li>Ethical Judgment & Oversight</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-12 bg-amber-50 border-l-4 border-amber-400 p-6 rounded-lg">
+                        <h4 class="font-bold text-amber-800">The Human Moat</h4>
+                        <p class="text-amber-700 mt-2">As AI handles routine technical tasks, uniquely human skills become your most valuable career protection. Creativity, critical thinking, emotional intelligence, and ethical judgment are the new "hard skills" that machines cannot replicate.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4: Your Personal Action Plan -->
+            <section id="plan" class="min-h-screen py-20 section-fade-in">
+                 <div class="max-w-5xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-bold text-center text-[#2C3E50]">Your Personal Action Plan</h2>
+                    <p class="mt-4 text-lg text-center text-gray-600 max-w-3xl mx-auto">Disruption demands a response. This four-step framework is your guide to not just surviving, but thriving. Build a "T-shaped" skillset: deep domain expertise combined with a broad ability to apply AI across it.</p>
+                    
+                    <div class="mt-12 w-full">
+                        <div class="flex flex-col md:flex-row rounded-lg overflow-hidden shadow-lg border border-gray-100">
+                            <!-- Tabs -->
+                            <div class="md:w-1/3 bg-gray-50 border-r border-gray-200">
+                                <button data-tab="step1" class="action-tab-btn w-full text-left p-6 border-l-4 border-[#D35400] bg-white">
+                                    <h4 class="font-bold text-lg text-[#2C3E50]">Step 1: AI Literacy</h4>
+                                    <p class="text-sm text-gray-500 mt-1">Understand the 'What'</p>
+                                </button>
+                                <button data-tab="step2" class="action-tab-btn w-full text-left p-6 border-l-4 border-transparent hover:bg-gray-100">
+                                    <h4 class="font-bold text-lg text-[#2C3E50]">Step 2: Master the Interface</h4>
+                                    <p class="text-sm text-gray-500 mt-1">Learn the 'How'</p>
+                                </button>
+                                <button data-tab="step3" class="action-tab-btn w-full text-left p-6 border-l-4 border-transparent hover:bg-gray-100">
+                                    <h4 class="font-bold text-lg text-[#2C3E50]">Step 3: Build Your T-Shape</h4>
+                                    <p class="text-sm text-gray-500 mt-1">Define the 'Where'</p>
+                                </button>
+                                <button data-tab="step4" class="action-tab-btn w-full text-left p-6 border-l-4 border-transparent hover:bg-gray-100">
+                                    <h4 class="font-bold text-lg text-[#2C3E50]">Step 4: Commit to Learning</h4>
+                                    <p class="text-sm text-gray-500 mt-1">The Ongoing 'How'</p>
+                                </button>
+                            </div>
+                            <!-- Tab Content -->
+                            <div class="md:w-2/3 p-8 bg-white">
+                                <div id="step1-content" class="action-tab-content">
+                                    <h3 class="text-2xl font-bold text-[#2C3E50]">Achieve Foundational AI Literacy</h3>
+                                    <p class="mt-4 text-gray-600">You don't need to be a data scientist, but a baseline understanding of AI concepts is now a mandatory professional skill. This knowledge provides the context to spot opportunities and risks in your field.</p>
+                                    <h5 class="mt-6 font-semibold">Recommended Free Courses:</h5>
+                                    <ul class="mt-2 list-disc list-inside space-y-2">
+                                        <li><a href="https://www.coursera.org/learn/ai-for-everyone" target="_blank" class="text-[#D35400] hover:underline">AI For Everyone (DeepLearning.AI / Coursera)</a></li>
+                                        <li><a href="https://grow.google/intl/en_uk/courses/ai-essentials/" target="_blank" class="text-[#D35400] hover:underline">Google AI Essentials (Grow with Google)</a></li>
+                                        <li><a href="https://www.elementsofai.com/" target="_blank" class="text-[#D35400] hover:underline">Elements of AI (University of Helsinki)</a></li>
+                                    </ul>
+                                </div>
+                                <div id="step2-content" class="action-tab-content hidden">
+                                    <h3 class="text-2xl font-bold text-[#2C3E50]">Master the Human-AI Interface</h3>
+                                    <p class="mt-4 text-gray-600">Learn to work *with* AI effectively. This means developing skills to direct, evaluate, and partner with AI tools to produce high-quality work.</p>
+                                     <h5 class="mt-6 font-semibold">Key Sub-Skills:</h5>
+                                    <ul class="mt-2 list-disc list-inside space-y-3">
+                                        <li><b>Prompt Engineering:</b> The art of giving clear instructions. Learn with <a href="https://www.coursera.org/learn/prompt-engineering" target="_blank" class="text-[#D35400] hover:underline">Vanderbilt's course on Coursera</a>.</li>
+                                        <li><b>Critical Evaluation:</b> Trust, but verify. Always check AI output for accuracy, bias, and "hallucinations" (fabricated information).</li>
+                                        <li><b>Human-in-the-Loop (HITL) Thinking:</b> Position yourself as the expert partner who trains, validates, and provides the ethical oversight machines lack.</li>
+                                    </ul>
+                                </div>
+                                <div id="step3-content" class="action-tab-content hidden">
+                                    <h3 class="text-2xl font-bold text-[#2C3E50]">Build Your "T-Shaped" Skillset</h3>
+                                    <p class="mt-4 text-gray-600">Future-proof professionals combine deep domain expertise (the vertical bar of the T) with a broad ability to apply AI tools across it (the horizontal bar).</p>
+                                    <ul class="mt-6 list-none space-y-4">
+                                        <li class="flex items-start">
+                                            <span class="font-bold text-xl text-[#2C3E50] mr-4">|</span>
+                                            <div><b>Vertical Bar: Deepen Your Expertise.</b> AI makes true domain knowledge *more* valuable. The expert is best equipped to guide AI and spot its flaws.</div>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <span class="font-bold text-xl text-[#2C3E50] mr-4">--</span>
+                                            <div><b>Horizontal Bar: Broaden Your AI Application.</b> Learn universally valuable skills like AI-Assisted Data Analysis. The <a href="https://www.coursera.org/professional-certificates/google-data-analytics" target="_blank" class="text-[#D35400] hover:underline">Google Data Analytics Certificate</a> is a great place to start.</div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div id="step4-content" class="action-tab-content hidden">
+                                     <h3 class="text-2xl font-bold text-[#2C3E50]">Commit to Continuous Learning</h3>
+                                    <p class="mt-4 text-gray-600">Skills can become obsolete quickly. Lifelong learning is now a career necessity. Start experimenting with free tools today to build practical experience.</p>
+                                    <h5 class="mt-6 font-semibold">Learning Roadmap & Free Tools:</h5>
+                                    <div class="overflow-x-auto mt-2">
+                                        <table class="w-full text-sm text-left">
+                                            <thead class="bg-gray-100"><tr><th class="p-2">Skill</th><th class="p-2">Practice Tool</th></tr></thead>
+                                            <tbody>
+                                                <tr class="border-b">
+                                                    <td class="p-2 font-medium">Prompt Engineering</td>
+                                                    <td class="p-2"><a href="https://gemini.google.com" target="_blank" class="text-[#D35400] hover:underline">Google Gemini</a>, ChatGPT</td>
+                                                </tr>
+                                                <tr class="border-b">
+                                                    <td class="p-2 font-medium">AI Image Generation</td>
+                                                    <td class="p-2"><a href="https://www.adobe.com/products/firefly.html" target="_blank" class="text-[#D35400] hover:underline">Adobe Firefly</a>, Pixlr</td>
+                                                </tr>
+                                                 <tr class="border-b">
+                                                    <td class="p-2 font-medium">Workflow Automation</td>
+                                                    <td class="p-2"><a href="https://zapier.com/" target="_blank" class="text-[#D35400] hover:underline">Zapier</a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="p-2 font-medium">AI Meeting Assistant</td>
+                                                    <td class="p-2"><a href="https://fathom.video/" target="_blank" class="text-[#D35400] hover:underline">Fathom</a></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <footer class="text-center py-8 mt-16 border-t border-gray-200">
+                <p class="text-gray-500">The future belongs to those who learn. Start your journey today.</p>
+            </footer>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const dashboardData = {
+        customer_service: {
+            title: 'Revolutionizing Customer Service',
+            labels: ['Avg. Agent Productivity', 'New Hire Productivity', 'Operational Cost Reduction'],
+            data: [14, 34, 28],
+            backgroundColor: ['#4DB6AC', '#81C784', '#FFB74D'],
+            text: `
+                <p>The customer service sector is a primary testbed for AI-driven efficiency. On average, AI assistants increase agent productivity by <strong>14%</strong>, with new hires seeing a remarkable <strong>34%</strong> surge as AI helps them learn best practices faster. This translates to cost reductions of <strong>25-30%</strong>.</p>
+                <h5 class="font-semibold mt-4">Case Studies:</h5>
+                <ul class="list-disc list-inside mt-2">
+                    <li><strong>Lyft:</strong> Reported an 87% reduction in average resolution times after integrating AI.</li>
+                    <li><strong>Unity:</strong> Saved an estimated $1.3 million by using an AI agent to reduce support ticket volume.</li>
+                </ul>
+                <p class="mt-4"><strong>Key Insight:</strong> AI automates routine inquiries, freeing human agents to focus on complex, high-empathy problems, which can improve job satisfaction.</p>
+            `
+        },
+        software: {
+            title: 'Rewriting Software Development',
+            labels: ['Task Completion Speed-up', 'Junior Dev Productivity Boost', 'Development Cost Reduction'],
+            data: [40, 40, 27],
+            backgroundColor: ['#64B5F6', '#4DD0E1', '#BA68C8'],
+            text: `
+                <p>Developers using AI assistants like GitHub Copilot complete tasks <strong>26-55%</strong> faster. The impact is most profound for junior developers, who can see productivity boosts of up to <strong>40%</strong>. This acceleration leads to an average reduction of <strong>27%</strong> in overall development costs.</p>
+                <h5 class="font-semibold mt-4">Case Study:</h5>
+                <ul class="list-disc list-inside mt-2">
+                    <li><strong>Shopify:</strong> Saw a 30% reduction in time spent on routine code and a 22% faster onboarding for new engineers.</li>
+                </ul>
+                <p class="mt-4"><strong>Key Insight:</strong> While speed increases, there's a risk of increased "code churn" and technical debt, highlighting the need for human oversight and quality control.</p>
+            `
+        },
+        legal: {
+            title: 'AI in the Halls of Justice',
+            labels: ['Legal Research Time Savings', 'Due Diligence Time Savings', 'Caseload Capacity Increase'],
+            data: [60, 75, 10],
+            backgroundColor: ['#7986CB', '#9575CD', '#F06292'],
+            text: `
+                <p>The legal field is seeing profound changes. Repetitive tasks that took hours are now done in minutes. AI tools have been shown to slash legal research time by <strong>60%</strong> and complex due diligence time by <strong>75%</strong>.</p>
+                <h5 class="font-semibold mt-4">Case Studies:</h5>
+                <ul class="list-disc list-inside mt-2">
+                    <li><strong>Rupp Pfalzgraf:</strong> Increased attorney caseload capacity by 10% with Lexis+ AI.</li>
+                    <li><strong>Slaughter and May:</strong> Saved 75% of time on M&A due diligence using Luminance.</li>
+                </ul>
+                <p class="mt-4"><strong>Key Insight:</strong> AI is causing an "80/20 inversion," where lawyers can now spend 80% of their time on high-level strategy and client counsel, rather than on information gathering.</p>
+            `
+        },
+        marketing: {
+            title: 'Reshaping the Creative Engine',
+            labels: ['Overall Performance Enhancement', 'Social Engagement Uplift (Heinz)'],
+            data: [22.5, 38],
+            backgroundColor: ['#FF8A65', '#A1887F', '#90A4AE'],
+            text: `
+                <p>Generative AI is a powerful partner in creative industries. Integrating AI-driven strategies can enhance overall marketing performance by <strong>15-30%</strong>. A key impact is "design democratization," empowering non-designers to create professional-quality assets.</p>
+                <h5 class="font-semibold mt-4">Case Studies:</h5>
+                <ul class="list-disc list-inside mt-2">
+                    <li><strong>Coca-Cola:</strong> Used DALL-E 2 to co-create unique artwork with its global fanbase in the "Create Real Magic" campaign.</li>
+                    <li><strong>Heinz:</strong> Generated novel ketchup bottle designs with AI, leading to a 38% higher social media engagement rate.</li>
+                </ul>
+                 <p class="mt-4"><strong>Key Insight:</strong> AI is not replacing creativity but augmenting it, enabling brands to produce personalized content and campaigns at an unprecedented scale.</p>
+            `
+        }
+    };
+
+    const ctx = document.getElementById('industryChart').getContext('2d');
+    let industryChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Productivity Impact (%)',
+                data: [],
+                backgroundColor: [],
+                borderColor: [],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.x !== null) {
+                                label += context.parsed.x + '%';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Impact / Percentage Gain (%)'
+                    }
+                }
+            }
+        }
+    });
+
+    const industryButtons = document.querySelectorAll('.industry-btn');
+    const dashboardTitle = document.getElementById('dashboard-title');
+    const dashboardText = document.getElementById('dashboard-text');
+
+    function updateDashboard(industry) {
+        const industryData = dashboardData[industry];
+        dashboardTitle.textContent = industryData.title;
+        dashboardText.innerHTML = industryData.text;
+        
+        industryChart.data.labels = industryData.labels;
+        industryChart.data.datasets[0].data = industryData.data;
+        industryChart.data.datasets[0].backgroundColor = industryData.backgroundColor;
+        industryChart.update();
+    }
+    
+    industryButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const industry = button.dataset.industry;
+            updateDashboard(industry);
+            
+            industryButtons.forEach(btn => {
+                btn.classList.remove('bg-[#E57373]', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-800');
+            });
+            button.classList.add('bg-[#E57373]', 'text-white');
+            button.classList.remove('bg-white', 'text-gray-800');
+        });
+    });
+
+    updateDashboard('customer_service');
+    document.querySelector('.industry-btn[data-industry="customer_service"]').classList.add('bg-[#E57373]', 'text-white');
+    document.querySelector('.industry-btn[data-industry="customer_service"]').classList.remove('bg-white', 'text-gray-800');
+
+
+    const skillTabButtons = document.querySelectorAll('.skill-tab-btn');
+    const skillContents = document.querySelectorAll('.skill-content');
+
+    skillTabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const skill = button.dataset.skill;
+
+            skillTabButtons.forEach(btn => {
+                btn.classList.remove('text-[#D35400]', 'border-[#D35400]');
+                btn.classList.add('text-gray-500');
+            });
+            button.classList.add('text-[#D35400]', 'border-[#D35400]');
+            button.classList.remove('text-gray-500');
+
+            skillContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${skill}-content`).classList.add('active');
+        });
+    });
+    
+    const actionTabButtons = document.querySelectorAll('.action-tab-btn');
+    const actionTabContents = document.querySelectorAll('.action-tab-content');
+
+    actionTabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tab = button.dataset.tab;
+
+            actionTabButtons.forEach(btn => {
+                btn.classList.remove('bg-white', 'border-[#D35400]');
+                btn.classList.add('border-transparent');
+            });
+            button.classList.add('bg-white', 'border-[#D35400]');
+            button.classList.remove('border-transparent');
+
+
+            actionTabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`${tab}-content`).classList.remove('hidden');
+        });
+    });
+
+
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.5
+    };
+
+    const sectionObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const sectionId = entry.target.id;
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === `#${sectionId}`);
+                });
+                 entry.target.classList.add('visible');
+            }
+        });
+    }, observerOptions);
+
+    sections.forEach(section => {
+        sectionObserver.observe(section);
+    });
+
+});
+</script>
+</body>
+</html>

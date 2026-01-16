@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Band Mixer</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f2f2f2;
+    }
+    canvas {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Upload Two Images</h2>
+  <input type="file" id="img1Input" accept="image/*">
+  <input type="file" id="img2Input" accept="image/*">
+  <br><br>
+
+  <label for="bandSlider">Number of Bands: <span id="bandCount">10</span></label>
+  <input type="range" id="bandSlider" min="2" max="100" value="10">
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const img1Input = document.getElementById("img1Input");
+    const img2Input = document.getElementById("img2Input");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const slider = document.getElementById("bandSlider");
+    const bandCountText = document.getElementById("bandCount");
+
+    let img1 = null;
+    let img2 = null;
+
+    function loadImage(file, callback) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => callback(img);
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    img1Input.addEventListener("change", () => {
+      loadImage(img1Input.files[0], (img) => {
+        img1 = img;
+        tryDraw();
+      });
+    });
+
+    img2Input.addEventListener("change", () => {
+      loadImage(img2Input.files[0], (img) => {
+        img2 = img;
+        tryDraw();
+      });
+    });
+
+    slider.addEventListener("input", () => {
+      bandCountText.textContent = slider.value;
+      tryDraw();
+    });
+
+    function tryDraw() {
+      if (!img1 || !img2) return;
+
+      const width = img1.width;
+      const height = img1.height;
+      const bandCount = parseInt(slider.value);
+      const bandWidth = Math.floor(width / bandCount);
+
+      canvas.width = width;
+      canvas.height = height;
+
+      for (let i = 0; i < bandCount; i++) {
+        const sx = i * bandWidth;
+
+        // Draw from img1 directly
+        if (i % 2 === 0) {
+          ctx.drawImage(img1, sx, 0, bandWidth, height, sx, 0, bandWidth, height);
+        } 
+        // Draw from scaled img2
+        else {
+          ctx.drawImage(
+            img2,                        // source image
+            (sx / width) * img2.width,  // source x (scaled)
+            0,                          // source y
+            (bandWidth / width) * img2.width, // source width (scaled)
+            img2.height,                // source height
+            sx, 0,                      // dest x/y
+            bandWidth, height           // dest width/height
+          );
+        }
+      }
+    }
+  </script>
+</body>
+</html>

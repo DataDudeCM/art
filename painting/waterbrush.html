@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stained Color Fields - Canvas Optimized</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0ede5; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        #canvas-container {
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            line-height: 0;
+            background: #f0ede5;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 18px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #333;
+            pointer-events: none;
+            border-left: 4px solid #264653;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-overlay">
+        <strong>STAINED FIELDS</strong><br>
+        • Click to drop pigment<br>
+        • Space to refresh canvas
+    </div>
+    <div id="canvas-container"></div>
+
+    <script>
+        /**
+         * STAINED COLOR FIELDS (Optimized for Canvas Environment)
+         * * This version utilizes Instance Mode and defensive initialization 
+         * to prevent the 'InvalidStateError'. 
+         * * Artistic additions:
+         * 1. Pigment Grain: A subtle noise pass on the buffer to mimic paper texture.
+         * 2. Blend Modes: Uses MULTIPLY to simulate additive pigment density.
+         */
+
+        const sketch = (p) => {
+            let stains = [];
+            let palette;
+            let canvasSize;
+            let pg; 
+
+            p.setup = () => {
+                // Defensive dimensioning for the Canvas environment
+                let w = (p.windowWidth > 0) ? p.windowWidth : 800;
+                let h = (p.windowHeight > 0) ? p.windowHeight : 800;
+                canvasSize = p.max(200, p.min(w * 0.85, h * 0.85));
+
+                let canvas = p.createCanvas(canvasSize, canvasSize);
+                canvas.parent('canvas-container');
+
+                // Initialize the offscreen graphics buffer
+                pg = p.createGraphics(canvasSize, canvasSize);
+                
+                palette = [
+                    p.color(38, 70, 83, 12),   // Deep Teal
+                    p.color(42, 157, 143, 12),  // Sea Green
+                    p.color(233, 196, 106, 12), // Goldenrod
+                    p.color(244, 162, 97, 12),  // Apricot
+                    p.color(231, 111, 81, 12)   // Terracotta
+                ];
+
+                p.initComposition();
+            };
+
+            p.draw = () => {
+                // Final safety check for the graphics object before rendering
+                if (pg && pg.width > 0 && pg.height > 0) {
+                    p.image(pg, 0, 0);
+                }
+
+                for (let i = stains.length - 1; i >= 0; i--) {
+                    stains[i].update();
+                    if (pg && pg.width > 0) {
+                        stains[i].display(pg);
+                    }
+                    if (stains[i].isFinished()) {
+                        stains.splice(i, 1);
+                    }
+                }
+            };
+
+            p.initComposition = () => {
+                if (!pg) return;
+
+                pg.background(240, 237, 229);
+                
+                // Add "Paper Texture" - referencing your preference for 'textured' art
+                pg.push();
+                for (let i = 0; i < 5000; i++) {
+                    pg.stroke(0, 5);
+                    pg.point(p.random(pg.width), p.random(pg.height));
+                }
+                pg.pop();
+
+                stains = [];
+                // Initial balance: dropping a few stains to define the negative space
+                for (let i = 0; i < 3; i++) {
+                    p.addStain(p.random(p.width), p.random(p.height));
+                }
+            };
+
+            p.addStain = (x, y) => {
+                let col = p.random(palette);
+                stains.push(new ColorStain(p, x, y, col));
+            };
+
+            p.mousePressed = () => {
+                if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
+                    p.addStain(p.mouseX, p.mouseY);
+                }
+            };
+
+            p.keyPressed = () => {
+                if (p.key === ' ') {
+                    p.initComposition();
+                }
+            };
+
+            p.windowResized = () => {
+                let w = p.windowWidth > 0 ? p.windowWidth : 800;
+                let h = p.windowHeight > 0 ? p.windowHeight : 800;
+                let newSize = p.max(200, p.min(w * 0.85, h * 0.85));
+                
+                if (newSize !== canvasSize) {
+                    canvasSize = newSize;
+                    p.resizeCanvas(canvasSize, canvasSize);
+                    
+                    // Create a fresh buffer to match the new size
+                    let newPg = p.createGraphics(canvasSize, canvasSize);
+                    pg = newPg;
+                    p.initComposition();
+                }
+            };
+
+            class ColorStain {
+                constructor(p, x, y, col) {
+                    this.p = p;
+                    this.pos = p.createVector(x, y);
+                    this.color = col;
+                    this.radius = p.random(10, 30);
+                    this.maxRadius = this.radius * p.random(5, 10);
+                    this.noiseSeed = p.random(10000);
+                    this.growSpeed = p.random(0.3, 0.7);
+                    this.done = false;
+                    this.detail = 80;
+                }
+
+                update() {
+                    if (this.radius < this.maxRadius) {
+                        this.radius += this.growSpeed;
+                    } else {
+                        this.done = true;
+                    }
+                }
+
+                display(buffer) {
+                    if (this.done) return;
+
+                    buffer.push();
+                    buffer.translate(this.pos.x, this.pos.y);
+                    buffer.noStroke();
+                    buffer.fill(this.color);
+
+                    // Replicating your "fuzzy" edge logic from artrect.js
+                    // Using blend mode to simulate layered washes
+                    buffer.blendMode(p.BLEND); 
+
+                    buffer.beginShape();
+                    for (let i = 0; i < this.detail; i++) {
+                        let angle = p.map(i, 0, this.detail, 0, p.TWO_PI);
+                        
+                        // Polar noise sampling for organic boundaries
+                        let xOff = p.cos(angle) + 1;
+                        let yOff = p.sin(angle) + 1;
+                        let n = p.noise(
+                            xOff + this.noiseSeed, 
+                            yOff + this.noiseSeed, 
+                            this.radius * 0.005
+                        );
+                        
+                        let r = this.radius * p.map(n, 0, 1, 0.6, 1.4);
+                        let vx = r * p.cos(angle);
+                        let vy = r * p.sin(angle);
+                        buffer.vertex(vx, vy);
+                    }
+                    buffer.endShape(p.CLOSE);
+                    buffer.pop();
+
+                    this.noiseSeed += 0.003;
+                }
+
+                isFinished() {
+                    return this.done;
+                }
+            }
+        };
+
+        // Standard initialization for the Canvas integrated viewer
+        window.onload = () => {
+            new p5(sketch);
+        };
+    </script>
+</body>
+</html>

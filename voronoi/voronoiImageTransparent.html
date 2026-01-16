@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Voronoi Overlay Filter</title>
+  <script src="https://d3js.org/d3-delaunay.v6.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+      text-align: center;
+      padding: 20px;
+    }
+    canvas {
+      border: 1px solid #444;
+      margin-top: 20px;
+      max-width: 100%;
+    }
+    .controls {
+      margin-top: 15px;
+    }
+    label {
+      margin-right: 10px;
+    }
+    input[type="range"] {
+      width: 200px;
+      vertical-align: middle;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Voronoi Overlay Filter</h1>
+  <input type="file" id="upload" accept="image/*"><br>
+
+  <div class="controls hidden" id="controls">
+    <label>
+      Voronoi Cell Density:
+      <input type="range" id="density" min="500" max="10000" step="500" value="3000">
+    </label><br><br>
+
+    <label>
+      Outline Color:
+      <select id="outline">
+        <option value="#000000">Black</option>
+        <option value="#FFFFFF">White</option>
+      </select>
+    </label><br><br>
+
+    <button id="apply">Apply Filter</button>
+    <button id="save">Save Image</button>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const upload = document.getElementById('upload');
+    const densitySlider = document.getElementById('density');
+    const outlineSelect = document.getElementById('outline');
+    const applyButton = document.getElementById('apply');
+    const saveButton = document.getElementById('save');
+    const controls = document.getElementById('controls');
+
+    let img, imageData;
+
+    upload.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        img = new Image();
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          imageData = ctx.getImageData(0, 0, img.width, img.height);
+          controls.classList.remove('hidden');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    applyButton.addEventListener('click', () => {
+      if (!imageData) return;
+      applyVoronoi();
+    });
+
+    saveButton.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'voronoi_overlay.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    });
+
+function applyVoronoi() {
+  const width = canvas.width;
+  const height = canvas.height;
+  const cellDensity = parseInt(densitySlider.value);
+  const outlineColor = outlineSelect.value;
+
+  // Draw original image
+  ctx.clearRect(0, 0, width, height);
+  ctx.globalAlpha = 1.0;
+  ctx.drawImage(img, 0, 0);
+
+  const numPoints = Math.floor((width * height) / cellDensity);
+  const points = Array.from({ length: numPoints }, () => [
+    Math.random() * width,
+    Math.random() * height
+  ]);
+
+  const delaunay = d3.Delaunay.from(points);
+  const voronoi = delaunay.voronoi([0, 0, width, height]);
+
+  // Split indices into 50/50 opaque vs translucent
+  const indices = [...Array(points.length).keys()];
+  shuffle(indices); // Randomize order
+  const half = Math.floor(indices.length / 3);
+  const opaqueSet = new Set(indices.slice(0, half));
+  const translucentSet = new Set(indices.slice(half));
+
+  for (let i = 0; i < points.length; i++) {
+    const cell = voronoi.cellPolygon(i);
+    if (!cell) continue;
+
+    ctx.beginPath();
+    ctx.moveTo(cell[0][0], cell[0][1]);
+    for (let j = 1; j < cell.length; j++) {
+      ctx.lineTo(cell[j][0], cell[j][1]);
+    }
+    ctx.closePath();
+
+    const minX = Math.max(0, Math.floor(Math.min(...cell.map(p => p[0]))));
+    const minY = Math.max(0, Math.floor(Math.min(...cell.map(p => p[1]))));
+    const maxX = Math.min(width, Math.ceil(Math.max(...cell.map(p => p[0]))));
+    const maxY = Math.min(height, Math.ceil(Math.max(...cell.map(p => p[1]))));
+
+    let r = 0, g = 0, b = 0, count = 0;
+
+    for (let y = minY; y < maxY; y++) {
+      for (let x = minX; x < maxX; x++) {
+        if (ctx.isPointInPath(x, y)) {
+          const idx = (y * width + x) * 4;
+          r += imageData.data[idx];
+          g += imageData.data[idx + 1];
+          b += imageData.data[idx + 2];
+          count++;
+        }
+      }
+    }
+
+    if (count > 0) {
+      r = Math.floor(r / count);
+      g = Math.floor(g / count);
+      b = Math.floor(b / count);
+
+      let alpha = 1.0;
+      if (translucentSet.has(i)) {
+        alpha = 0 + Math.random() * .5; // Random transparency (0–50% opacity)
+      }
+
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1.0;
+    ctx.strokeStyle = outlineColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Simple array shuffle function
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+}
+
+
+
+  </script>
+</body>
+</html>

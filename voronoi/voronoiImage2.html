@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Voronoi Image Overlay</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; background: #222; color: #fff; }
+    input[type="range"] { width: 300px; }
+    canvas { display: block; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+
+<h2>Voronoi Overlay Generator</h2>
+
+<label for="opacityRatio">Opaque Cell Ratio (0–100%): <span id="ratioLabel">50</span>%</label><br>
+<input type="range" id="opacityRatio" min="0" max="100" value="50">
+
+<br><br>
+<input type="file" id="imageInput" accept="image/*">
+<br><br>
+<button id="saveBtn">Save Image</button>
+<canvas id="canvas"></canvas>
+
+<script>
+const imageInput = document.getElementById('imageInput');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const opacitySlider = document.getElementById('opacityRatio');
+const ratioLabel = document.getElementById('ratioLabel');
+const saveBtn = document.getElementById('saveBtn');
+
+opacitySlider.addEventListener('input', () => {
+  ratioLabel.textContent = opacitySlider.value;
+  if (currentImage) processImage(currentImage);
+});
+
+saveBtn.addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'voronoi_output.png';
+  link.href = canvas.toDataURL();
+  link.click();
+});
+
+let currentImage = null;
+
+imageInput.addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+
+  const img = new Image();
+  img.onload = () => {
+    currentImage = img;
+    processImage(img);
+  };
+  img.src = URL.createObjectURL(file);
+});
+
+function processImage(img) {
+  canvas.width = img.width;
+  canvas.height = img.height;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+
+  const numPoints = 500;
+  const points = d3.range(numPoints).map(() => [Math.random() * canvas.width, Math.random() * canvas.height]);
+
+  const delaunay = d3.Delaunay.from(points);
+  const voronoi = delaunay.voronoi([0, 0, canvas.width, canvas.height]);
+
+  // Determine opacity distribution
+  const opaqueCount = Math.floor(numPoints * (parseInt(opacitySlider.value) / 100));
+  const opacityLevels = Array(numPoints).fill(0).map((_, i) => {
+    if (i < opaqueCount) return 1;
+    return 1 - Math.random() * 0.3; // 0.7 to 1 opacity (i.e., 0% to 30% transparent)
+  });
+
+  // Shuffle for randomness
+  opacityLevels.sort(() => Math.random() - 0.5);
+
+  // Draw Voronoi overlay
+  for (let i = 0; i < numPoints; i++) {
+    const cell = voronoi.cellPolygon(i);
+    if (!cell) continue;
+
+    // Create path
+    ctx.beginPath();
+    cell.forEach((p, j) => {
+      if (j === 0) ctx.moveTo(p[0], p[1]);
+      else ctx.lineTo(p[0], p[1]);
+    });
+    ctx.closePath();
+
+    // Get average color under cell
+    const mask = document.createElement('canvas');
+    mask.width = canvas.width;
+    mask.height = canvas.height;
+    const maskCtx = mask.getContext('2d');
+
+    maskCtx.beginPath();
+    cell.forEach((p, j) => {
+      if (j === 0) maskCtx.moveTo(p[0], p[1]);
+      else maskCtx.lineTo(p[0], p[1]);
+    });
+    maskCtx.closePath();
+    maskCtx.fill();
+
+    const cellData = maskCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let r = 0, g = 0, b = 0, count = 0;
+
+    for (let p = 0; p < data.length; p += 4) {
+      const alpha = cellData[p + 3];
+      if (alpha > 0) {
+        r += data[p];
+        g += data[p + 1];
+        b += data[p + 2];
+        count++;
+      }
+    }
+
+    if (count === 0) continue;
+    r = Math.floor(r / count);
+    g = Math.floor(g / count);
+    b = Math.floor(b / count);
+
+    // Fill cell
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacityLevels[i].toFixed(2)})`;
+    ctx.fill();
+
+    // Outline
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+}
+</script>
+</body>
+</html>

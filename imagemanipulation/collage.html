@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5.js Abstract Collage</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Inter', sans-serif;
+            color: #888;
+        }
+
+        .upload-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .upload-area {
+            width: 80%;
+            max-width: 400px;
+            padding: 2rem;
+            border: 2px dashed #444;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .upload-area:hover {
+            border-color: #aaa;
+            color: #aaa;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+
+        #canvas-container {
+            display: block;
+        }
+
+        #message {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ccc;
+            font-size: 0.9rem;
+            z-index: 5;
+            padding: 8px 16px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .show {
+            opacity: 1 !important;
+        }
+    </style>
+    <!-- p5.js library is required to run the program -->
+    	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.2/p5.min.js"></script>
+</head>
+<body>
+    <div class="upload-container" id="upload-container">
+        <div class="upload-area" id="background-upload-area">
+            <label for="backgroundInput">
+                1. Drag & drop a background image here
+            </label>
+            <input type="file" id="backgroundInput" accept="image/*">
+        </div>
+        <div class="upload-area" id="collage-upload-area" style="display:none;">
+            <label for="collageInput">
+                2. Drag & drop collage images here
+            </label>
+            <input type="file" id="collageInput" multiple accept="image/*">
+        </div>
+    </div>
+    
+    <div id="message"></div>
+    <div id="canvas-container"></div>
+    <script src="js/collage.js"></script>
+    </body>
+</html>
