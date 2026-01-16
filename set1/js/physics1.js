@@ -1,4 +1,8 @@
 // Uses toxiclabs physics library
+//
+// Uses physics library, springs and gravity to influence the motion of 2 or more particles across the screen
+// By drawing semi transparent lines between the points, we get interesting spirograph like art
+// Currently utilizes the colors from Pallette 4 in my pallette file.
 const { VerletPhysics2D, VerletParticle2D, VerletSpring2D } = toxi.physics2d;
 const { GravityBehavior } = toxi.physics2d.behaviors;
 const { Vec2D, Rect } = toxi.geom;
