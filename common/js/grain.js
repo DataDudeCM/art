@@ -43,14 +43,14 @@ void main() {
 }
 `
 
-function applyGrain(cnv) {
+function applyGrain(cnv, noiseAmt = 0.075) {
   grainBuffer.clear()
   grainBuffer.reset()
   grainBuffer.push()
   grainBuffer.shader(grainShader)
   grainShader.setUniform('noiseSeed', random()) // to make the grain change each frame
   grainShader.setUniform('source', cnv)
-  grainShader.setUniform('noiseAmount', 0.1) // 0.075 default
+  grainShader.setUniform('noiseAmount', noiseAmt) // 0.075 default
   grainBuffer.rectMode(CENTER)
   grainBuffer.noStroke()
   grainBuffer.rect(0, 0, width, height)

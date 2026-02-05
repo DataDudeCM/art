@@ -7,8 +7,8 @@
 let palettes = [
     ["#FF5733","#33FF57","#5733FF","#FF3357"],//0
     ["#F0A500","#00A4CC","#D9BF77","#EB5160"],//1
-    ['#1a1c2c', '#29366f', '#3b5dc9'], // 2 Deep blues for depth; arcane like
-    ['#2b2d42', '#8d99ae', '#edf2f4'], // 3 Darkest to lightest
+    ["#1a1c2c","#2e294b","#29366f", "#3b5dc9"], // 2 Deep blues for depth; arcane like
+    ["#2b2d42","#696773","#8d99ae", "#edf2f4"], // 3 Darkest to lightest
     ["#fe4a49","#2ab7ca","#fed766","#e6e6ea","#f4f4f8"],//4
     ["#011f4b","#03396c","#005b96","#6497b1","#b3cde0"],//5
     ["#0d1b2a","#1b263b","#415a77","#778da9","#e0e1dd"],//6

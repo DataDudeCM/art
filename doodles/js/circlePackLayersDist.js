@@ -2,14 +2,20 @@
 // Each layer has circles "punched out" to reveal the layer below
 // The bottom layer shows the background color through all holes
 // Texturing and distribution is used in this version
-let layerCounts = [100, 250, 80]; 
-let circleData = [[], [], []];
+let layerCounts = [200, 175, 150, 100]; // 4 layers
+let circleData = [[], [], [], []]; // 4 layers
 let palette = [];
+let cheight = 0;
+
+function preload() {
+  myCustomFont = loadFont('../common/fonts/test_sans.ttf');
+}
 
 function setup() {
   mainCanvas = createCanvas(windowWidth, windowHeight); //
+  cheight = height - 20; // leave space for signature
 
-  grainBuffer = createGraphics(width, height, WEBGL);
+  grainBuffer = createGraphics(width, cheight, WEBGL);
   grainShader = grainBuffer.createShader(vert, frag)
   pixelDensity(1); // Keep it snappy for the texture generation
   frameRate(1);
@@ -17,33 +23,43 @@ function setup() {
 }
 
 function draw() {
-  palette = palettes[int(random(palettes.length))];
-  //background('#050508'); // The "void" at the bottom
-  background(palette[0]); // The "void" at the bottom
-  circleData = [[], [], []];
-  for (let i = 0; i < 3; i++) {
+  palette = palettes[int(random(12))];
+  //background('White');
+  background('#050508'); // The "void" at the bottom
+  //background(palette[0]); // The "void" at the bottom
+  circleData = [[], [], [], []]; // reset circle data  
+  for (let i = 0; i < layerCounts.length; i++) {
     packLayer(i, layerCounts[i]);
   }
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < circleData.length; i++) {
     drawTexturedCutout(i);
   }
-  applyGrain(mainCanvas, grainBuffer, grainShader, 0.05);
+  applyGrain(mainCanvas);
+
+  // Signature
+  fill('White');
+  noStroke();
+  rect  (0, height - 30, width, height);
+  textSize(14);
+  fill('Black');
+  noStroke();
+  text('Circle Packing Cutouts - (c) www.cmARTcreations.com 2026', 10, height-4);
 }
 
 function packLayer(index, maxCircles) {
   let attempts = 0;
-  let center = createVector(width / 2, height / 2);
+  let center = createVector(width / 2, cheight / 2);
 
   while (circleData[index].length < maxCircles && attempts < 10000) {
     let x = random(width);
-    let y = random(height);
+    let y = random(cheight);
     let dToCenter = dist(x, y, center.x, center.y);
     
     // VIGNETTE LOGIC: Circles are more likely to spawn/be larger near the center
-    let spawnChance = map(dToCenter, 0, width/2, 1.0, 0.01);
+    let spawnChance = map(dToCenter, 0, width/2, 1.0, 0.1); // 1.0 at center, 1% at edges
     
     if (random() < spawnChance) {
-      let maxR = map(dToCenter, 0, width/2, 200, 40) * (index + 1) * 0.5;
+      let maxR = map(dToCenter, 0, width/2, width*.4, width*.05) * (index + 1) * 0.5;
       let newC = { x: x, y: y, r: random(20, maxR) }; // default is 5 for smaller circles
       
       let overlapping = false;
@@ -61,12 +77,12 @@ function packLayer(index, maxCircles) {
 }
 
 function drawTexturedCutout(index) {
-  let pg = createGraphics(width, height);
+  let pg = createGraphics(width, cheight);
   
   // 1. Create Paper Texture
   pg.fill(palette[index]);
   pg.noStroke();
-  pg.rect(0, 0, width, height);
+  pg.rect(0, 0, width, cheight);
 
   // 2. Punch the holes
   pg.erase();
@@ -85,9 +101,9 @@ function drawTexturedCutout(index) {
 
   // 3. Shadow Rendering
   // The higher the layer, the further the shadow casts
-  drawingContext.shadowOffsetX = 12 * (index + 1);
-  drawingContext.shadowOffsetY = 12 * (index + 1);
-  drawingContext.shadowBlur = 25;
+  drawingContext.shadowOffsetX = 5 * (index + 1);
+  drawingContext.shadowOffsetY = 5 * (index + 1);
+  drawingContext.shadowBlur = 20;
   drawingContext.shadowColor = 'rgba(0, 0, 0, 0.8)';
 
   image(pg, 0, 0);
