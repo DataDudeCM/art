@@ -2,12 +2,13 @@
 // Each layer has circles "punched out" to reveal the layer below
 // The bottom layer shows the background color through all holes
 // Texturing and distribution is used in this version
-let layerCounts = [400, 250, 80]; 
+let layerCounts = [200, 250, 40]; 
 let circleData = [[], [], []];
 let palette = ['#1a1c2c', '#29366f', '#3b5dc9']; // Deep blues for depth
+//let palette = ['#2b2d42', '#8d99ae', '#edf2f4']; // Darkest to lightest
 
 function setup() {
-  createCanvas(800, 800);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1); // Keep it snappy for the texture generation
   
 
@@ -38,7 +39,7 @@ function packLayer(index, maxCircles) {
     let spawnChance = map(dToCenter, 0, width/2, 1.0, 0.01);
     
     if (random() < spawnChance) {
-      let maxR = map(dToCenter, 0, width/2, 200, 20) * (index + 1) * 0.5;
+      let maxR = map(dToCenter, 0, width/2, 200, 40) * (index + 1) * 0.5;
       let newC = { x: x, y: y, r: random(5, maxR) };
       
       let overlapping = false;
@@ -64,8 +65,8 @@ function drawTexturedCutout(index) {
   pg.rect(0, 0, width, height);
   
   // Add grain/fiber (IT Architect efficiency: don't use set(), use points)
-  pg.strokeWeight(1.25);
-  for (let i = 0; i < 20000; i++) {
+  pg.strokeWeight(1);
+  for (let i = 0; i < 40000; i++) {
     pg.stroke(255, random(10, 40)); // Subtle light fibers
     pg.point(random(width), random(height));
     pg.stroke(0, random(5, 60)); // Subtle dark pits
@@ -80,7 +81,7 @@ function drawTexturedCutout(index) {
   }
   pg.noErase();
   
-  pg.stroke(200); //light grey
+  pg.stroke('Light Gold'); //light grey
   pg.strokeWeight(2);
   pg.noFill();
   for (let c of circleData[index]) {
@@ -99,4 +100,11 @@ function drawTexturedCutout(index) {
   // Reset for next layer
   drawingContext.shadowBlur = 0;
   pg.remove();
+}
+function keyPressed() {
+  if (key == 's' || key == 'S') {
+    // images go to Downloads folder
+    let timeStamp = year() + "-" + month() + "-" + day() + "-" + hour() + "-" + minute() + "-" + second() + "-" + nf(millis(), 3, 0);
+      save('circlePackLayersDist_' + timeStamp);
+    }
 }
