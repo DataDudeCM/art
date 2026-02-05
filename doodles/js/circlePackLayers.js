@@ -1,4 +1,19 @@
-let layerCounts = [500, 300, 150]; // Dense bottom, sparse top
+// Circle Packing with Layered Cutouts
+// Each layer has circles "punched out" to reveal the layer below
+// The bottom layer shows the background color through all holes
+/*
+5 Creative Twists for Negative Space
+The "Vignette" Fade: Instead of random packing, use a dist() check from the center of the canvas. Make the holes larger and more frequent in the middle, creating a "tunnel" effect that draws the eye into the deep background.
+
+Textured Paper: In your temp graphics buffer, before punching the holes, apply a slight filter(NOISE) or draw thousands of tiny, low-opacity points. This gives the "paper" a tactile, fiber-like texture that catches the digital shadow beautifully.
+
+The "Backlit" Glow: Invert the shadow! Use a bright color (like a neon cyan or orange) for shadowColor and set shadowOffsetX to 0. This makes it look like the layers are being lit from behind, with light leaking through the cutouts.
+
+Inner Shadows (Beveling): To make it look like thick foam-core board, draw the holes twice: once to erase, and once with a slightly offset, dark, low-opacity stroke inside the hole.
+
+Arcane "Paint Strokes": Instead of using ellipse() to punch holes, use a custom shape or a series of quad() calls that look like rough brush strokes. This replicates the "stylized carving" look of the Arcane environments.
+*/
+let layerCounts = [100, 50, 50]; // Dense bottom, sparse top
 let circleData = [[], [], []];
 let palette = ['#2b2d42', '#8d99ae', '#edf2f4']; // Darkest to lightest
 
@@ -37,12 +52,16 @@ function drawCutoutLayer(index) {
     temp.ellipse(c.x, c.y, c.r * 2);
   }
   temp.noErase();
-  temp.stroke(200);
-  temp.strokeWeight(2);
+  
+  /*
+  // Outline each circle
+  temp.stroke(200); //light grey
+  temp.strokeWeight(3);
   temp.noFill();
   for (let c of circleData[index]) {
     temp.ellipse(c.x, c.y, c.r * 2);
   }
+  */
 
   // 3. Apply Shadow to the main canvas context before drawing the sheet
   drawingContext.shadowOffsetX = 10;
