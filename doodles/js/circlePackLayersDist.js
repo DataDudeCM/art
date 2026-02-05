@@ -2,21 +2,24 @@
 // Each layer has circles "punched out" to reveal the layer below
 // The bottom layer shows the background color through all holes
 // Texturing and distribution is used in this version
-let layerCounts = [200, 250, 40]; 
+let layerCounts = [100, 250, 80]; 
 let circleData = [[], [], []];
-let palette = ['#1a1c2c', '#29366f', '#3b5dc9']; // Deep blues for depth
-//let palette = ['#2b2d42', '#8d99ae', '#edf2f4']; // Darkest to lightest
+let palette = [];
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  pixelDensity(1); // Keep it snappy for the texture generation
-  
+  mainCanvas = createCanvas(windowWidth, windowHeight); //
 
+  grainBuffer = createGraphics(width, height, WEBGL);
+  grainShader = grainBuffer.createShader(vert, frag)
+  pixelDensity(1); // Keep it snappy for the texture generation
+  frameRate(1);
   //noLoop();
 }
 
 function draw() {
-  background('#050508'); // The "void" at the bottom
+  palette = palettes[int(random(palettes.length))];
+  //background('#050508'); // The "void" at the bottom
+  background(palette[0]); // The "void" at the bottom
   circleData = [[], [], []];
   for (let i = 0; i < 3; i++) {
     packLayer(i, layerCounts[i]);
@@ -24,6 +27,7 @@ function draw() {
   for (let i = 0; i < 3; i++) {
     drawTexturedCutout(i);
   }
+  applyGrain(mainCanvas, grainBuffer, grainShader, 0.05);
 }
 
 function packLayer(index, maxCircles) {
@@ -40,7 +44,7 @@ function packLayer(index, maxCircles) {
     
     if (random() < spawnChance) {
       let maxR = map(dToCenter, 0, width/2, 200, 40) * (index + 1) * 0.5;
-      let newC = { x: x, y: y, r: random(5, maxR) };
+      let newC = { x: x, y: y, r: random(20, maxR) }; // default is 5 for smaller circles
       
       let overlapping = false;
       for (let other of circleData[index]) {
@@ -63,15 +67,6 @@ function drawTexturedCutout(index) {
   pg.fill(palette[index]);
   pg.noStroke();
   pg.rect(0, 0, width, height);
-  
-  // Add grain/fiber (IT Architect efficiency: don't use set(), use points)
-  pg.strokeWeight(1);
-  for (let i = 0; i < 40000; i++) {
-    pg.stroke(255, random(10, 40)); // Subtle light fibers
-    pg.point(random(width), random(height));
-    pg.stroke(0, random(5, 60)); // Subtle dark pits
-    pg.point(random(width), random(height));
-  }
 
   // 2. Punch the holes
   pg.erase();
