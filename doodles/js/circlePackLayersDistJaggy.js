@@ -88,17 +88,18 @@ function drawTexturedCutout(index) {
   pg.erase();
   pg.noStroke();
   for (let c of circleData[index]) {
-    pg.ellipse(c.x, c.y, c.r * 2);
+    drawRoughCircle(pg, c.x, c.y, c.r * 2);
   }
   pg.noErase();
   
-  
+  /*
   pg.stroke('Light Gold'); //light grey
   pg.strokeWeight(2);
   pg.noFill();
   for (let c of circleData[index]) {
     pg.ellipse(c.x, c.y, c.r * 2);
   }
+  */
 
   // 2.5 Paper Edge Highlight (The "Deboss" look)
   pg.noFill();
@@ -130,6 +131,20 @@ function drawTexturedCutout(index) {
   drawingContext.shadowBlur = 0;
   pg.remove();
 }
+
+function drawRoughCircle(target, x, y, r, variance = 5) {
+  target.beginShape();
+  for (let a = 0; a < TWO_PI; a += 0.1) {
+    // Offset the radius using noise based on angle and a unique seed per circle
+    let offset = map(noise(cos(a) + x, sin(a) + y, frameCount * 0.01), 0, 1, -variance, variance);
+    let rRough = r + offset;
+    let vx = x + rRough * cos(a);
+    let vy = y + rRough * sin(a);
+    target.vertex(vx, vy);
+  }
+  target.endShape(CLOSE);
+}
+
 function keyPressed() {
   if (key == 's' || key == 'S') {
     // images go to Downloads folder

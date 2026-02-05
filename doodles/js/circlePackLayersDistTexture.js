@@ -6,9 +6,11 @@ let layerCounts = [200, 175, 150, 100]; // 4 layers
 let circleData = [[], [], [], []]; // 4 layers
 let palette = [];
 let cheight = 0;
+let swMax = 2;
 
 function preload() {
   myCustomFont = loadFont('../common/fonts/test_sans.ttf');
+  myPaperTexture = loadImage('../images/canvasBoard.jpg');
 }
 
 function setup() {
@@ -80,9 +82,15 @@ function drawTexturedCutout(index) {
   let pg = createGraphics(width, cheight);
   
   // 1. Create Paper Texture
-  pg.fill(palette[index]);
+  pg.tint(palette[index]);
   pg.noStroke();
-  pg.rect(0, 0, width, cheight);
+  pg.push();
+    pg.translate(width/2, cheight/2);
+    pg.rotate(PI);
+    pg.imageMode(CENTER);
+    pg.image(myPaperTexture, 0, 0, width, cheight);
+  pg.pop();
+
 
   // 2. Punch the holes
   pg.erase();
@@ -91,36 +99,30 @@ function drawTexturedCutout(index) {
     pg.ellipse(c.x, c.y, c.r * 2);
   }
   pg.noErase();
-  
-  
-  pg.stroke('Light Gold'); //light grey
-  pg.strokeWeight(2);
-  pg.noFill();
-  for (let c of circleData[index]) {
-    pg.ellipse(c.x, c.y, c.r * 2);
-  }
 
   // 2.5 Paper Edge Highlight (The "Deboss" look)
+
   pg.noFill();
   // Draw a highlight on the bottom-right of the hole (opposite to shadow)
-  pg.stroke(255, 255, 255, 150); // Semi-transparent white
-  pg.strokeWeight(1.5);
+  pg.stroke(255, 255, 255, 125); // Semi-transparent white
+  pg.strokeWeight(map(index, 0, circleData.length - 1, 0, swMax)); // Thicker on top layers
   for (let c of circleData[index]) {
       // Offset slightly to catch the "light"
-      pg.arc(c.x, c.y, c.r * 2, c.r * 2, QUARTER_PI, PI - QUARTER_PI); 
+      pg.arc(c.x, c.y, (c.r-swMax*.05) * 2, (c.r-swMax*.05) * 2, QUARTER_PI, PI - QUARTER_PI); 
   }
 
   // Draw a shadow/dark rim on the top-left (inner depth)
-  pg.stroke(0, 0, 0, 50);
+  pg.stroke(10, 10, 10, 100);
+  pg.strokeWeight(map(index, 0, circleData.length - 1, 0, swMax*1.25)); // Thicker on top layers
   for (let c of circleData[index]) {
-      pg.arc(c.x, c.y, c.r * 2, c.r * 2, PI + QUARTER_PI, -QUARTER_PI); 
+      pg.arc(c.x, c.y, (c.r-swMax*.5) * 2, (c.r-swMax*.5) * 2, PI, 0); 
   }
 
 
   // 3. Shadow Rendering
   // The higher the layer, the further the shadow casts
-  drawingContext.shadowOffsetX = 5 * (index + 1);
-  drawingContext.shadowOffsetY = 5 * (index + 1);
+  drawingContext.shadowOffsetX = 4 * (index + 1);
+  drawingContext.shadowOffsetY = 4 * (index + 1);
   drawingContext.shadowBlur = 20;
   drawingContext.shadowColor = 'rgba(0, 0, 0, 0.8)';
 
