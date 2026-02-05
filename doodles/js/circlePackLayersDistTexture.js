@@ -11,6 +11,7 @@ let swMax = 2;
 function preload() {
   myCustomFont = loadFont('../common/fonts/test_sans.ttf');
   myPaperTexture = loadImage('../images/canvasBoard.jpg');
+  img.resize(windowWidth, windoHeight); // Resize for performance; each pixel is a 3D vertex
 }
 
 function setup() {
