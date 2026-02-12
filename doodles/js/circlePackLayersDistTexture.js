@@ -10,7 +10,7 @@ let swMax = 2;
 
 function preload() {
   myCustomFont = loadFont('../common/fonts/test_sans.ttf');
-  myPaperTexture = loadImage('../images/canvasBoard.jpg');
+  myPaperTexture = loadImage('../images/baremetalTexturePlastic.jpg');
   img.resize(windowWidth, windoHeight); // Resize for performance; each pixel is a 3D vertex
 }
 
@@ -62,7 +62,7 @@ function packLayer(index, maxCircles) {
     let spawnChance = map(dToCenter, 0, width/2, 1.0, 0.1); // 1.0 at center, 1% at edges
     
     if (random() < spawnChance) {
-      let maxR = map(dToCenter, 0, width/2, width*.4, width*.05) * (index + 1) * 0.5;
+      let maxR = map(dToCenter, 0, width/2, width*.4, width*.05) * (index + 1) * 0.5; // Larger max radius for higher layers, but still smaller towards edges
       let newC = { x: x, y: y, r: random(20, maxR) }; // default is 5 for smaller circles
       
       let overlapping = false;
