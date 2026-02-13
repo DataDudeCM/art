@@ -14,8 +14,8 @@ let tiles = [];
 // For a 4000px image, 40-50 is a good "Tile" size.
 // 20 will be very detailed, 100  will be abstract.
 //let tileSize = 60; // larger the tilesize, the larger the scale factor should be
-let scaleFactor = 4; // How much to upscale the target image for better tile matching. 2-4 is good.
-let tileSize = scaleFactor * 10; // We keep the source tiles at a fixed size (e.g. 40x40) for better detail, but we can scale the target up to match that detail.
+let scaleFactor = 5; // How much to upscale the target image for better tile matching. 2-4 is good.
+let tileSize = scaleFactor * 4; // We keep the source tiles at a fixed size (e.g. 40x40) for better detail, but we can scale the target up to match that detail.
 
 function setup() {
   // Start with a small placeholder canvas

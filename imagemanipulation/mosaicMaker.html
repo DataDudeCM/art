@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>p5.js Photographic Mosaic Maker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <link rel="stylesheet" href="css/mosaicMaker.css">
+</head>
+<body>
+
+  <div id="app-container">
+    <div id="canvas-container"></div>
+
+ <div id="controls-panel">
+      <h2>Mosaic Controls</h2>
+
+      <div class="control-group">
+        <h3>1. Source Tile Image</h3>
+        <p class="hint">The image used as "paint" tiles.</p>
+        <div id="source-file-input-container"></div>
+        
+        <div class="status-box">
+           <span id="source-status-text">Waiting for image...</span>
+           <img id="source-thumbnail" class="thumbnail hidden" alt="Source Thumbnail">
+        </div>
+
+        <div class="stats">
+            <small>Dimensions: <span id="source-dims">-</span></small><br>
+            <small>Total Tiles: <span id="source-tile-count">-</span></small>
+        </div>
+
+        <div class="slider-container">
+          <label for="tile-size-slider">Tile Size (px): <span id="tile-size-val">20</span></label>
+          <div id="tile-size-slider-container"></div>
+        </div>
+      </div>
+
+
+       <div class="control-group">
+        <h3>2. Target Image</h3>
+        <p class="hint">The main image to recreate.</p>
+        <div id="target-file-input-container"></div>
+
+         <div class="status-box">
+           <span id="target-status-text">Waiting for image...</span>
+           <img id="target-thumbnail" class="thumbnail hidden" alt="Target Thumbnail">
+        </div>
+
+        <div class="stats">
+            <small>Dimensions: <span id="target-dims">-</span></small>
+        </div>
+
+        <div class="slider-container">
+          <label for="scale-slider">Target Scale: <span id="scale-val">2.0</span>x</label>
+          <div id="scale-slider-container"></div>
+        </div>
+      </div>
+
+      <div id="main-status" class="highlight">Please upload both images to begin.</div>
+
+    </div>
+  </div>
+
+  <script src="js/mosaicMaker.js"></script>
+</body>
+</html>
