@@ -6,6 +6,7 @@
 // - Off-screen buffer for smooth rendering
 // - 'F' key toggle to compare original and mosaic
 // - Responsive UI with status updates
+
 let sourceImg = null;
 let targetImg = null;
 
@@ -26,11 +27,12 @@ let tileSizeValDisplay, scaleValDisplay, thresholdValDisplay; // Added display
 let sourceDimsDisplay, sourceTileCountDisplay, targetDimsDisplay;
 
 let isProcessing = false;
+let gap = -1; // Negative gap creates overlap to hide seams
 
 function setup() {
   let cnv = createCanvas(400, 400);
   cnv.parent('canvas-container');
-  background(220);
+  background(220); 
   textAlign(CENTER, CENTER);
   text("Upload images to begin", width / 2, height / 2);
   noLoop(); 
@@ -55,12 +57,14 @@ function setupInterface() {
   sourceTileCountDisplay = select('#source-tile-count');
   targetDimsDisplay = select('#target-dims');
 
+  select('#btn-visualize').mousePressed(saveProcessVisualization); // New button to save process steps
+
   // --- Source Input ---
   sourceFileInput = createFileInput(handleSourceFile);
   sourceFileInput.parent('source-file-input-container');
 
   // Slider 1: Now acts as "Minimum Tile Size"
-  minSizeSlider = createSlider(4, 50, 10, 1); 
+  minSizeSlider = createSlider(4, 200, 10, 2); 
   minSizeSlider.parent('tile-size-slider-container');
   minSizeSlider.style('width', '100%');
   minSizeSlider.changed(() => { triggerUpdate(); }); // Changing min size affects the Target generation now
@@ -70,7 +74,7 @@ function setupInterface() {
   targetFileInput = createFileInput(handleTargetFile);
   targetFileInput.parent('target-file-input-container');
 
-  scaleSlider = createSlider(0.1, 4, 1.0, 0.1);
+  scaleSlider = createSlider(0.1, 8, 1.0, 0.1);
   scaleSlider.parent('scale-slider-container');
   scaleSlider.style('width', '100%');
   scaleSlider.changed(() => { triggerUpdate(); });
@@ -235,7 +239,7 @@ function generateQuadtreeMosaic() {
   refImg.resize(finalW, finalH);
   refImg.loadPixels();
 
-  mosaicBuffer.background(0);
+  mosaicBuffer.background(0); // Start with black background to highlight gaps
 
   // 3. Start Recursive Division
   // We start with one giant block covering the whole image
@@ -288,14 +292,14 @@ function drawBestTile(x, y, w, h, refImg) {
         // THE FIX: We add +1 to width and height to create a slight overlap
         // causing the tiles to "bleed" over the black gaps.
 
-        mosaicBuffer.image(bestTile.img, x, y, w + 1, h + 1);
+        mosaicBuffer.image(bestTile.img, x, y, w - gap, h - gap);
     } else {
         mosaicBuffer.fill(avgColor.r, avgColor.g, avgColor.b);
-        mosaicBuffer.rect(x, y, w + 1, h + 1); // Add bleed here too
+        mosaicBuffer.rect(x, y, w - gap, h - gap); // Add bleed here too
     }
     if (bordersEnabled) {
       mosaicBuffer.noFill();
-      mosaicBuffer.strokeWeight(1);
+      mosaicBuffer.strokeWeight(random(0.5, 1.5)); // Randomize stroke weight for a more organic look
       mosaicBuffer.stroke(0);
       mosaicBuffer.rect(x, y, w + 1, h + 1); // Draw a border to prevent gaps
     }
@@ -398,4 +402,100 @@ function redrawOutput() {
         mainStatus.html("Showing Quadtree Mosaic (Press 'F' to switch)");
     }
   }
+}
+// --- VISUALIZATION TOOL FOR BLOG ---
+function saveProcessVisualization() {
+  if (!sourceImg || sourceTiles.length === 0) {
+    alert("Please upload and process a source image first!");
+    return;
+  }
+
+  // 1. Setup the Layout
+  // We want the Source Image on top, and the Sorted Palette below.
+  let padding = 20;
+  let labelHeight = 40;
+  
+  // Calculate width/height for the visualization canvas
+  let visW = sourceImg.width; 
+  let visH = sourceImg.height + labelHeight + sourceImg.height + labelHeight + padding;
+  
+  // If the source image is tiny, make the canvas bigger so we can see details
+  if (visW < 800) {
+      let scale = 800 / visW;
+      visW = 800;
+      visH = (sourceImg.height * scale) * 2 + (labelHeight * 2) + padding;
+  }
+
+  let pg = createGraphics(visW, visH);
+  pg.background(255);
+  pg.fill(0);
+  pg.noStroke();
+  pg.textSize(24);
+  pg.textAlign(LEFT, TOP);
+
+  // --- STEP 1: DRAW GRID OVERLAY ---
+  pg.text("Step 1: Grid Decomposition", padding, padding);
+  
+  // Draw the source image scaled to fit width
+  let imgH = (sourceImg.height / sourceImg.width) * (visW - padding*2);
+  pg.image(sourceImg, padding, labelHeight + padding, visW - padding*2, imgH);
+
+  // Draw the Red Grid Lines
+  pg.stroke(255, 0, 0, 150); // Red with transparency
+  pg.strokeWeight(2);
+  pg.noFill();
+
+  // Calculate grid size relative to this visualization
+  // (We need to map the 50px extract size to this scaled drawing)
+  let scaleRatio = (visW - padding*2) / sourceImg.width;
+  let visTileSize = 50 * scaleRatio; // 50 was our fixed extract size
+
+  let cols = sourceImg.width / 50;
+  let rows = sourceImg.height / 50;
+
+  for (let x = 0; x <= cols; x++) {
+      let xpos = padding + (x * visTileSize);
+      pg.line(xpos, labelHeight + padding, xpos, labelHeight + padding + imgH);
+  }
+  for (let y = 0; y <= rows; y++) {
+      let ypos = labelHeight + padding + (y * visTileSize);
+      pg.line(padding, ypos, visW - padding, ypos);
+  }
+
+  // --- STEP 2: DRAW SORTED PALETTE ---
+  let step2Y = labelHeight + padding + imgH + padding;
+  pg.noStroke();
+  pg.fill(0);
+  pg.text("Step 2: Sorted Tile Palette (Dark to Light)", padding, step2Y);
+
+  // Create a sorted copy of our tiles
+  // We sort by brightness (r+g+b) to make it look organized
+  let sortedTiles = [...sourceTiles]; // Create a copy
+  sortedTiles.sort((a, b) => {
+      let brightA = a.r + a.g + a.b;
+      let brightB = b.r + b.g + b.b;
+      return brightA - brightB;
+  });
+
+  // Draw them in a dense grid
+  let palX = padding;
+  let palY = step2Y + labelHeight;
+  let palW = visW - padding * 2;
+  
+  // Calculate how many tiles we can fit in a row
+  let tilesPerRow = ceil(sqrt(sortedTiles.length * (palW / imgH))); 
+  let tinySize = palW / tilesPerRow;
+
+  for (let i = 0; i < sortedTiles.length; i++) {
+      let tile = sortedTiles[i];
+      // Calculate grid position
+      let tx = (i % tilesPerRow) * tinySize;
+      let ty = floor(i / tilesPerRow) * tinySize;
+      
+      pg.image(tile.img, palX + tx, palY + ty, tinySize, tinySize);
+  }
+
+  // Save the result
+  save(pg, 'process_visualization.png');
+  pg.remove();
 }

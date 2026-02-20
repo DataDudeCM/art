@@ -2,6 +2,7 @@ function setup() {
   createCanvas(600, 400);
   background(255); // White background
   strokeWeight(2);
+
   noLoop(); // Only draw once
 }
 
