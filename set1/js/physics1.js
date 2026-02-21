@@ -12,11 +12,17 @@ let particles = [];
 let springs = [];
 let numparticles;
 
+function preload() {
+  // 1) Load your brush image (e.g., Acrylic Basic.png)
+  myBrush = loadImage('../brushes/Creamy.png');
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  selectedPalette = palettes[3];
+  selectedPalette = palettes[5];
   background(selectedPalette[0]);
+  background('White'); // White background
   
   c1 = color(selectedPalette[4]); // line segment 1
   c1.setAlpha(20);
@@ -50,6 +56,7 @@ function setup() {
     }
       
   }
+  painter = new BrushArtist(myBrush);
 }
 
 function draw() {
@@ -78,6 +85,7 @@ function draw() {
       c1true=c1true;
     }
     line(particles[l].x,particles[l].y,particles[(l+1) % (numparticles)].x,particles[(l+1) % (numparticles)].y);
+    //sketchyPaintedLine(particles[l].x,particles[l].y,particles[(l+1) % (numparticles)].x,particles[(l+1) % (numparticles)].y);
   }
   //stroke(c1);
   //line(particles[0].x,particles[0].y,particles[1].x,particles[1].y);

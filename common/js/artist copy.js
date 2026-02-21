@@ -36,7 +36,7 @@ class BrushArtist {
    * @param {number} px, py - Previous coordinates (for velocity)
    * @param {Object} options - { color, size, opacity, ghosting, angle }
    */
-  paintStroke(pg, x, y, options = {}) {
+  paintStroke(x, y, options = {}) {
     // Consider making the 2nd point optional, defaulting to the current point for stamping effects
     let {
       px = x, py = y, // Default to current point if previous point is not provided
@@ -79,22 +79,22 @@ class BrushArtist {
         
         let jitterX = random(-2, 2);
         let jitterY = random(-2, 2);
-        this._drawStamp(pg, subX + jitterX, subY + jitterY, passSize, angle, strokeColor, passAlpha);
+        this._drawStamp(subX + jitterX, subY + jitterY, passSize, angle, strokeColor, passAlpha);
       }
     }
   }
 
   // Internal helper to stamp the brush image
-  _drawStamp(pg, x, y, size, angle, c, a) {
-    pg.push();
-    pg.translate(x, y);
-    pg.rotate(angle);
-    pg.tint(red(c), green(c), blue(c), a);
-    pg.imageMode(CENTER);
+  _drawStamp(x, y, size, angle, c, a) {
+    push();
+    translate(x, y);
+    rotate(angle);
+    tint(red(c), green(c), blue(c), a);
+    imageMode(CENTER);
     // Scales brush based on original image dimensions from brush.js
     let renderSize = this.brush.width * (size * 0.01);
-    pg.image(this.brush, 0, 0, renderSize, renderSize);
-    pg.pop();
+    image(this.brush, 0, 0, renderSize, renderSize);
+    pop();
   }
 
   // Call this to "dip the brush back in paint"
