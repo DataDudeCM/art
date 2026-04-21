@@ -6,6 +6,7 @@ let myBrush;
 let painter;
 let selectedPalette;
 let shape = [];
+let isLoopingFlag = true;
 
 function preload() {
   // 1) Load your brush image (e.g., Acrylic Basic.png)
@@ -39,20 +40,29 @@ function setup() {
 }
 
 function draw() {
+    // Place a stamp somewhere on the canvas
+    let x = random(width);
+    let y = random(height);
+    let r = random(TWO_PI);
+    let s = random(0.5, 1);
 
-  // Place a stamp somewhere on the canvas
-  let x = random(width);
-  let y = random(height);
-  let r = random(TWO_PI);
-  let s = random(0.5, 1);
+    push();
+      translate(x, y);
+      rotate(r);
+      scale(s);
+            // Optionally, you can also draw the shape outline for reference
+      stroke(selectedPalette[1]);
+      strokeWeight(2);
+      noFill();
+      beginShape();
+        for (let i = 0; i < shape.length; i++) {
+          vertex(shape[i].x, shape[i].y);
+        }
+      endShape(CLOSE); 
+      imageMode(CENTER);
+      image(stamp, 0, 0);
 
-  push();
-  translate(x, y);
-  rotate(r);
-  scale(s);
-  imageMode(CENTER);
-  image(stamp, 0, 0);
-  pop();
+    pop();
 }
 
 // Need a function to create a "stamp"
@@ -96,4 +106,24 @@ function createAbstractStamp(shape,strokeColor) {
   let img = pg.get();
   img.mask(maskG);
   return img;
+}
+
+function keyReleased() {
+  if (keyCode == DELETE || keyCode == BACKSPACE) {
+
+  } 
+  if (key == 'l' || key == 'L') {
+    if (isLoopingFlag) {
+      isLoopingFlag = false;
+      noLoop()
+    } else {
+      isLoopingFlag = true;
+      loop();
+    }
+  }
+  if (key == 's' || key == 'S') {
+    // images go to Downloads folder
+    let timeStamp = year() + "-" + month() + "-" + day() + "-" + hour() + "-" + minute() + "-" + second() + "-" + nf(millis(), 3, 0);
+      save('tileart_' + timeStamp + 'png');
+    }
 }

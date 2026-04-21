@@ -69,7 +69,7 @@ function keyPressed() {
             loop();
         }
 	} 
-    if (key == 'r' || key == 'Rr') {
+    if (key == 'r' || key == 'R') {
         blendMode(BLEND);
         background(backcolor);
         blendMode(blendtype);
