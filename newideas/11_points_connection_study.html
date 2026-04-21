@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>11 Points — Connection Study</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #07070f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+  #wrap { position: relative; width: 580px; }
+  #top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0 8px;
+  }
+  #study-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.18);
+  }
+  #shuffle-btn {
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    background: none;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.25s;
+    border-radius: 3px;
+  }
+  #shuffle-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.35); }
+  canvas { display: block; }
+  #mode-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .mbtn {
+    font-family: 'Courier New', monospace;
+    font-size: 8px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.22);
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 3px;
+  }
+  .mbtn:hover { color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.28); }
+  .mbtn.on { color: #fff; border-color: rgba(255,255,255,0.55); }
+  #hint {
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.1);
+    text-align: center;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="top-bar">
+    <span id="study-label">11 Points — Connection Study</span>
+    <button id="shuffle-btn">⟳ new arrangement</button>
+  </div>
+  <div id="canvas-wrap"></div>
+  <div id="mode-row"></div>
+  <div id="hint">drag any point &nbsp;·&nbsp; choose a connection mode</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<script>
+const MODES = [
+  { name: 'Tension Web',    rgb: [100,190,255] },
+  { name: 'Organic Flow',   rgb: [255,165,65]  },
+  { name: 'Harmonic',       rgb: [55,220,165]  },
+  { name: 'Spanning Tree',  rgb: [175,255,125] },
+  { name: 'Constellation',  rgb: [185,120,255] },
+  { name: 'Chain Path',     rgb: [255,105,120] },
+];
+
+let dots = [], T = 0, currentMode = 0;
+let dragging = null, offX = 0, offY = 0;
+let btns = [];
+
+const CW = 580, CH = 560;
+
+new p5(sk => {
+  sk.setup = () => {
+    let cnv = sk.createCanvas(CW, CH);
+    cnv.parent('canvas-wrap');
+    sk.colorMode(sk.RGB, 255);
+    initDots(sk);
+
+    let row = document.getElementById('mode-row');
+    MODES.forEach((m, i) => {
+      let b = document.createElement('button');
+      b.className = 'mbtn' + (i === 0 ? ' on' : '');
+      b.textContent = m.name;
+      b.onclick = () => {
+        currentMode = i;
+        btns.forEach((btn, idx) => btn.classList.toggle('on', idx === i));
+      };
+      row.appendChild(b);
+      btns.push(b);
+    });
+
+    document.getElementById('shuffle-btn').onclick = () => initDots(sk);
+  };
+
+  sk.draw = () => {
+    sk.background(7, 7, 15, 30);
+    T += 0.007;
+    let [r, g, b] = MODES[currentMode].rgb;
+    switch(currentMode) {
+      case 0: webMode(sk, r, g, b); break;
+      case 1: flowMode(sk, r, g, b); break;
+      case 2: harmonicMode(sk, r, g, b); break;
+      case 3: treeMode(sk, r, g, b); break;
+      case 4: constellMode(sk, r, g, b); break;
+      case 5: chainMode(sk, r, g, b); break;
+    }
+    drawDots(sk, r, g, b);
+  };
+
+  sk.mousePressed = () => {
+    for (let d of dots) {
+      if (sk.dist(sk.mouseX, sk.mouseY, d.x, d.y) < d.r + 14) {
+        dragging = d;
+        offX = d.x - sk.mouseX;
+        offY = d.y - sk.mouseY;
+        return;
+      }
+    }
+  };
+  sk.mouseDragged = () => {
+    if (dragging) {
+      dragging.x = sk.constrain(sk.mouseX + offX, 0, CW);
+      dragging.y = sk.constrain(sk.mouseY + offY, 0, CH);
+    }
+  };
+  sk.mouseReleased = () => { dragging = null; };
+});
+
+function initDots(sk) {
+  dots = [];
+  let mg = 65, uw = CW - mg*2, uh = CH - mg*2;
+  let base = [
+    [0.18,0.22],[0.33,0.12],[0.10,0.40],
+    [0.75,0.20],[0.88,0.36],[0.68,0.44],
+    [0.40,0.78],[0.60,0.82],
+    [0.57,0.07],[0.04,0.68],[0.93,0.78],
+  ];
+  for (let [nx,ny] of base) {
+    dots.push({
+      x: mg + (nx + sk.random(-0.06,0.06)) * uw,
+      y: mg + (ny + sk.random(-0.06,0.06)) * uh,
+      r: sk.random(3.5,6.5),
+      phase: sk.random(sk.TWO_PI)
+    });
+  }
+}
+
+function webMode(sk, r, g, b) {
+  for (let i = 0; i < dots.length; i++) {
+    for (let j = i+1; j < dots.length; j++) {
+      let d = sk.dist(dots[i].x,dots[i].y,dots[j].x,dots[j].y);
+      sk.stroke(r,g,b,sk.map(d,0,680,215,0));
+      sk.strokeWeight(sk.map(d,0,680,2.8,0.15));
+      sk.line(dots[i].x,dots[i].y,dots[j].x,dots[j].y);
+    }
+  }
+}
+
+function flowMode(sk, r, g, b) {
+  sk.noFill();
+  for (let i = 0; i < dots.length; i++) {
+    for (let j = i+1; j < dots.length; j++) {
+      let d = sk.dist(dots[i].x,dots[i].y,dots[j].x,dots[j].y);
+      if (d > 380) continue;
+      sk.stroke(r,g,b,sk.map(d,0,380,195,15));
+      sk.strokeWeight(sk.map(d,0,380,2.2,0.4));
+      let mx=(dots[i].x+dots[j].x)/2, my=(dots[i].y+dots[j].y)/2;
+      let dx=dots[j].x-dots[i].x, dy=dots[j].y-dots[i].y;
+      let len=Math.max(0.001,Math.sqrt(dx*dx+dy*dy));
+      let nx=-dy/len, ny=dx/len;
+      let nv=(sk.noise(i*0.31+j*0.19,T)*2-1);
+      let off=nv*d*0.45;
+      sk.beginShape();
+      sk.vertex(dots[i].x,dots[i].y);
+      sk.quadraticVertex(mx+nx*off,my+ny*off,dots[j].x,dots[j].y);
+      sk.endShape();
+    }
+  }
+}
+
+function harmonicMode(sk, r, g, b) {
+  sk.noFill();
+  for (let i = 0; i < dots.length; i++) {
+    for (let j = i+1; j < dots.length; j++) {
+      let d = sk.dist(dots[i].x,dots[i].y,dots[j].x,dots[j].y);
+      if (d > 430) continue;
+      let freq = ((i*3+j*7)%5)+2;
+      let amp = sk.map(d,30,430,24,7) * Math.abs(Math.sin(T*0.8+i*0.5));
+      sk.stroke(r,g,b,sk.map(d,0,430,165,12));
+      sk.strokeWeight(1.2);
+      let ax=dots[i].x,ay=dots[i].y,bx=dots[j].x,by=dots[j].y;
+      let dx=bx-ax,dy=by-ay;
+      let len=Math.max(0.001,Math.sqrt(dx*dx+dy*dy));
+      let nx=-dy/len,ny=dx/len;
+      sk.beginShape();
+      for (let s=0;s<=55;s++) {
+        let lp=s/55;
+        let wave=Math.sin(lp*sk.TWO_PI*freq+T*2.5)*amp*Math.sin(lp*Math.PI);
+        sk.vertex(ax+dx*lp+nx*wave, ay+dy*lp+ny*wave);
+      }
+      sk.endShape();
+    }
+  }
+}
+
+function treeMode(sk, r, g, b) {
+  let inTree=new Set([0]), mst=[];
+  while(inTree.size<dots.length){
+    let best=null,bestD=Infinity;
+    for(let u of inTree){
+      for(let v=0;v<dots.length;v++){
+        if(!inTree.has(v)){
+          let d=sk.dist(dots[u].x,dots[u].y,dots[v].x,dots[v].y);
+          if(d<bestD){bestD=d;best={u,v};}
+        }
+      }
+    }
+    if(best){mst.push(best);inTree.add(best.v);}
+  }
+  for(let e of mst){
+    let ax=dots[e.u].x,ay=dots[e.u].y,bx=dots[e.v].x,by=dots[e.v].y;
+    for(let s=0;s<40;s++){
+      let t1=s/40,t2=(s+1)/40;
+      let env=Math.sin(((t1+t2)/2)*Math.PI);
+      let br=1+Math.sin(T*1.5+e.u+e.v)*0.14;
+      sk.stroke(r,g,b,env*205*br);
+      sk.strokeWeight(env*3*br);
+      sk.line(sk.lerp(ax,bx,t1),sk.lerp(ay,by,t1),sk.lerp(ax,bx,t2),sk.lerp(ay,by,t2));
+    }
+  }
+}
+
+function constellMode(sk, r, g, b) {
+  let thresh=215+Math.sin(T*0.55)*32;
+  for(let i=0;i<dots.length;i++){
+    for(let j=i+1;j<dots.length;j++){
+      let d=sk.dist(dots[i].x,dots[i].y,dots[j].x,dots[j].y);
+      if(d<thresh){
+        sk.stroke(r,g,b,sk.map(d,0,thresh,175,0));
+        sk.strokeWeight(sk.map(d,0,thresh,1.6,0.15));
+        sk.line(dots[i].x,dots[i].y,dots[j].x,dots[j].y);
+      } else if(d<thresh+65){
+        sk.stroke(r,g,b,sk.map(d,thresh,thresh+65,22,0));
+        sk.strokeWeight(0.5);
+        let steps=Math.floor(d/14);
+        for(let s=0;s<steps;s++){
+          if(s%2===0){
+            let t1=s/steps,t2=(s+0.5)/steps;
+            sk.line(
+              sk.lerp(dots[i].x,dots[j].x,t1),sk.lerp(dots[i].y,dots[j].y,t1),
+              sk.lerp(dots[i].x,dots[j].x,t2),sk.lerp(dots[i].y,dots[j].y,t2)
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
+function chainMode(sk, r, g, b) {
+  let visited=new Array(dots.length).fill(false);
+  let path=[0]; visited[0]=true;
+  while(path.length<dots.length){
+    let last=path[path.length-1],nearest=-1,nearD=Infinity;
+    for(let j=0;j<dots.length;j++){
+      if(!visited[j]){
+        let d=sk.dist(dots[last].x,dots[last].y,dots[j].x,dots[j].y);
+        if(d<nearD){nearD=d;nearest=j;}
+      }
+    }
+    path.push(nearest); visited[nearest]=true;
+  }
+  sk.noFill();
+  sk.stroke(r,g,b,185);
+  sk.strokeWeight(2);
+  sk.beginShape();
+  sk.curveVertex(dots[path[0]].x,dots[path[0]].y);
+  for(let idx of path) sk.curveVertex(dots[idx].x,dots[idx].y);
+  sk.curveVertex(dots[path[path.length-1]].x,dots[path[path.length-1]].y);
+  sk.endShape();
+  for(let i=0;i<path.length-1;i++){
+    let a=dots[path[i]],bDot=dots[path[i+1]];
+    let mx=(a.x+bDot.x)/2,my=(a.y+bDot.y)/2;
+    let sz=3+Math.sin(T*2+i)*1.5;
+    sk.fill(r,g,b,110); sk.noStroke();
+    sk.push(); sk.translate(mx,my); sk.rotate(Math.PI/4+T*0.25);
+    sk.rect(-sz/2,-sz/2,sz,sz);
+    sk.pop();
+    sk.noFill(); sk.stroke(r,g,b,185); sk.strokeWeight(2);
+  }
+}
+
+function drawDots(sk, r, g, b) {
+  sk.noStroke();
+  for(let d of dots){
+    let pulse=Math.sin(T*2.5+d.phase)*1.5;
+    let s=d.r+pulse;
+    sk.fill(r,g,b,12); sk.circle(d.x,d.y,(s+15)*2);
+    sk.fill(r,g,b,28); sk.circle(d.x,d.y,(s+7)*2);
+    sk.fill(255,255,255,228); sk.circle(d.x,d.y,s*2);
+  }
+}
+</script>
+</body>
+</html>
