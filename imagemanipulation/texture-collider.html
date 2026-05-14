@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Texture Collider</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0a0a09;
+  --surf:    #111110;
+  --surf2:   #161614;
+  --border:  #1f1f1c;
+  --text:    #c8bfae;
+  --muted:   #5a5449;
+  --dim:     #2e2b26;
+  --accent:  #c8871a;
+  --accent2: #e0a030;
+  --red:     #8a3a2a;
+}
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  display: flex;
+}
+
+/* ── Sidebar ── */
+#sidebar {
+  width: 218px;
+  min-width: 218px;
+  background: var(--surf);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dim) transparent;
+}
+#sidebar-footer {
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: var(--surf);
+}
+
+/* Brand */
+.brand {
+  text-align: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.brand-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 300;
+  letter-spacing: 5px;
+  color: var(--accent2);
+  text-transform: uppercase;
+}
+.brand-sub {
+  font-size: 8.5px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* Section */
+.sec {
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 5px;
+}
+
+/* Controls */
+.ctrl { display: flex; flex-direction: column; gap: 2px; }
+.lbl {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 10px;
+  padding: 1px 0;
+}
+.lbl em { color: var(--text); font-style: normal; }
+input[type=range] {
+  width: 100%;
+  height: 3px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin: 2px 0 3px;
+}
+select {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 4px 6px;
+  width: 100%;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+select:focus, select:hover { border-color: var(--accent); }
+
+/* Buttons */
+.btn {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 5px 8px;
+  width: 100%;
+  cursor: pointer;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: border-color .15s, color .15s;
+  text-align: left;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent2); }
+.btn.go {
+  background: var(--accent);
+  color: #0a0a09;
+  border: none;
+  font-weight: 500;
+  font-size: 11px;
+  padding: 8px;
+  letter-spacing: 3px;
+  text-align: center;
+}
+.btn.go:hover { background: var(--accent2); }
+.btn.variation { border-color: var(--dim); color: var(--muted); }
+.btn.variation:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Image slots */
+.img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.slot {
+  height: 56px;
+  background: #0d0d0c;
+  border: 1px dashed var(--dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.slot:hover { border-color: var(--accent); }
+.slot.has-img { border-style: solid; border-color: var(--dim); }
+.slot-lbl { font-size: 9px; color: var(--dim); pointer-events: none; z-index: 1; }
+.slot.has-img .slot-lbl { display: none; }
+.slot input[type=file] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.slot img.thumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.slot .clear-btn {
+  position: absolute;
+  top: 2px; right: 3px;
+  font-size: 9px;
+  color: var(--muted);
+  z-index: 2;
+  cursor: pointer;
+  pointer-events: all;
+  background: rgba(10,10,9,.7);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Toggle */
+.tog-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 10px;
+  padding: 3px 0;
+}
+.tog {
+  width: 26px; height: 13px;
+  background: var(--dim);
+  border-radius: 7px;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .2s;
+}
+.tog.on { background: var(--accent); }
+.tog::after {
+  content: '';
+  position: absolute;
+  width: 9px; height: 9px;
+  background: #444;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: left .18s;
+}
+.tog.on::after { left: 15px; background: #0a0a09; }
+
+/* Status */
+#status {
+  font-size: 9.5px;
+  color: var(--muted);
+  text-align: center;
+  padding: 2px 0;
+  min-height: 14px;
+  font-style: italic;
+}
+#seed-line {
+  font-size: 8.5px;
+  color: var(--dim);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* Canvas area */
+#canvas-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+#canvas-area canvas { display: block; box-shadow: 0 0 60px rgba(0,0,0,.8); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="sidebar-scroll">
+    <div class="brand">
+      <div class="brand-name">Texture Collider</div>
+      <div class="brand-sub">cmartcreations</div>
+    </div>
+
+    <!-- Images -->
+    <div class="ctrl">
+      <div class="sec">Source Images</div>
+      <div class="img-grid">
+        <div class="slot" id="slot0">
+          <span class="slot-lbl">+ IMG 1</span>
+          <input type="file" accept="image/*" onchange="loadSlot(0,this)">
+        </div>
+        <div class="slot" id="slot1">
+          <span class="slot-lbl">+ IMG 2</span>
+          <input type="file" accept="image/*" onchange="loadSlot(1,this)">
+        </div>
+        <div class="slot" id="slot2">
+          <span class="slot-lbl">+ IMG 3</span>
+          <input type="file" accept="image/*" onchange="loadSlot(2,this)">
+        </div>
+        <div class="slot" id="slot3">
+          <span class="slot-lbl">+ IMG 4</span>
+          <input type="file" accept="image/*" onchange="loadSlot(3,this)">
+        </div>
+      </div>
+    </div>
+
+    <!-- Shape & Composition -->
+    <div class="ctrl">
+      <div class="sec">Shape & Composition</div>
+      <select id="shapeType">
+        <option value="torn">Torn Strip</option>
+        <option value="shard">Glass Shard</option>
+        <option value="brush">Brush Stroke</option>
+        <option value="circle">Circle Punch</option>
+        <option value="rect">Rectangle</option>
+        <option value="mixed">Mixed (Random)</option>
+      </select>
+      <select id="composition" style="margin-top:4px">
+        <option value="grid">Grid + Chaos</option>
+        <option value="scatter">Random Scatter</option>
+        <option value="diagonal">Diagonal Flow</option>
+        <option value="radial">Radial Burst</option>
+        <option value="density">Density Wave</option>
+      </select>
+    </div>
+
+    <!-- Pieces -->
+    <div class="ctrl">
+      <div class="sec">Pieces</div>
+      <div class="lbl">Count <em id="vCount">80</em></div>
+      <input type="range" id="pieceCount" min="10" max="350" value="80"
+        oninput="V('vCount',this.value)">
+      <div class="lbl">Size min <em id="vSzMin">70</em>px</div>
+      <input type="range" id="sizeMin" min="20" max="450" value="70"
+        oninput="V('vSzMin',this.value)">
+      <div class="lbl">Size max <em id="vSzMax">260</em>px</div>
+      <input type="range" id="sizeMax" min="20" max="700" value="260"
+        oninput="V('vSzMax',this.value)">
+    </div>
+
+    <!-- Placement -->
+    <div class="ctrl">
+      <div class="sec">Placement</div>
+      <div class="lbl">Chaos <em id="vChaos">55</em></div>
+      <input type="range" id="chaos" min="0" max="100" value="55"
+        oninput="V('vChaos',this.value)">
+      <div class="tog-row">Allow rotation
+        <div class="tog on" id="togRotation" onclick="T('rotation',this)"></div>
+      </div>
+      <div class="tog-row">Allow flip
+        <div class="tog" id="togFlip" onclick="T('flip',this)"></div>
+      </div>
+    </div>
+
+    <!-- Opacity -->
+    <div class="ctrl">
+      <div class="sec">Opacity</div>
+      <div class="lbl">Min <em id="vOpMin">45</em>%</div>
+      <input type="range" id="opMin" min="5" max="100" value="45"
+        oninput="V('vOpMin',this.value)">
+      <div class="lbl">Max <em id="vOpMax">100</em>%</div>
+      <input type="range" id="opMax" min="5" max="100" value="100"
+        oninput="V('vOpMax',this.value)">
+    </div>
+
+    <!-- Blend -->
+    <div class="ctrl">
+      <div class="sec">Blend Modes</div>
+      <select id="blendMode">
+        <option value="multiply">Multiply</option>
+        <option value="screen">Screen</option>
+        <option value="overlay">Overlay</option>
+        <option value="soft-light">Soft Light</option>
+        <option value="hard-light">Hard Light</option>
+        <option value="darken">Darken</option>
+        <option value="lighten">Lighten</option>
+        <option value="color-dodge">Color Dodge</option>
+        <option value="color-burn">Color Burn</option>
+        <option value="difference">Difference</option>
+        <option value="exclusion">Exclusion</option>
+        <option value="source-over">Normal</option>
+      </select>
+      <div class="tog-row" style="margin-top:5px">Auto-vary blends
+        <div class="tog on" id="togVaryBlend" onclick="T('varyBlend',this)"></div>
+      </div>
+    </div>
+
+    <!-- Background -->
+    <div class="ctrl">
+      <div class="sec">Background</div>
+      <select id="bgColor">
+        <option value="0,0,0">Black</option>
+        <option value="10,10,9">Near Black</option>
+        <option value="245,242,236">Warm White</option>
+        <option value="128,128,128">Mid Gray</option>
+        <option value="20,15,10">Dark Sepia</option>
+        <option value="8,12,18">Dark Blue</option>
+      </select>
+    </div>
+
+    <!-- Border -->
+    <div class="ctrl">
+      <div class="sec">Rectangle Border</div>
+      <div class="tog-row">Show border
+        <div class="tog" id="togBorder" onclick="T('border',this)"></div>
+      </div>
+      <div id="borderOpts" style="display:none;margin-top:4px;display:flex;flex-direction:column;gap:3px;">
+        <div class="lbl">Color</div>
+        <select id="borderColor">
+          <option value="255,255,255">White</option>
+          <option value="0,0,0">Black</option>
+          <option value="200,160,80">Gold</option>
+          <option value="180,180,180">Silver</option>
+        </select>
+        <div class="lbl" style="margin-top:3px">Thickness <em id="vBorderW">6</em>px</div>
+        <input type="range" id="borderWidth" min="1" max="60" value="6"
+          oninput="V('vBorderW',this.value)">
+      </div>
+    </div>
+
+  </div><!-- /scroll -->
+
+  <div id="sidebar-footer">
+    <div id="status">Load images to begin</div>
+    <div id="seed-line">—</div>
+    <button class="btn go" onclick="generate()">⟳  Generate</button>
+    <button class="btn variation" onclick="restyle()">◈  Restyle Blends</button>
+    <div class="lbl" style="margin-top:2px">Output size</div>
+    <select id="outputSize" style="margin-bottom:2px">
+      <option value="1024">1024 × 1024</option>
+      <option value="2048" selected>2048 × 2048</option>
+      <option value="3072">3072 × 3072</option>
+      <option value="4096">4096 × 4096</option>
+    </select>
+    <button class="btn" onclick="exportArt()" id="exportBtn">↓  Export PNG</button>
+  </div>
+</div>
+
+<div id="canvas-area"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<script>
+// ─── Global State ────────────────────────────────────────────────────────────
+const srcImgs  = [null, null, null, null];
+const togStates = { rotation: true, flip: false, varyBlend: true, border: false };
+let p5inst;
+let storedPieces = []; // for Restyle
+let storedBg = 0;
+
+const BLEND_POOL = [
+  'multiply','screen','overlay','soft-light','hard-light',
+  'darken','lighten','color-dodge','color-burn','difference','exclusion'
+];
+const SHAPE_LIST = ['torn','shard','rect','circle','brush'];
+
+// ─── p5 Sketch ───────────────────────────────────────────────────────────────
+new p5(sk => {
+  p5inst = sk;
+  let gfx;
+  let showPlaceholder = true;
+
+  sk.setup = () => {
+    const area = document.getElementById('canvas-area');
+    const sz = Math.min(area.clientWidth - 20, area.clientHeight - 20, 740);
+    const cnv = sk.createCanvas(sz, sz);
+    cnv.parent('canvas-area');
+    var initSz = parseInt(document.getElementById('outputSize').value) || 2048;
+    gfx = sk.createGraphics(initSz, initSz);
+    drawPlaceholder();
+    sk.noLoop();
+  };
+
+  sk.draw = () => {
+    if (!showPlaceholder) {
+      sk.image(gfx, 0, 0, sk.width, sk.height);
+    }
+  };
+
+  function drawPlaceholder() {
+    sk.background(10, 10, 9);
+    sk.stroke(24, 22, 20);
+    sk.strokeWeight(1);
+    const gap = 36;
+    for (let x = 0; x <= sk.width; x += gap) sk.line(x, 0, x, sk.height);
+    for (let y = 0; y <= sk.height; y += gap) sk.line(0, y, sk.width, y);
+    sk.noStroke();
+    sk.textAlign(sk.CENTER, sk.CENTER);
+    sk.textFont('DM Mono, monospace');
+    sk.fill(44, 40, 35);
+    sk.textSize(13);
+    sk.text('TEXTURE COLLIDER', sk.width/2, sk.height/2 - 18);
+    sk.textSize(9.5);
+    sk.fill(32, 28, 24);
+    sk.text('load images  ·  configure  ·  generate', sk.width/2, sk.height/2 + 8);
+  }
+
+  // ─── Generate ─────────────────────────────────────────────────────────────
+  window.generate = () => {
+    const loaded = srcImgs.filter(x => x !== null);
+    if (!loaded.length) { ST('⚠  load at least one image first'); return; }
+
+    const s = getSettings();
+    const seed = Math.floor(Math.random() * 9999999);
+    sk.randomSeed(seed);
+    sk.noiseSeed(seed);
+    document.getElementById('seed-line').textContent = 'seed · ' + seed;
+
+    // Recreate buffer if resolution changed
+    var outSz = parseInt(document.getElementById('outputSize').value) || 2048;
+    if (gfx.width !== outSz || gfx.height !== outSz) {
+      gfx.remove();
+      gfx = sk.createGraphics(outSz, outSz);
+    }
+    const W = gfx.width, H = gfx.height;
+    storedPieces = buildPieces(s, W, H, loaded, sk);
+    storedBg = s.bg;
+    renderPieces(gfx, storedPieces, s.bg);
+    showPlaceholder = false;
+    sk.redraw();
+    ST('✓ ' + s.count + ' pieces · ' + storedPieces.length + ' rendered');
+  };
+
+  // ─── Restyle (change only blends/opacity, keep positions) ──────────────────
+  window.restyle = () => {
+    if (!storedPieces.length) { ST('⚠  generate first'); return; }
+    const s = getSettings();
+    const seed = Math.floor(Math.random() * 9999999);
+    sk.randomSeed(seed);
+    for (const pc of storedPieces) {
+      pc.opacity = sk.random(s.opMin, s.opMax) / 100;
+      pc.blend   = togStates.varyBlend
+        ? BLEND_POOL[Math.floor(sk.random(BLEND_POOL.length))]
+        : s.blend;
+    }
+    renderPieces(gfx, storedPieces, storedBg);
+    sk.redraw();
+    ST('◈ blends restyled');
+  };
+
+  // ─── Export ───────────────────────────────────────────────────────────────
+  window.exportArt = () => {
+    if (!storedPieces.length) { ST('generate first'); return; }
+    ST('preparing export...');
+    // link.click() is blocked in sandboxed iframes — open in new tab instead
+    // User can then right-click > Save Image As, or browser auto-downloads
+    const cvs = gfx.drawingContext.canvas;
+    const dataUrl = cvs.toDataURL('image/png');
+    const win = window.open('', '_blank');
+    if (win) {
+      const sz = gfx.width;
+      win.document.write(
+        '<html><head><title>texture-collider-' + Date.now() + '</title>' +
+        '<style>body{margin:0;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:monospace;}' +
+        'img{max-width:100vmin;max-height:100vmin;}' +
+        'p{color:#888;font-size:12px;margin:10px 0 0;}' +
+        'a{color:#c8871a;text-decoration:none;}' +
+        '</style></head><body>' +
+        '<img src="' + dataUrl + '">' +
+        '<p>Right-click the image and choose <strong style="color:#ccc">Save Image As</strong> &nbsp;|&nbsp; ' +
+        sz + ' &times; ' + sz + 'px &nbsp;&mdash;&nbsp; ' +
+        '<a href="' + dataUrl + '" download="texture-collider-' + Date.now() + '.png">or click here to download</a></p>' +
+        '</body></html>'
+      );
+      win.document.close();
+      ST('opened in new tab - save from there');
+    } else {
+      ST('pop-up blocked - allow pop-ups and try again');
+    }
+  };
+
+  // ─── Core render ──────────────────────────────────────────────────────────
+  function renderPieces(g, pieces, bg) {
+    const [r,gr,b] = bg.split(',').map(Number);
+    g.background(r, gr, b);
+    const ctx = g.drawingContext;
+    for (const pc of pieces) {
+      ctx.save();
+      ctx.globalAlpha = pc.opacity;
+      ctx.globalCompositeOperation = pc.blend;
+      ctx.translate(pc.x, pc.y);
+      ctx.rotate(pc.rotation);
+      if (pc.flipH) ctx.scale(-1, 1);
+      if (pc.flipV) ctx.scale(1, -1);
+
+      ctx.beginPath();
+      if (pc.verts) {
+        ctx.moveTo(pc.verts[0].x, pc.verts[0].y);
+        for (let j = 1; j < pc.verts.length; j++) ctx.lineTo(pc.verts[j].x, pc.verts[j].y);
+      } else {
+        ctx.rect(-pc.dw/2, -pc.dh/2, pc.dw, pc.dh);
+      }
+      ctx.closePath();
+      ctx.clip();
+
+      try {
+        ctx.drawImage(pc.img.canvas, pc.sx, pc.sy, pc.sw, pc.sh, -pc.dw/2, -pc.dh/2, pc.dw, pc.dh);
+      } catch(e) { /* skip bad frames */ }
+
+      ctx.restore();
+
+      // Border drawn outside clip so it sits on top, fully visible
+      if (pc.borderOn) {
+        ctx.save();
+        ctx.translate(pc.x, pc.y);
+        ctx.rotate(pc.rotation);
+        if (pc.flipH) ctx.scale(-1, 1);
+        if (pc.flipV) ctx.scale(1, -1);
+        const bc = pc.borderColor.split(',').map(Number);
+        ctx.strokeStyle = 'rgb(' + bc[0] + ',' + bc[1] + ',' + bc[2] + ')';
+        ctx.lineWidth   = pc.borderWidth;
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeRect(-pc.dw/2, -pc.dh/2, pc.dw, pc.dh);
+        ctx.restore();
+      }
+    }
+  }
+
+  // ─── Build pieces array ───────────────────────────────────────────────────
+  function buildPieces(s, W, H, loaded, sk) {
+    const positions = genPositions(s.count, s.comp, W, H, s.chaos/100, sk);
+    const pieces = [];
+    for (let i = 0; i < s.count; i++) {
+      const img = loaded[Math.floor(sk.random(loaded.length))];
+      const bsz = sk.random(s.szMin, Math.max(s.szMin + 1, s.szMax));
+      const asp = sk.random(0.3, 3.2);
+      const dw = bsz, dh = bsz * asp;
+
+      const sw = Math.max(4, Math.min(Math.round(dw), img.width));
+      const sh = Math.max(4, Math.min(Math.round(dh), img.height));
+      const sx = img.width  > sw ? Math.round(sk.random(0, img.width  - sw)) : 0;
+      const sy = img.height > sh ? Math.round(sk.random(0, img.height - sh)) : 0;
+
+      const shape   = s.shape === 'mixed' ? SHAPE_LIST[Math.floor(sk.random(SHAPE_LIST.length))] : s.shape;
+      const blend   = togStates.varyBlend ? BLEND_POOL[Math.floor(sk.random(BLEND_POOL.length))] : s.blend;
+      const opacity = sk.random(s.opMin, s.opMax) / 100;
+      const rotation = togStates.rotation ? sk.random(-Math.PI, Math.PI) : 0;
+      const flipH   = togStates.flip && sk.random() > 0.5;
+      const flipV   = togStates.flip && sk.random() > 0.5;
+      const verts   = buildVerts(shape, dw, dh, sk);
+
+      pieces.push({ img, sx, sy, sw, sh, dw, dh,
+        x: positions[i].x, y: positions[i].y,
+        rotation, opacity, blend, verts, flipH, flipV,
+        shape,
+        borderOn:    s.borderOn && shape === 'rect',
+        borderColor: s.borderColor,
+        borderWidth: s.borderWidth });
+    }
+    return pieces;
+  }
+
+  // ─── Position Generators ──────────────────────────────────────────────────
+  function genPositions(n, mode, W, H, c, sk) {
+    const ps = [];
+    if (mode === 'scatter') {
+      for (let i = 0; i < n; i++)
+        ps.push({ x: sk.random(-W*.12, W*1.12), y: sk.random(-H*.12, H*1.12) });
+    }
+    else if (mode === 'grid') {
+      const cols = Math.max(1, Math.round(Math.sqrt(n * W / H)));
+      const rows = Math.ceil(n / cols);
+      const cw = W / cols, ch = H / rows;
+      for (let i = 0; i < n; i++) {
+        const col = i % cols, row = Math.floor(i / cols);
+        ps.push({
+          x: (col + .5)*cw + sk.random(-cw*c*.75, cw*c*.75),
+          y: (row + .5)*ch + sk.random(-ch*c*.75, ch*c*.75)
+        });
+      }
+    }
+    else if (mode === 'diagonal') {
+      for (let i = 0; i < n; i++) {
+        const t = i / n;
+        ps.push({
+          x: t*W + sk.random(-W*c*.28, W*c*.28),
+          y: t*H + sk.random(-H*c*.28, H*c*.28)
+        });
+      }
+    }
+    else if (mode === 'radial') {
+      for (let i = 0; i < n; i++) {
+        const a = (i/n) * Math.PI * (4 + c*7);
+        const r = sk.random(0, Math.min(W,H)*.54) * sk.random(.6, 1.4);
+        ps.push({ x: W/2 + Math.cos(a)*r, y: H/2 + Math.sin(a)*r });
+      }
+    }
+    else if (mode === 'density') {
+      for (let i = 0; i < n; i++) {
+        let x, y, tries = 0;
+        do {
+          x = sk.random(W); y = sk.random(H);
+          const dx = (x-W/2)/(W/2), dy = (y-H/2)/(H/2);
+          const d  = Math.sqrt(dx*dx + dy*dy);
+          const accept = Math.exp(-d * (2.2 - c*1.9)) + sk.noise(x*.0025, y*.0025) * c * .6;
+          if (sk.random() < accept || tries++ > 18) break;
+        } while (true);
+        ps.push({ x, y });
+      }
+    }
+    return ps;
+  }
+
+  // ─── Vertex Builders ──────────────────────────────────────────────────────
+  function buildVerts(shape, w, h, sk) {
+    if (shape === 'rect') return null;
+
+    if (shape === 'torn') {
+      const v = [], st = 30, ns = sk.random(1000), tear = h * .44;
+      // Top edge (L → R, noisy)
+      for (let i = 0; i <= st; i++) {
+        const t = i/st;
+        v.push({ x: -w/2 + t*w, y: -h/2 + (sk.noise(t*4.5+ns)-.5)*tear });
+      }
+      // Bottom-right corner, bottom edge (R → L, noisy)
+      v.push({ x: w/2, y: h/2 });
+      for (let i = st; i >= 0; i--) {
+        const t = i/st;
+        v.push({ x: -w/2 + t*w, y: h/2 + (sk.noise(t*4.5+ns+77)-.5)*tear });
+      }
+      return v;
+    }
+
+    if (shape === 'shard') {
+      const n = Math.floor(sk.random(4, 9)), v = [];
+      let a = sk.random(Math.PI*2);
+      for (let i = 0; i < n; i++) {
+        a += (Math.PI*2/n) * sk.random(.45, 1.55);
+        const r = sk.random(.38, 1.0);
+        v.push({ x: Math.cos(a)*w/2*r, y: Math.sin(a)*h/2*r });
+      }
+      return v;
+    }
+
+    if (shape === 'circle') {
+      const v = [], st = 52, ns = sk.random(1000);
+      for (let i = 0; i < st; i++) {
+        const a = (i/st)*Math.PI*2;
+        const wob = 1 + (sk.noise(i*.18+ns)-.5)*.22;
+        v.push({ x: Math.cos(a)*w/2*wob, y: Math.sin(a)*h/2*wob });
+      }
+      return v;
+    }
+
+    if (shape === 'brush') {
+      // Build top + bottom edges of a tapered brush stroke
+      const v = [], st = 38, ns = sk.random(1000);
+      const rx = w/2, ry = Math.max(h/4, 10);
+      for (let i = 0; i <= st; i++) {
+        const t = i/st, x = -rx + t*2*rx;
+        const tap  = Math.sin(t * Math.PI);
+        const noise = 1 + (sk.noise(t*7+ns)-.5)*.38;
+        v.push({ x, y: -ry * tap * noise });
+      }
+      for (let i = st; i >= 0; i--) {
+        const t = i/st, x = -rx + t*2*rx;
+        const tap  = Math.sin(t * Math.PI);
+        const noise = 1 + (sk.noise(t*7+ns+55)-.5)*.38;
+        v.push({ x, y:  ry * tap * noise });
+      }
+      return v;
+    }
+
+    return null;
+  }
+
+}); // end p5 sketch
+
+// ─── Image Loading ────────────────────────────────────────────
+// FileReader -> dataURL: no blob/CORS/sandbox restrictions
+window.loadSlot = function(idx, input) {
+  if (!input || !input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var reader = new FileReader();
+
+  reader.onload = function(evt) {
+    var dataUrl = evt.target.result;
+
+    // Thumbnail
+    var slot = document.getElementById('slot' + idx);
+    slot.classList.add('has-img');
+    slot.querySelectorAll('img.thumb,.clear-btn').forEach(function(el){el.remove();});
+
+    var th = document.createElement('img');
+    th.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:2;';
+    th.src = dataUrl;
+    slot.appendChild(th);
+
+    var clr = document.createElement('span');
+    clr.style.cssText = 'position:absolute;top:2px;right:3px;font-size:9px;color:#999;z-index:4;cursor:pointer;background:rgba(0,0,0,.75);padding:0 3px;border-radius:2px;pointer-events:all;';
+    clr.textContent = 'x';
+    clr.onclick = function(ev) { ev.stopPropagation(); clearSlot(idx); };
+    slot.appendChild(clr);
+
+    // Decode to offscreen canvas for drawImage use during render
+    var img = new Image();
+    img.onload = function() {
+      var cvs = document.createElement('canvas');
+      cvs.width  = img.naturalWidth;
+      cvs.height = img.naturalHeight;
+      cvs.getContext('2d').drawImage(img, 0, 0);
+      srcImgs[idx] = { canvas: cvs, width: cvs.width, height: cvs.height };
+      var n = srcImgs.filter(function(x){ return x !== null; }).length;
+      ST(n + ' image' + (n > 1 ? 's' : '') + ' loaded - ready');
+    };
+    img.onerror = function() { ST('image decode failed'); };
+    img.src = dataUrl;
+  };
+
+  reader.onerror = function() { ST('file read failed'); };
+  ST('reading...');
+  reader.readAsDataURL(file);
+}
+window.clearSlot = idx => {
+  srcImgs[idx] = null;
+  const slot = document.getElementById('slot' + idx);
+  slot.classList.remove('has-img');
+  slot.querySelectorAll('img.thumb, .clear-btn').forEach(e => e.remove());
+  slot.querySelector('input[type=file]').value = '';
+  const n = srcImgs.filter(x => x !== null).length;
+  ST(n + ' image' + (n>1?'s':'') + ' loaded');
+};
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+const V  = (id, v) => document.getElementById(id).textContent = v;
+const ST = msg => document.getElementById('status').textContent = msg;
+window.T = function(key, el) {
+  togStates[key] = !togStates[key];
+  el.classList.toggle('on', togStates[key]);
+  if (key === 'border') {
+    var opts = document.getElementById('borderOpts');
+    if (opts) opts.style.display = togStates[key] ? 'flex' : 'none';
+  }
+};
+
+function getSettings() {
+  return {
+    shape:       document.getElementById('shapeType').value,
+    comp:        document.getElementById('composition').value,
+    count:       +document.getElementById('pieceCount').value,
+    szMin:       +document.getElementById('sizeMin').value,
+    szMax:       +document.getElementById('sizeMax').value,
+    chaos:       +document.getElementById('chaos').value,
+    opMin:       +document.getElementById('opMin').value,
+    opMax:       +document.getElementById('opMax').value,
+    blend:       document.getElementById('blendMode').value,
+    bg:          document.getElementById('bgColor').value,
+    borderOn:    togStates.border,
+    borderColor: document.getElementById('borderColor').value,
+    borderWidth: +document.getElementById('borderWidth').value,
+  };
+}
+</script>
+</body>
+</html>
