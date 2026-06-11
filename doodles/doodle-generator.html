@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organic Doodle Generator — cmARTcreations</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<style>
+  :root {
+    --steel: #5B8FA8;
+    --charcoal: #1A1A1A;
+    --grey: #D0D5D8;
+    --dim: #6b7378;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--charcoal);
+    color: var(--grey);
+    font-family: 'DM Sans', -apple-system, 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 500;
+    font-size: 1.7rem;
+    letter-spacing: 0.06em;
+  }
+  h1 span { color: var(--steel); font-style: italic; }
+  .sub {
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--steel);
+    margin: 6px 0 18px;
+  }
+  .studio {
+    display: flex;
+    gap: 22px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  #canvas-wrap {
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    line-height: 0;
+    cursor: pointer;
+  }
+  .panel {
+    width: 250px;
+    border: 1px solid #33393d;
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: sticky;
+    top: 16px;
+    align-self: flex-start;
+  }
+  .panel h2 {
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--steel);
+    font-weight: 500;
+    border-bottom: 1px solid #33393d;
+    padding-bottom: 10px;
+  }
+  .knob label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-bottom: 5px;
+  }
+  .knob label span { color: var(--dim); }
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--steel);
+    cursor: pointer;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .check input { accent-color: var(--steel); cursor: pointer; }
+  .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button, select {
+    background: transparent;
+    border: 1px solid var(--steel);
+    color: var(--steel);
+    font-family: inherit;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  button:hover { background: var(--steel); color: var(--charcoal); }
+  select { padding: 10px 14px; }
+  select option { background: var(--charcoal); color: var(--grey); }
+  .seed { font-size: 0.75rem; color: var(--dim); letter-spacing: 0.08em; }
+  .hint { font-size: 0.68rem; color: var(--dim); line-height: 1.5; letter-spacing: 0.04em; }
+  #saveModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 26, 26, 0.92);
+    z-index: 10;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 14px;
+  }
+  #saveModal.open { display: flex; }
+  #saveModal img {
+    max-height: 78vh;
+    max-width: 92vw;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  }
+  #saveModal p {
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--steel);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <h1>Organic Doodle <span>Generator</span></h1>
+  <div class="sub">spine &middot; blobs &middot; pattern vocabulary &middot; ink &middot; grain</div>
+
+  <div class="studio">
+    <div class="panel">
+      <h2>Knobs</h2>
+      <div id="sliders"></div>
+      <label class="check"><input type="checkbox" id="moonChk" checked onchange="redraw()"> Focal moon</label>
+      <h2 style="margin-top:6px">Collide</h2>
+      <label class="check"><input type="checkbox" id="collideChk" onchange="toggleCollide()"> Collide two seeds</label>
+      <label class="check"><input type="checkbox" id="flipChk" checked onchange="redraw()"> Flip partner horizontally</label>
+      <label class="check"><input type="checkbox" id="invertChk" onchange="redraw()"> Invert result</label>
+      <select id="blendSelect" onchange="redraw()" style="width:100%">
+        <option value="EXCLUSION" selected>Exclusion</option>
+        <option value="DIFFERENCE">Difference</option>
+        <option value="MULTIPLY">Multiply</option>
+        <option value="SCREEN">Screen</option>
+        <option value="HARD_LIGHT">Hard Light</option>
+      </select>
+      <button onclick="rerollPartner()" style="width:100%">Reroll partner seed</button>
+      <div class="hint">Knobs re-render the <em>current</em> seed, so you can sculpt one composition. Click the canvas for a new seed.</div>
+    </div>
+    <div id="canvas-wrap"></div>
+  </div>
+
+  <div class="controls">
+    <button onclick="regen()">Regenerate</button>
+    <select id="paletteSelect" onchange="recolor()"></select>
+    <button onclick="savePiece()">Save PNG</button>
+    <span class="seed" id="seedLabel"></span>
+  </div>
+
+  <div id="saveModal" onclick="this.classList.remove('open')">
+    <img id="saveImg" alt="Generated doodle ready to save">
+    <p>Right-click (or long-press on mobile) the image and choose<br>&ldquo;Save image as&hellip;&rdquo; &mdash; tap anywhere else to close</p>
+  </div>
+
+<script>
+// ===================================================================
+//  ORGANIC DOODLE GENERATOR  v3
+//  Layers: silhouette -> regions -> patterns -> wash -> grain
+//  Now with a control panel. The instrument, not the slot machine.
+// ===================================================================
+
+const W = 700, H = 1020;
+let currentSeed;
+let seedB; // the collision partner
+let grainImg = null;
+
+const BLEND_MODES = () => ({
+  EXCLUSION: EXCLUSION, DIFFERENCE: DIFFERENCE,
+  MULTIPLY: MULTIPLY, SCREEN: SCREEN, HARD_LIGHT: HARD_LIGHT
+});
+
+function isColliding() {
+  return document.getElementById('collideChk').checked;
+}
+
+function updateSeedLabel() {
+  const el = document.getElementById('seedLabel');
+  el.textContent = isColliding()
+    ? 'seed ' + currentSeed + ' \u00d7 ' + seedB
+    : 'seed ' + currentSeed;
+}
+
+function toggleCollide() {
+  updateSeedLabel();
+  redraw();
+}
+
+function rerollPartner() {
+  seedB = floor(Math.random() * 99999);
+  updateSeedLabel();
+  redraw();
+}
+
+// -------------------------------------------------------------------
+//  KNOBS -- every slider lives here. C holds the live values.
+// -------------------------------------------------------------------
+const KNOBS = [
+  { id: 'coverage', label: 'Coverage', min: 0.55, max: 1.5,  step: 0.05, val: 1.0,
+    tip: 'overall scale of the mass on the page' },
+  { id: 'colonies', label: 'Colonies', min: 1,    max: 8,    step: 1,    val: 1,
+    tip: 'how many organisms grow on the page' },
+  { id: 'cluster',  label: 'Cluster',  min: 0,    max: 1,    step: 0.05, val: 0.6,
+    tip: 'pulls colonies toward the center so they overlap and fuse' },
+  { id: 'wobble',   label: 'Wobble',   min: 0.05, max: 0.8,  step: 0.05, val: 0.35,
+    tip: 'how organic vs. circular the blobs are' },
+  { id: 'density',  label: 'Satellites', min: 0,  max: 10,   step: 1,    val: 2,
+    tip: 'small blobs clinging to the spine' },
+  { id: 'lean',     label: 'Lean',     min: -1,   max: 1,    step: 0.1,  val: 0,
+    tip: 'horizontal bias: negative drifts left, positive right' },
+  { id: 'gravity',  label: 'Gravity',  min: 0,    max: 1,    step: 0.05, val: 0.25,
+    tip: 'mass sags and swells downward; stalks reach upward' },
+  { id: 'detail',   label: 'Pattern detail', min: 0.6, max: 1.8, step: 0.1, val: 1.0,
+    tip: 'fineness of hatching, dots, stipple' },
+  { id: 'stalks',   label: 'Stalks',   min: 0,    max: 14,   step: 1,    val: 6,
+    tip: 'antennae with dotted heads' },
+  { id: 'wash',     label: 'Color wash', min: 0,  max: 1,    step: 0.05, val: 0.55,
+    tip: 'how many cells get a tint (0 = pure ink)' },
+  { id: 'grain',    label: 'Grain',    min: 0,    max: 1,    step: 0.05, val: 1.0,
+    tip: 'paper texture intensity' }
+];
+const C = {};
+
+function buildPanel() {
+  const wrap = document.getElementById('sliders');
+  for (const k of KNOBS) {
+    C[k.id] = k.val;
+    const div = document.createElement('div');
+    div.className = 'knob';
+    div.innerHTML =
+      '<label>' + k.label + ' <span id="v-' + k.id + '">' + k.val + '</span></label>' +
+      '<input type="range" id="' + k.id + '" min="' + k.min + '" max="' + k.max +
+      '" step="' + k.step + '" value="' + k.val + '" title="' + k.tip + '">';
+    wrap.appendChild(div);
+    div.querySelector('input').addEventListener('input', e => {
+      C[k.id] = parseFloat(e.target.value);
+      document.getElementById('v-' + k.id).textContent = e.target.value;
+      redraw(); // same seed: sculpt the piece you are looking at
+    });
+  }
+}
+
+// -------------------------------------------------------------------
+//  PALETTES
+// -------------------------------------------------------------------
+const PALETTES = [
+  { name: 'Faded Field',
+    paper: '#E9E3D6', ink: '#3A372F',
+    accents: ['#A8987A', '#8FA08E', '#B5836B', '#7E8C99'] },
+  { name: 'Slate Study',
+    paper: '#E2E6E8', ink: '#23282C',
+    accents: ['#5B8FA8', '#8FA6B5', '#A9B4BA', '#6E7F8A'] },
+  { name: 'Dust & Clay',
+    paper: '#E7DDCF', ink: '#41382F',
+    accents: ['#C2A878', '#9C7B5E', '#8A8F7A', '#B09A8C'] },
+  { name: 'Sea Fog',
+    paper: '#E4E6E0', ink: '#2E3A39',
+    accents: ['#7FA39B', '#A3B5A8', '#8B9D9E', '#C0B8A3'] },
+  { name: 'Classic Ink',
+    paper: '#FAF8F2', ink: '#161616',
+    accents: [] }
+];
+
+let PAL = PALETTES[0];
+let INK, PAPER, BLOBFILL;
+
+function setup() {
+  const c = createCanvas(W, H);
+  c.parent('canvas-wrap');
+  pixelDensity(2);
+  noLoop();
+
+  buildPanel();
+
+  const sel = document.getElementById('paletteSelect');
+  PALETTES.forEach((p, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = p.name;
+    sel.appendChild(o);
+  });
+
+  grainImg = makeGrain();
+  regen();
+}
+
+function regen() {
+  currentSeed = floor(Math.random() * 99999);
+  seedB = floor(Math.random() * 99999);
+  updateSeedLabel();
+  redraw();
+}
+
+function recolor() {
+  PAL = PALETTES[document.getElementById('paletteSelect').value];
+  redraw();
+}
+
+function savePiece() {
+  // Sandboxed iframes block programmatic downloads, so try the normal
+  // route and fall back to a right-click-to-save overlay.
+  const cnv = document.querySelector('#canvas-wrap canvas');
+  const url = cnv.toDataURL('image/png');
+  const seedTag = isColliding() ? currentSeed + 'x' + seedB : currentSeed;
+  const name = 'doodle_' + seedTag + '_' + PAL.name.replace(/\W+/g, '') + '.png';
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (e) { /* overlay below is the safety net */ }
+  document.getElementById('saveImg').src = url;
+  document.getElementById('saveModal').classList.add('open');
+}
+
+function mousePressed() {
+  if (document.getElementById('saveModal').classList.contains('open')) return;
+  if (mouseX >= 0 && mouseX <= W && mouseY >= 0 && mouseY <= H) regen();
+}
+
+// -------------------------------------------------------------------
+//  GRAIN
+// -------------------------------------------------------------------
+function makeGrain() {
+  const g = createGraphics(W, H);
+  g.pixelDensity(1);
+  g.loadPixels();
+  for (let i = 0; i < W * H * 4; i += 4) {
+    const v = 230 + Math.random() * 25;
+    const clump = Math.random() < 0.004 ? -22 : 0;
+    g.pixels[i] = v + clump;
+    g.pixels[i + 1] = v + clump;
+    g.pixels[i + 2] = v + clump;
+    g.pixels[i + 3] = 255;
+  }
+  g.updatePixels();
+  return g;
+}
+
+function applyGrain() {
+  if (C.grain <= 0) return;
+  const fiber = color(INK);
+  fiber.setAlpha(10 * C.grain);
+  stroke(fiber); strokeWeight(1);
+  for (let i = 0; i < 350 * C.grain; i++) {
+    const x = random(W), y = random(H), a = random(TWO_PI), l = random(2, 7);
+    line(x, y, x + cos(a) * l, y + sin(a) * l);
+  }
+  push();
+  blendMode(MULTIPLY);
+  tint(255, 255 * C.grain); // fade the noise field with the knob
+  image(grainImg, 0, 0, W, H);
+  noTint();
+  pop();
+}
+
+// -------------------------------------------------------------------
+//  BLOB
+// -------------------------------------------------------------------
+function makeBlob(cx, cy, baseR, wobble) {
+  return { cx, cy, baseR, wobble, off: random(1000) };
+}
+
+function radiusAt(b, ang, scale) {
+  const k = 1.4;
+  const n = noise(cos(ang) * k + b.off, sin(ang) * k + b.off);
+  return b.baseR * scale * (1 + b.wobble * (n - 0.5) * 2);
+}
+
+function blobPoints(b, scale, n = 140) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TWO_PI;
+    const r = radiusAt(b, a, scale);
+    pts.push({ x: b.cx + cos(a) * r, y: b.cy + sin(a) * r });
+  }
+  return pts;
+}
+
+function fillPolygon(pts) {
+  beginShape();
+  pts.forEach(p => vertex(p.x, p.y));
+  endShape(CLOSE);
+}
+
+function clipToPolygon(pts, fn) {
+  drawingContext.save();
+  drawingContext.beginPath();
+  pts.forEach((p, i) => i ? drawingContext.lineTo(p.x, p.y)
+                          : drawingContext.moveTo(p.x, p.y));
+  drawingContext.closePath();
+  drawingContext.clip();
+  fn();
+  drawingContext.restore();
+}
+
+function washColor() {
+  if (!PAL.accents.length) return null;
+  const c = color(random(PAL.accents));
+  c.setAlpha(random(45, 85));
+  return c;
+}
+
+// blob wobble derived from the knob, with per-blob variation
+function wob() {
+  return constrain(random(C.wobble * 0.7, C.wobble * 1.3), 0.02, 0.9);
+}
+
+// pick an angle, pulled toward `target` with probability `strength`
+function biasedAngle(target, strength) {
+  if (random() < strength) return target + random(-1.1, 1.1);
+  return random(TWO_PI);
+}
+
+// -------------------------------------------------------------------
+//  PATTERN VOCABULARY -- all gaps and counts respect C.detail
+// -------------------------------------------------------------------
+function patHatch(b) {
+  const ang = random(TWO_PI);
+  const gap = random(4.5, 7.5) / C.detail;
+  const reach = b.baseR * 2.4;
+  push();
+  translate(b.cx, b.cy);
+  rotate(ang);
+  stroke(INK); strokeWeight(random(1.2, 2.2) / sqrt(C.detail)); noFill();
+  for (let y = -reach; y <= reach; y += gap) {
+    const bow = sin(y * 0.02 + b.off) * 6;
+    bezier(-reach, y, -reach / 3, y + bow, reach / 3, y - bow, reach, y);
+  }
+  pop();
+}
+
+function patStipple(b) {
+  noStroke(); fill(INK);
+  const count = b.baseR * b.baseR * 0.55 * C.detail;
+  for (let i = 0; i < count; i++) {
+    const a = random(TWO_PI);
+    const t = sqrt(random());
+    const r = radiusAt(b, a, 0.92) * t;
+    if (random() < t * t) {
+      circle(b.cx + cos(a) * r, b.cy + sin(a) * r, random(1, 2.6) / sqrt(C.detail));
+    }
+  }
+}
+
+function patCells(b) {
+  const placed = [];
+  let tries = 0;
+  const maxCells = 40 * C.detail;
+  while (tries < 1100 && placed.length < maxCells) {
+    tries++;
+    const a = random(TWO_PI);
+    const rr = radiusAt(b, a, 0.85) * sqrt(random());
+    const x = b.cx + cos(a) * rr;
+    const y = b.cy + sin(a) * rr;
+    const size = random(7, b.baseR * 0.34) / C.detail;
+    if (placed.every(p => dist(x, y, p.x, p.y) > (size + p.size) * 0.92)) {
+      placed.push({ x, y, size });
+    }
+  }
+  for (const p of placed) {
+    stroke(INK); strokeWeight(2); fill(BLOBFILL);
+    circle(p.x, p.y, p.size * 2);
+    const core = (PAL.accents.length && random() < C.wash * 0.7)
+      ? color(random(PAL.accents)) : color(INK);
+    fill(core); noStroke();
+    circle(p.x, p.y, p.size * random(0.55, 0.95));
+    fill(BLOBFILL); noStroke();
+    circle(p.x, p.y, p.size * random(0.2, 0.4));
+  }
+}
+
+function patContours(b) {
+  stroke(INK); noFill();
+  const step = 0.11 / C.detail;
+  for (let s = 0.85; s > 0.08; s -= step) {
+    strokeWeight(map(s, 0.08, 0.85, 0.8, 2.2));
+    fillPolygon(blobPoints(b, s));
+  }
+}
+
+function patDots(b) {
+  noStroke(); fill(INK);
+  const gap = random(7, 10) / C.detail;
+  for (let y = b.cy - b.baseR * 1.5; y < b.cy + b.baseR * 1.5; y += gap) {
+    for (let x = b.cx - b.baseR * 1.5; x < b.cx + b.baseR * 1.5; x += gap) {
+      const jx = x + (floor(y / gap) % 2) * gap / 2;
+      circle(jx, y, gap * 0.42);
+    }
+  }
+}
+
+function patWaves(b) {
+  stroke(INK); strokeWeight(random(2, 3.2) / sqrt(C.detail)); noFill();
+  const gap = random(7, 10) / C.detail;
+  for (let y = b.cy - b.baseR * 1.6; y < b.cy + b.baseR * 1.6; y += gap) {
+    beginShape();
+    for (let x = b.cx - b.baseR * 1.6; x < b.cx + b.baseR * 1.6; x += 6) {
+      vertex(x, y + sin(x * 0.045 + b.off * 10) * gap * 0.55);
+    }
+    endShape();
+  }
+}
+
+const PATTERNS = [patHatch, patStipple, patCells, patContours, patDots, patWaves];
+
+// -------------------------------------------------------------------
+//  THE FOCAL MOON
+// -------------------------------------------------------------------
+function drawMoon(cx, cy, r) {
+  noStroke(); fill(INK); circle(cx, cy, (r + 14) * 2);
+  fill(BLOBFILL); stroke(INK); strokeWeight(5); circle(cx, cy, r * 2);
+
+  drawingContext.save();
+  drawingContext.beginPath();
+  drawingContext.arc(cx, cy, r * 0.96, 0, TWO_PI);
+  drawingContext.clip();
+
+  const wash = washColor();
+  if (wash && random() < C.wash + 0.2) { noStroke(); fill(wash); circle(cx, cy, r * 2); }
+
+  noStroke(); fill(INK);
+  for (let i = 0; i < r * r * 1.1 * C.detail; i++) {
+    const a = random(TWO_PI);
+    const t = sqrt(random());
+    if (random() < t * t * t) {
+      circle(cx + cos(a) * r * t, cy + sin(a) * r * t, random(1, 2.4) / sqrt(C.detail));
+    }
+  }
+  for (let i = 0; i < 38; i++) {
+    const a = random(TWO_PI);
+    const t = sqrt(random());
+    const x = cx + cos(a) * r * t;
+    const y = cy + sin(a) * r * t;
+    const cr = random(3, 14) * (0.4 + t);
+    if (random() < 0.5) {
+      stroke(INK); strokeWeight(1.6); fill(BLOBFILL);
+      circle(x, y, cr * 2);
+      noStroke(); fill(INK);
+      circle(x, y, cr * random(0.5, 1.1));
+    } else {
+      stroke(INK); strokeWeight(1.4); fill(BLOBFILL);
+      circle(x, y, cr * 2);
+    }
+  }
+  drawingContext.restore();
+}
+
+// -------------------------------------------------------------------
+//  STALKS
+// -------------------------------------------------------------------
+function drawStalk(x, y, ang) {
+  const len = random(45, 95);
+  const bend = random(-0.9, 0.9);
+  const ex = x + cos(ang + bend) * len;
+  const ey = y + sin(ang + bend) * len;
+  stroke(INK); strokeWeight(random(2.5, 4)); noFill();
+  bezier(x, y,
+         x + cos(ang) * len * 0.4, y + sin(ang) * len * 0.4,
+         ex - cos(ang + bend) * len * 0.3, ey - sin(ang + bend) * len * 0.3,
+         ex, ey);
+  const hr = random(6, 13);
+  fill(BLOBFILL); strokeWeight(2.5);
+  circle(ex, ey, hr * 2);
+  noStroke(); fill(INK);
+  for (let i = 0; i < hr * hr * 0.5; i++) {
+    const a = random(TWO_PI), t = sqrt(random());
+    if (random() < t) circle(ex + cos(a) * hr * t * 0.8, ey + sin(a) * hr * t * 0.8, 1.4);
+  }
+}
+
+// -------------------------------------------------------------------
+//  COMPOSITION
+//  One organism = spine + satellites + stalks + (maybe) a moon.
+//  The colony knob grows several, back-to-front, joined by tendrils.
+// -------------------------------------------------------------------
+
+// Grow and fully render one organism anchored at (ax, ay).
+// Returns its blob list so connectors can find attachment points.
+function growOrganism(ax, ay, S, isPrimary) {
+  const blobs = [];
+  let x = ax - C.lean * 110 * S;
+  let y = ay;
+  const spineCount = isPrimary ? floor(random(5, 7)) : floor(random(3, 5));
+  const moonIndex = floor(random(1, 3));
+  let moon = null;
+
+  for (let i = 0; i < spineCount; i++) {
+    if (y > H - 120 * S) break; // don't run off the page
+    if (i === moonIndex && isPrimary && document.getElementById('moonChk').checked) {
+      moon = { cx: x, cy: y + 20, r: random(95, 120) * S };
+      y += moon.r * 1.5;
+      x += random(-70, 70) * S;
+      continue;
+    }
+    // gravity: blobs swell as they descend, like ink pooling
+    const sag = lerp(1, map(y, 0, H, 0.7, 1.45), C.gravity);
+    const b = makeBlob(x, y, random(55, 105) * S * sag, wob());
+    blobs.push(b);
+    const sats = floor(random(0, C.density + 1));
+    for (let s = 0; s < sats; s++) {
+      // satellites: gravity pulls them under, lean pushes them aside
+      let a;
+      if (random() < 0.5) a = biasedAngle(HALF_PI, C.gravity * 0.75);
+      else a = biasedAngle(C.lean > 0 ? 0 : PI, abs(C.lean) * 0.75);
+      const d = b.baseR * random(0.9, 1.3);
+      blobs.push(makeBlob(b.cx + cos(a) * d, b.cy + sin(a) * d,
+                          random(26, 58) * S * sag, wob()));
+    }
+    y += b.baseR * random(1.2, 1.6);
+    x += (random(-85, 85) + C.lean * 60) * S;
+    x = constrain(x, 90 * S + 30, W - 90 * S - 30);
+  }
+
+  // layer 1: unified silhouette
+  noStroke(); fill(INK);
+  for (const b of blobs) fillPolygon(blobPoints(b, 1.18));
+
+  // stalks; under gravity they reach upward
+  const stalkCount = isPrimary ? C.stalks : ceil(C.stalks * 0.5);
+  for (let i = 0; i < stalkCount; i++) {
+    const b = random(blobs);
+    if (!b) break;
+    const a = biasedAngle(-HALF_PI, C.gravity * 0.65);
+    const r = radiusAt(b, a, 1.1);
+    drawStalk(b.cx + cos(a) * r, b.cy + sin(a) * r, a);
+  }
+
+  // layer 2: halo + optional wash + pattern per blob
+  for (const b of blobs) {
+    stroke(INK); strokeWeight(4.5); fill(BLOBFILL);
+    fillPolygon(blobPoints(b, 1.0));
+    const region = blobPoints(b, 0.92);
+    clipToPolygon(region, () => {
+      const wash = washColor();
+      if (wash && random() < C.wash) {
+        noStroke(); fill(wash);
+        fillPolygon(region);
+      }
+      random(PATTERNS)(b);
+    });
+  }
+
+  // layer 3: the moon presides over the primary organism
+  if (moon) drawMoon(moon.cx, moon.cy, moon.r);
+
+  return blobs;
+}
+
+// Anchor points for n colonies, with jitter. The first anchor is
+// the primary (largest) organism. After layout, the cluster knob
+// pulls every anchor toward a shared heart so the bodies overlap.
+function colonyAnchors(n) {
+  const j = () => random(-45, 45);
+  let pts;
+  if (n === 1) pts = [{ x: W / 2 + j(), y: 150 + random(0, 40) }];
+  else if (n === 2) pts = [
+    { x: W * 0.36 + j(), y: 130 + random(0, 30) },
+    { x: W * 0.70 + j(), y: H * 0.42 + random(0, 50) }
+  ];
+  else if (n === 3) pts = [
+    { x: W * 0.50 + j(), y: 120 + random(0, 30) },
+    { x: W * 0.24 + j(), y: H * 0.46 + random(0, 40) },
+    { x: W * 0.76 + j(), y: H * 0.52 + random(0, 40) }
+  ];
+  else if (n === 4) pts = [
+    { x: W * 0.32 + j(), y: 115 + random(0, 25) },
+    { x: W * 0.74 + j(), y: 150 + random(0, 30) },
+    { x: W * 0.26 + j(), y: H * 0.55 + random(0, 35) },
+    { x: W * 0.72 + j(), y: H * 0.58 + random(0, 35) }
+  ];
+  else {
+    // 5+: scatter with a minimum distance; clustering relaxes it
+    pts = [];
+    const minD = (230 - n * 12) * (1 - C.cluster * 0.75);
+    let guard = 0;
+    while (pts.length < n && guard < 5000) {
+      guard++;
+      const p = { x: random(W * 0.14, W * 0.86), y: random(110, H * 0.78) };
+      if (pts.every(q => dist(p.x, p.y, q.x, q.y) > minD)) pts.push(p);
+    }
+  }
+  // the pull: lerp every anchor toward a shared heart. The heart sits
+  // high (organisms grow downward), with a little wander of its own.
+  const heart = { x: W / 2 + random(-40, 40), y: H * 0.26 + random(-20, 30) };
+  for (const p of pts) {
+    p.x = lerp(p.x, heart.x, C.cluster * 0.85);
+    p.y = lerp(p.y, heart.y, C.cluster * 0.85);
+  }
+  return pts;
+}
+
+// Mycelium tendril: a dotted, noise-bent trail joining two colonies.
+function drawConnector(b1, b2) {
+  const x1 = b1.cx, y1 = b1.cy, x2 = b2.cx, y2 = b2.cy;
+  const steps = floor(dist(x1, y1, x2, y2) / 9);
+  const off = random(1000);
+  noStroke(); fill(INK);
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    // drift perpendicular to the straight line, fading at both ends
+    const drift = (noise(off + t * 3) - 0.5) * 110 * sin(t * PI);
+    const px = lerp(x1, x2, t) + (y2 - y1) / dist(x1, y1, x2, y2) * drift;
+    const py = lerp(y1, y2, t) - (x2 - x1) / dist(x1, y1, x2, y2) * drift;
+    // dots breathe: bigger mid-journey, tiny near the bodies
+    circle(px, py, lerp(1.5, 4.5, sin(t * PI)));
+  }
+}
+
+// Renders one full composition (background through moon) for whatever
+// seed is currently loaded into randomSeed/noiseSeed. No grain here --
+// in collide mode grain is applied once at the end, unified.
+function renderComposition() {
+  background(PAPER);
+  blendMode(BLEND);
+
+  const n = C.colonies;
+  // secondary colonies shrink so the page doesn't choke; the more
+  // colonies, the smaller they run, and the primary cedes some room
+  const primaryS = C.coverage * (n === 1 ? 1 : map(n, 2, 8, 0.82, 0.62));
+  const secMul = map(n, 2, 8, 0.62, 0.42);
+  const anchors = colonyAnchors(n);
+
+  // grow back-to-front: secondaries first, primary last and on top
+  const rendered = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const isPrimary = (i === 0);
+    const S = isPrimary ? primaryS : primaryS * random(secMul * 0.85, secMul * 1.15);
+    const blobs = growOrganism(anchors[i].x, anchors[i].y, S, isPrimary);
+    if (blobs.length) rendered.push(blobs);
+  }
+
+  // tendrils stitch colonies that have a real gap between them;
+  // fused neighbors don't need stitching, so skip the short hops
+  for (let i = 0; i + 1 < rendered.length; i++) {
+    const b1 = random(rendered[i]);
+    const b2 = random(rendered[i + 1]);
+    if (b1 && b2 && dist(b1.cx, b1.cy, b2.cx, b2.cy) > b1.baseR + b2.baseR + 90) {
+      drawConnector(b1, b2);
+    }
+  }
+}
+
+function draw() {
+  INK = color(PAL.ink);
+  PAPER = color(PAL.paper);
+  BLOBFILL = lerpColor(PAPER, color(255), 0.45);
+
+  if (!isColliding()) {
+    randomSeed(currentSeed);
+    noiseSeed(currentSeed);
+    renderComposition();
+    applyGrain();
+    return;
+  }
+
+  // --- COLLIDE: render two seeds, smash them together ---
+  // pass A
+  randomSeed(currentSeed);
+  noiseSeed(currentSeed);
+  renderComposition();
+  const imgA = get();
+
+  // pass B (the partner)
+  randomSeed(seedB);
+  noiseSeed(seedB);
+  renderComposition();
+  const imgB = get();
+
+  // composite: A as the base, B blended on top (flipped if asked)
+  blendMode(BLEND);
+  background(PAPER);
+  image(imgA, 0, 0, W, H);
+  blendMode(BLEND_MODES()[document.getElementById('blendSelect').value]);
+  if (document.getElementById('flipChk').checked) {
+    push();
+    translate(W, 0);
+    scale(-1, 1);
+    image(imgB, 0, 0, W, H);
+    pop();
+  } else {
+    image(imgB, 0, 0, W, H);
+  }
+  blendMode(BLEND);
+
+  // exclusion/difference of two light papers lands dark; the invert
+  // checkbox flips the whole field back to light for previewing
+  if (document.getElementById('invertChk').checked) filter(INVERT);
+
+  // one unified grain pass over the collision
+  applyGrain();
+}
+</script>
+</body>
+</html>
