@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doodle Grid — cmARTcreations</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<style>
+  :root {
+    --steel: #5B8FA8;
+    --charcoal: #1A1A1A;
+    --grey: #D0D5D8;
+    --base: #F6F7F8;
+    --panel: #222426;
+    --panel-line: #35383B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--base);
+    color: var(--charcoal);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    display: flex;
+    min-height: 100vh;
+  }
+  #canvas-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    min-width: 0;
+  }
+  #canvas-wrap canvas {
+    box-shadow: 0 4px 24px rgba(26,26,26,0.12);
+    max-width: 100%;
+    height: auto !important;
+  }
+  #panel {
+    width: 300px;
+    flex-shrink: 0;
+    background: var(--panel);
+    color: var(--grey);
+    padding: 20px 20px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    max-height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  #panel h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  #panel h1 span { color: var(--steel); }
+  .ctrl label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    color: var(--grey);
+  }
+  .ctrl label output {
+    color: var(--steel);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--panel-line);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--steel);
+    cursor: pointer;
+    border: 2px solid var(--panel);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--steel);
+    cursor: pointer;
+    border: 2px solid var(--panel);
+  }
+  input[type="range"]:focus-visible { outline: 2px solid var(--steel); outline-offset: 4px; }
+  select {
+    width: 100%;
+    background: var(--panel-line);
+    color: var(--grey);
+    border: 1px solid var(--panel-line);
+    border-radius: 3px;
+    padding: 7px 8px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+  }
+  select:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+  .section-label {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--steel);
+    font-weight: 600;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--panel-line);
+    margin: 4px 0;
+  }
+  .btn-row { display: flex; gap: 8px; }
+  button {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--steel);
+    color: var(--steel);
+    padding: 9px 0;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+  }
+  button:hover { background: var(--steel); color: #fff; }
+  button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  button.primary { background: var(--steel); color: #fff; }
+  button.primary:hover { background: #4a7a91; }
+  .seed-note {
+    font-size: 11px;
+    color: #8a9094;
+    font-variant-numeric: tabular-nums;
+  }
+  @media (max-width: 760px) {
+    body { flex-direction: column; }
+    #panel { width: 100%; position: static; max-height: none; order: 2; }
+    #canvas-wrap { order: 1; padding: 12px; }
+  }
+  /* export fallback overlay (for sandboxed environments that block downloads) */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,26,0.82);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  #overlay.open { display: flex; }
+  #overlay-box {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 6px;
+    max-width: 640px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: auto;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #overlay-box p { font-size: 13px; color: var(--grey); line-height: 1.5; }
+  #overlay-box img {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--panel-line);
+    border-radius: 3px;
+  }
+  #overlay-box textarea {
+    width: 100%;
+    height: 180px;
+    background: #17181A;
+    color: var(--grey);
+    border: 1px solid var(--panel-line);
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+    padding: 8px;
+    resize: vertical;
+  }
+  #overlay-box .btn-row { margin-top: 2px; }
+</style>
+</head>
+<body>
+<div id="canvas-wrap"></div>
+
+<div id="panel">
+  <h1>Doodle<span>Grid</span></h1>
+
+  <div class="ctrl">
+    <label>Columns <output id="o-cols">8</output></label>
+    <input type="range" id="cols" min="1" max="24" value="8">
+  </div>
+  <div class="ctrl">
+    <label>Rows <output id="o-rows">8</output></label>
+    <input type="range" id="rows" min="1" max="24" value="8">
+  </div>
+  <div class="ctrl">
+    <label>Margin <output id="o-margin">15%</output></label>
+    <input type="range" id="margin" min="0" max="100" value="15">
+  </div>
+
+  <hr class="divider">
+  <div class="section-label">Vocabulary</div>
+
+  <div class="ctrl">
+    <label>Edges <output id="o-edges">45%</output></label>
+    <input type="range" id="edges" min="0" max="100" value="45">
+  </div>
+  <div class="ctrl">
+    <label>Slices <output id="o-slices">45%</output></label>
+    <input type="range" id="slices" min="0" max="100" value="45">
+  </div>
+  <div class="ctrl">
+    <label>Diagonals <output id="o-diagonals">45%</output></label>
+    <input type="range" id="diagonals" min="0" max="100" value="45">
+  </div>
+
+  <hr class="divider">
+  <div class="section-label">Field</div>
+
+  <div class="ctrl">
+    <select id="fieldmode" aria-label="Field mode">
+      <option value="uniform">Uniform (no field)</option>
+      <option value="radial" selected>Radial (focus at center)</option>
+      <option value="linear">Linear (top-left to bottom-right)</option>
+      <option value="noise">Noise (organic patches)</option>
+    </select>
+  </div>
+  <div class="ctrl">
+    <label>Density falloff <output id="o-falloff">60%</output></label>
+    <input type="range" id="falloff" min="0" max="100" value="60">
+  </div>
+  <div class="ctrl">
+    <label>Vocabulary shift <output id="o-vocab">60%</output></label>
+    <input type="range" id="vocab" min="0" max="100" value="60">
+  </div>
+  <div class="ctrl">
+    <label>Noise scale <output id="o-nscale">25</output></label>
+    <input type="range" id="nscale" min="5" max="80" value="25">
+  </div>
+
+  <hr class="divider">
+  <div class="section-label">Cell Tint</div>
+
+  <div class="ctrl">
+    <select id="tintsource" aria-label="Tint source">
+      <option value="none" selected>None</option>
+      <option value="field">Field (tint follows the field)</option>
+      <option value="flat">Flat (all cells equal)</option>
+      <option value="random">Random per cell</option>
+    </select>
+  </div>
+  <div class="ctrl">
+    <label>Tint strength <output id="o-tint">40%</output></label>
+    <input type="range" id="tint" min="0" max="100" value="40">
+  </div>
+
+  <hr class="divider">
+  <div class="ctrl">
+    <label>Inset size <output id="o-inset">30%</output></label>
+    <input type="range" id="inset" min="0" max="45" value="30">
+  </div>
+  <div class="ctrl">
+    <label>Inset chance <output id="o-insetchance">50%</output></label>
+    <input type="range" id="insetchance" min="0" max="100" value="50">
+  </div>
+  <div class="ctrl">
+    <label>Half chance <output id="o-half">0%</output></label>
+    <input type="range" id="half" min="0" max="100" value="0">
+  </div>
+  <div class="ctrl">
+    <label>Circle chance <output id="o-circle">15%</output></label>
+    <input type="range" id="circle" min="0" max="100" value="15">
+  </div>
+  <div class="ctrl">
+    <label>Circle size <output id="o-circsize">12%</output></label>
+    <input type="range" id="circsize" min="3" max="40" value="12">
+  </div>
+  <div class="ctrl">
+    <label>Stroke weight <output id="o-stroke">2.0</output></label>
+    <input type="range" id="stroke" min="5" max="60" value="20">
+  </div>
+  <div class="ctrl">
+    <label>Grain <output id="o-grain">0%</output></label>
+    <input type="range" id="grain" min="0" max="100" value="0">
+  </div>
+
+  <hr class="divider">
+
+  <div class="btn-row">
+    <button class="primary" id="reseed">Reseed</button>
+    <button id="save">PNG</button>
+    <button id="savesvg">SVG</button>
+  </div>
+  <div class="seed-note">seed <span id="o-seed">—</span></div>
+</div>
+
+<div id="overlay" role="dialog" aria-modal="true">
+  <div id="overlay-box">
+    <p id="overlay-msg"></p>
+    <div id="overlay-content"></div>
+    <div class="btn-row">
+      <button id="overlay-copy" style="display:none">Copy SVG</button>
+      <button id="overlay-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  Doodle Grid — each cell has 8 candidate segments:
+    4 edges, 1 vertical slice, 1 horizontal slice, 2 diagonals.
+  Any subset is drawn; a segment may be halved (edge -> corner to
+  edge-midpoint, slice/diagonal -> boundary to center); each end
+  may be inset by a fixed amount; any segment may terminate in a
+  small circle at one end.
+
+  A spatial FIELD (radial / linear / noise) modulates each cell:
+    - density falloff: cells fade out where the field is low
+    - vocabulary shift: edges dominate where the field is low,
+      diagonals dominate where it is high (slices stay neutral)
+
+  Randomness is consumed in a FIXED pattern per segment (10 draws),
+  so slider changes morph the same composition instead of
+  reshuffling it. Only Reseed (or changing rows/cols) reshuffles.
+*/
+
+const P = {}; // live params, read from sliders
+let seed = Math.floor(Math.random() * 100000);
+const CANVAS = 800;
+
+const ids = ["cols","rows","margin","edges","slices","diagonals","falloff","vocab","nscale","tint","inset","insetchance","half","circle","circsize","stroke","grain"];
+
+function readParams() {
+  P.cols        = +document.getElementById("cols").value;
+  P.rows        = +document.getElementById("rows").value;
+  P.margin      = +document.getElementById("margin").value / 100;       // fraction of cell size
+  P.edges       = +document.getElementById("edges").value / 100;        // base prob. per edge segment
+  P.slices      = +document.getElementById("slices").value / 100;       // base prob. per slice segment
+  P.diagonals   = +document.getElementById("diagonals").value / 100;    // base prob. per diagonal segment
+  P.fieldMode   = document.getElementById("fieldmode").value;
+  P.falloff     = +document.getElementById("falloff").value / 100;      // how much field scales density
+  P.vocab       = +document.getElementById("vocab").value / 100;        // how much field shifts edges<->diagonals
+  P.nscale      = +document.getElementById("nscale").value / 100;       // noise frequency
+  P.tintSource  = document.getElementById("tintsource").value;
+  P.tint        = +document.getElementById("tint").value / 100;         // tint strength
+  P.insetSize   = +document.getElementById("inset").value / 100;        // fixed inset, fraction of segment length, per end
+  P.insetChance = +document.getElementById("insetchance").value / 100;  // prob. a given end is inset
+  P.half        = +document.getElementById("half").value / 100;         // prob. a segment is halved
+  P.circle      = +document.getElementById("circle").value / 100;       // prob. segment becomes a circle
+  P.circSize    = +document.getElementById("circsize").value / 100;     // circle diameter as fraction of cell size
+  P.strokeW     = +document.getElementById("stroke").value / 10;
+  P.grain       = +document.getElementById("grain").value / 100;        // grain overlay strength
+}
+
+function updateReadouts() {
+  document.getElementById("o-cols").textContent   = P.cols;
+  document.getElementById("o-rows").textContent   = P.rows;
+  document.getElementById("o-margin").textContent = Math.round(P.margin * 100) + "%";
+  document.getElementById("o-edges").textContent = Math.round(P.edges * 100) + "%";
+  document.getElementById("o-slices").textContent = Math.round(P.slices * 100) + "%";
+  document.getElementById("o-diagonals").textContent = Math.round(P.diagonals * 100) + "%";
+  document.getElementById("o-falloff").textContent = Math.round(P.falloff * 100) + "%";
+  document.getElementById("o-vocab").textContent = Math.round(P.vocab * 100) + "%";
+  document.getElementById("o-nscale").textContent = Math.round(P.nscale * 100);
+  document.getElementById("o-tint").textContent = Math.round(P.tint * 100) + "%";
+  document.getElementById("o-inset").textContent  = Math.round(P.insetSize * 100) + "%";
+  document.getElementById("o-insetchance").textContent = Math.round(P.insetChance * 100) + "%";
+  document.getElementById("o-half").textContent = Math.round(P.half * 100) + "%";
+  document.getElementById("o-circle").textContent = Math.round(P.circle * 100) + "%";
+  document.getElementById("o-circsize").textContent = Math.round(P.circSize * 100) + "%";
+  document.getElementById("o-stroke").textContent = P.strokeW.toFixed(1);
+  document.getElementById("o-grain").textContent  = Math.round(P.grain * 100) + "%";
+  document.getElementById("o-seed").textContent   = seed;
+}
+
+// The 8 candidate segments: unit-square endpoints [x1,y1,x2,y2] + family
+const SEGMENTS = [
+  { pts: [0, 0, 1, 0],     fam: "edge" },  // top edge
+  { pts: [1, 0, 1, 1],     fam: "edge" },  // right edge
+  { pts: [0, 1, 1, 1],     fam: "edge" },  // bottom edge
+  { pts: [0, 0, 0, 1],     fam: "edge" },  // left edge
+  { pts: [0.5, 0, 0.5, 1], fam: "slice" }, // vertical slice
+  { pts: [0, 0.5, 1, 0.5], fam: "slice" }, // horizontal slice
+  { pts: [0, 0, 1, 1],     fam: "diag" },  // diagonal TL -> BR
+  { pts: [1, 0, 0, 1],     fam: "diag" },  // diagonal TR -> BL
+];
+
+// Deterministic per-cell hash in [0,1), independent of the main
+// random() stream — random tint must not shift segment randomness,
+// or every seed's composition would reshuffle.
+function cellHash(gx, gy) {
+  let h = (gx * 374761393 + gy * 668265263 + seed * 2246822519) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+
+// Field value in [0,1] for a cell at normalized grid position (nx, ny).
+// 1 = full presence, 0 = fading out.
+function fieldValue(nx, ny) {
+  switch (P.fieldMode) {
+    case "radial": {
+      const d = dist(nx, ny, 0.5, 0.5) / dist(0, 0, 0.5, 0.5);
+      return constrain(1 - d, 0, 1);
+    }
+    case "linear":
+      return constrain(1 - (nx + ny) / 2, 0, 1);
+    case "noise":
+      return noise(nx * P.nscale * 20, ny * P.nscale * 20);
+    default: // uniform
+      return 1;
+  }
+}
+
+let grainImg; // static monochrome noise, generated once
+
+function setup() {
+  const c = createCanvas(CANVAS, CANVAS);
+  c.parent("canvas-wrap");
+  noLoop();
+
+  // pre-generate grain texture (texture only — not part of the
+  // seeded composition, and excluded from SVG export)
+  grainImg = createImage(CANVAS, CANVAS);
+  grainImg.loadPixels();
+  for (let i = 0; i < grainImg.pixels.length; i += 4) {
+    const v = Math.floor(Math.random() * 256);
+    grainImg.pixels[i] = v;
+    grainImg.pixels[i + 1] = v;
+    grainImg.pixels[i + 2] = v;
+    grainImg.pixels[i + 3] = 255;
+  }
+  grainImg.updatePixels();
+
+  readParams();
+  updateReadouts();
+}
+
+// Builds the full composition as an ordered list of primitives.
+// Both the canvas painter and the SVG exporter consume this, so
+// what you see is exactly what you export.
+function buildScene() {
+  randomSeed(seed);
+  noiseSeed(seed);
+
+  const prims = [];
+  const BG = [246, 247, 248];
+
+  const cellFull = min(CANVAS / P.cols, CANVAS / P.rows);
+  const gridW = cellFull * P.cols;
+  const gridH = cellFull * P.rows;
+  const ox = (CANVAS - gridW) / 2;
+  const oy = (CANVAS - gridH) / 2;
+
+  // margin shrinks the drawable square inside each cell slot
+  const m = (cellFull * P.margin) / 2;
+  const inner = cellFull - 2 * m;
+
+  for (let gy = 0; gy < P.rows; gy++) {
+    for (let gx = 0; gx < P.cols; gx++) {
+      const cx = ox + gx * cellFull + m;
+      const cy = oy + gy * cellFull + m;
+
+      const cellLines = [];
+      const cellCircles = [];
+
+      // field value at this cell's center, in normalized grid coords
+      const f = fieldValue(
+        P.cols > 1 ? gx / (P.cols - 1) : 0.5,
+        P.rows > 1 ? gy / (P.rows - 1) : 0.5
+      );
+
+      // density falloff: field scales all families toward zero
+      const dMult = lerp(1, f, P.falloff);
+      // vocabulary shift: low field favors edges, high field favors
+      // diagonals; slices stay neutral. Balanced at f = 0.5.
+      const edgeMult = lerp(1, constrain(2 * (1 - f), 0, 2), P.vocab);
+      const diagMult = lerp(1, constrain(2 * f, 0, 2), P.vocab);
+
+      const famDensity = {
+        edge:  P.edges     * dMult * edgeMult,
+        slice: P.slices    * dMult,
+        diag:  P.diagonals * dMult * diagMult,
+      };
+
+      // faint background tint on the drawable square, drawn first.
+      // Composited to an opaque color so circle caps can reuse it
+      // and still occlude lines cleanly on tinted cells.
+      let cellFill = BG;
+      if (P.tintSource !== "none" && P.tint > 0 && inner > 0) {
+        let t = 1;
+        if (P.tintSource === "field")  t = f;
+        if (P.tintSource === "random") t = cellHash(gx, gy);
+        const a = t * P.tint * 0.27; // max ~27% tint, kept faint
+        if (a > 0.002) {
+          cellFill = [
+            lerp(246, 91,  a),
+            lerp(247, 143, a),
+            lerp(248, 168, a), // toward steel blue
+          ];
+          prims.push({ t: "rect", x: cx, y: cy, w: inner, fill: cellFill });
+        }
+      }
+
+      for (const seg of SEGMENTS) {
+        // fixed random consumption: 10 draws per segment, always
+        const rDraw     = random();
+        const rCircle   = random();
+        const rInsA     = random();
+        const rInsAAmt  = random();
+        const rInsB     = random();
+        const rInsBAmt  = random();
+        const rCircSize = random();
+        const rCircEnd  = random();
+        const rHalf     = random();
+        const rHalfEnd  = random();
+
+        if (rDraw >= famDensity[seg.fam] || inner <= 0) continue;
+
+        let x1 = cx + seg.pts[0] * inner;
+        let y1 = cy + seg.pts[1] * inner;
+        let x2 = cx + seg.pts[2] * inner;
+        let y2 = cy + seg.pts[3] * inner;
+
+        // optionally halve: keep one half of the segment, so an edge
+        // runs corner-to-edge-midpoint and a slice/diagonal runs
+        // boundary-to-center. Done first so inset and circle logic
+        // operate on the resulting half segment.
+        if (rHalf < P.half) {
+          const mx = (x1 + x2) / 2;
+          const my = (y1 + y2) / 2;
+          if (rHalfEnd < 0.5) { x2 = mx; y2 = my; }
+          else                { x1 = mx; y1 = my; }
+        }
+
+        // optionally inset either end by a fixed amount
+        // (rInsAAmt / rInsBAmt are still consumed above but unused —
+        //  removing the draws would reshuffle every existing seed)
+        const fullLen = dist(x1, y1, x2, y2);
+        const ux = (x2 - x1) / fullLen;
+        const uy = (y2 - y1) / fullLen;
+        const ins = P.insetSize * fullLen;
+
+        if (rInsA < P.insetChance) {
+          x1 += ux * ins; y1 += uy * ins;
+        }
+        if (rInsB < P.insetChance) {
+          x2 -= ux * ins; y2 -= uy * ins;
+        }
+
+        if (rCircle < P.circle) {
+          // cap one endpoint (chosen at random) with a small circle,
+          // and pull the line back so it just touches the circle's edge
+          // (rCircSize is still consumed above but no longer used —
+          //  removing the draw would reshuffle every existing seed)
+          const d = inner * P.circSize;
+          const r = d / 2;
+          const atStart = rCircEnd < 0.5;
+
+          if (atStart) {
+            cellCircles.push({ t: "circle", x: x1, y: y1, d, fill: cellFill });
+            x1 += ux * r; y1 += uy * r;
+          } else {
+            cellCircles.push({ t: "circle", x: x2, y: y2, d, fill: cellFill });
+            x2 -= ux * r; y2 -= uy * r;
+          }
+
+          // if the circle swallows the whole segment, skip the line
+          if (dist(x1, y1, x2, y2) <= r) continue;
+        }
+
+        cellLines.push({ t: "line", x1, y1, x2, y2 });
+      }
+
+      // per-cell order: tint rect, then lines, then circle caps on
+      // top so they occlude any lines passing beneath
+      prims.push(...cellLines, ...cellCircles);
+    }
+  }
+
+  return prims;
+}
+
+function draw() {
+  background(246, 247, 248);
+  strokeCap(ROUND);
+
+  const prims = buildScene();
+
+  for (const p of prims) {
+    if (p.t === "rect") {
+      noStroke();
+      fill(p.fill[0], p.fill[1], p.fill[2]);
+      rect(p.x, p.y, p.w, p.w);
+    } else if (p.t === "line") {
+      stroke(26, 26, 26);
+      strokeWeight(P.strokeW);
+      noFill();
+      line(p.x1, p.y1, p.x2, p.y2);
+    } else if (p.t === "circle") {
+      stroke(26, 26, 26);
+      strokeWeight(P.strokeW);
+      fill(p.fill[0], p.fill[1], p.fill[2]);
+      circle(p.x, p.y, p.d);
+    }
+  }
+
+  // grain overlay (raster-only; not included in SVG export)
+  if (P.grain > 0) {
+    push();
+    blendMode(OVERLAY);
+    tint(255, P.grain * 90);
+    image(grainImg, 0, 0);
+    pop();
+    noTint();
+    blendMode(BLEND);
+  }
+}
+
+// --- SVG export: serializes the same primitive list ---
+function rgbStr(c) {
+  return `rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`;
+}
+function n(v) { return Math.round(v * 100) / 100; }
+
+function buildSVGText() {
+  const prims = buildScene();
+  const sw = P.strokeW;
+  const parts = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS}" height="${CANVAS}" viewBox="0 0 ${CANVAS} ${CANVAS}">`,
+    `<rect width="${CANVAS}" height="${CANVAS}" fill="rgb(246,247,248)"/>`,
+  ];
+
+  for (const p of prims) {
+    if (p.t === "rect") {
+      parts.push(`<rect x="${n(p.x)}" y="${n(p.y)}" width="${n(p.w)}" height="${n(p.w)}" fill="${rgbStr(p.fill)}"/>`);
+    } else if (p.t === "line") {
+      parts.push(`<line x1="${n(p.x1)}" y1="${n(p.y1)}" x2="${n(p.x2)}" y2="${n(p.y2)}" stroke="rgb(26,26,26)" stroke-width="${sw}" stroke-linecap="round"/>`);
+    } else if (p.t === "circle") {
+      parts.push(`<circle cx="${n(p.x)}" cy="${n(p.y)}" r="${n(p.d / 2)}" fill="${rgbStr(p.fill)}" stroke="rgb(26,26,26)" stroke-width="${sw}"/>`);
+    }
+  }
+
+  parts.push(`</svg>`);
+  return parts.join("\n");
+}
+
+// --- export plumbing ---
+// Sandboxed iframes (e.g. an artifact preview) block programmatic
+// downloads. Detect that and fall back to an overlay: the PNG is
+// shown as an image you can right-click/long-press to save, and
+// the SVG as markup you can copy into a .svg file.
+const sandboxed = (() => {
+  try { return window.self !== window.top; } catch (e) { return true; }
+})();
+
+const overlay = document.getElementById("overlay");
+const overlayMsg = document.getElementById("overlay-msg");
+const overlayContent = document.getElementById("overlay-content");
+const overlayCopy = document.getElementById("overlay-copy");
+
+function openOverlay() { overlay.classList.add("open"); }
+function closeOverlay() {
+  overlay.classList.remove("open");
+  overlayContent.innerHTML = "";
+  overlayCopy.style.display = "none";
+}
+document.getElementById("overlay-close").addEventListener("click", closeOverlay);
+overlay.addEventListener("click", e => { if (e.target === overlay) closeOverlay(); });
+
+function exportPNG() {
+  if (!sandboxed) {
+    saveCanvas("doodle-grid-" + seed, "png");
+    return;
+  }
+  const dataUrl = document.querySelector("#canvas-wrap canvas").toDataURL("image/png");
+  overlayMsg.textContent =
+    "Downloads are blocked in this embedded preview. Right-click (or long-press) the image below and choose \u201CSave image as\u2026\u201D \u2014 or open this HTML file directly in your browser for one-click export.";
+  const img = document.createElement("img");
+  img.src = dataUrl;
+  img.alt = "Doodle grid export, seed " + seed;
+  overlayContent.appendChild(img);
+  openOverlay();
+}
+
+function exportSVGFile(svgText) {
+  const blob = new Blob([svgText], { type: "image/svg+xml" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `doodle-grid-${seed}.svg`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportSVG() {
+  const svgText = buildSVGText();
+  if (!sandboxed) {
+    exportSVGFile(svgText);
+    return;
+  }
+  overlayMsg.textContent =
+    "Downloads are blocked in this embedded preview. Copy the SVG markup below and paste it into a file named doodle-grid-" + seed + ".svg \u2014 or open this HTML file directly in your browser for one-click export.";
+  const ta = document.createElement("textarea");
+  ta.value = svgText;
+  ta.readOnly = true;
+  overlayContent.appendChild(ta);
+  overlayCopy.style.display = "";
+  overlayCopy.textContent = "Copy SVG";
+  overlayCopy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(svgText);
+      overlayCopy.textContent = "Copied \u2713";
+    } catch (e) {
+      ta.select();
+      document.execCommand("copy");
+      overlayCopy.textContent = "Copied \u2713";
+    }
+  };
+  openOverlay();
+}
+
+// wire up controls
+ids.forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    readParams();
+    updateReadouts();
+    redraw();
+  });
+});
+
+document.getElementById("fieldmode").addEventListener("change", () => {
+  readParams();
+  updateReadouts();
+  redraw();
+});
+
+document.getElementById("tintsource").addEventListener("change", () => {
+  readParams();
+  updateReadouts();
+  redraw();
+});
+
+document.getElementById("reseed").addEventListener("click", () => {
+  seed = Math.floor(Math.random() * 100000);
+  updateReadouts();
+  redraw();
+});
+
+document.getElementById("save").addEventListener("click", exportPNG);
+
+document.getElementById("savesvg").addEventListener("click", exportSVG);
+</script>
+</body>
+</html>
