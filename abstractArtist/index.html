@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>abstractArtist v0.1</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #d2ccbf;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+  }
+
+  canvas {
+    display: block;
+    box-shadow:
+      0 0 0 1px rgba(120, 105, 85, 0.18),
+      0 10px 30px rgba(80, 65, 45, 0.12);
+
+    transform: scale(var(--zoom, 1));
+    transform-origin: center center;
+  }
+
+  #zoomControls {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 10px;
+  background: rgba(216, 211, 199, 0.9);
+  border: 1px solid rgba(120, 105, 85, 0.25);
+  border-radius: 8px;
+  }
+
+  #zoomControls button {
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+
+  #zoomValue {
+    min-width: 48px;
+    text-align: center;
+  }
+
+</style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.2/p5.min.js"></script>
+</head>
+<body>
+  <div id="zoomControls">
+    <button id="zoomOut">−</button>
+    <span id="zoomValue">100%</span>
+    <button id="zoomIn">+</button>
+    <button id="zoomReset">Reset</button>
+  </div>
+  <script src="js/settings.js"></script>
+  <script src="js/renderers/PaperRenderer.js"></script>
+  <script src="js/sketch.js"></script>
+  <script>
+    let zoom = 1;
+
+    const minZoom = 0.25;
+    const maxZoom = 2.0;
+    const zoomStep = 0.1;
+
+    function updateZoom() {
+      document.documentElement.style.setProperty("--zoom", zoom);
+
+      document.getElementById("zoomValue").textContent =
+        Math.round(zoom * 100) + "%";
+    }
+
+    document.getElementById("zoomIn").addEventListener("click", () => {
+      zoom = Math.min(maxZoom, zoom + zoomStep);
+      updateZoom();
+    });
+
+    document.getElementById("zoomOut").addEventListener("click", () => {
+      zoom = Math.max(minZoom, zoom - zoomStep);
+      updateZoom();
+    });
+
+    document.getElementById("zoomReset").addEventListener("click", () => {
+      zoom = 1;
+      updateZoom();
+    });
+  </script>
+</body>
+</html>
