@@ -3,6 +3,7 @@ class TestComposition {
     this.width = canvasWidth;
     this.height = canvasHeight;
     this.s = settings;
+    this.lastProtectedZone = null;
     this.palette = settings.palette || {
       red: [176, 82, 72],
       blue: [65, 95, 145],
@@ -14,6 +15,8 @@ class TestComposition {
   }
 
   create(intent) {
+    this.lastProtectedZone = null;
+
     switch (intent.movement) {
       case "structured":
         return this._fragileOrder(intent);
@@ -39,8 +42,10 @@ class TestComposition {
       this._zone(0.36, 0.50, 0.38, 0.60, 0.25)
     ]);
     const elements = [];
+    const protectedZone = this._makeProtectedZone(anchor, b.negativeSpace);
+    this.lastProtectedZone = protectedZone;
 
-    elements.push(this._circle({
+    const anchorElement = this._circle({
       role: "anchor",
       x: anchor.x,
       y: anchor.y,
@@ -49,19 +54,24 @@ class TestComposition {
       importance: 0.96,
       intent,
       cluster: 0
-    }));
+    });
+    elements.push(anchorElement);
 
     // One companion stays near enough to create restlessness; the other masses
     // are deliberately pushed away to let isolation become visible.
     const open = this._openDirections(anchor);
-    const secondaryPos = this._offsetFromAnchor(
-      anchor,
-      open.x * random(155, 255) * b.spread,
-      -open.y * random(35, 145) * b.spread,
-      24
+    const secondaryPos = this._avoidZone(
+      this._offsetFromAnchor(
+        anchor,
+        open.x * random(155, 255) * b.spread,
+        -open.y * random(35, 145) * b.spread,
+        24
+      ),
+      protectedZone,
+      120
     );
 
-    elements.push(this._polygon({
+    const secondaryElement = this._polygon({
       role: "secondary",
       x: secondaryPos.x,
       y: secondaryPos.y,
@@ -72,16 +82,21 @@ class TestComposition {
       importance: 0.72,
       intent,
       cluster: 0
-    }));
+    });
+    elements.push(secondaryElement);
 
-    const counterPos = this._offsetFromAnchor(
-      anchor,
-      open.x * random(430, 590),
-      open.y * random(220, 360),
-      36
+    const counterPos = this._avoidZone(
+      this._offsetFromAnchor(
+        anchor,
+        open.x * random(430, 590),
+        open.y * random(220, 360),
+        36
+      ),
+      protectedZone,
+      80
     );
 
-    elements.push(this._circle({
+    const counterElement = this._circle({
       role: "counterweight",
       x: counterPos.x,
       y: counterPos.y,
@@ -90,14 +105,19 @@ class TestComposition {
       importance: 0.52,
       intent,
       cluster: 1
-    }));
+    });
+    elements.push(counterElement);
 
     if (b.secondaryCount >= 3) {
-      const distantSecondaryPos = this._offsetFromAnchor(
-        anchor,
-        open.x * random(360, 520),
-        -open.y * random(280, 420),
-        44
+      const distantSecondaryPos = this._avoidZone(
+        this._offsetFromAnchor(
+          anchor,
+          open.x * random(360, 520),
+          -open.y * random(280, 420),
+          44
+        ),
+        protectedZone,
+        110
       );
 
       elements.push(this._polygon({
@@ -114,6 +134,49 @@ class TestComposition {
       }));
     }
 
+    this._addEchoCircle(elements, anchorElement, {
+      intent,
+      scale: 0.22,
+      dx: open.x * random(35, 80),
+      dy: -open.y * random(55, 110),
+      jitter: 16,
+      color: this.palette.ochre,
+      cluster: 0
+    });
+
+    const restlessAngle = Math.atan2(open.y, open.x) + random(-0.45, 0.25);
+    const restlessStart = {
+      x: anchor.x - Math.cos(restlessAngle) * random(170, 250),
+      y: anchor.y - Math.sin(restlessAngle) * random(170, 250)
+    };
+    const restlessEnd = {
+      x: anchor.x + Math.cos(restlessAngle) * random(430, 600),
+      y: anchor.y + Math.sin(restlessAngle) * random(430, 600)
+    };
+    elements.push(this._line({
+      role: "gesture",
+      x1: this._clamp(restlessStart.x, 70, this.width - 70),
+      y1: this._clamp(restlessStart.y, 70, this.height - 70),
+      x2: this._clamp(restlessEnd.x, 70, this.width - 70),
+      y2: this._clamp(restlessEnd.y, 70, this.height - 70),
+      importance: 0.62,
+      intent,
+      relationship: { type: "align", targetRole: "anchor" }
+    }));
+
+    elements.push(this._arc({
+      role: "echo",
+      x: anchor.x,
+      y: anchor.y,
+      radius: anchorElement.geometry.radius * random(1.2, 1.55),
+      startAngle: random(-PI * 0.15, PI * 0.15),
+      endAngle: random(PI * 0.65, PI * 1.05),
+      importance: 0.34,
+      intent,
+      cluster: 0,
+      relationship: { type: "echo", targetRole: "anchor" }
+    }));
+
     return elements;
   }
 
@@ -129,7 +192,7 @@ class TestComposition {
     const axisX = anchor.x + random(-25, 25);
     const interval = lerp(150, 225, 1 - b.clusterTightness);
 
-    elements.push(this._circle({
+    const anchorElement = this._circle({
       role: "anchor",
       x: anchor.x,
       y: anchor.y,
@@ -138,7 +201,8 @@ class TestComposition {
       importance: 0.90,
       intent,
       cluster: 0
-    }));
+    });
+    elements.push(anchorElement);
 
     // A nearly ordered vertical sequence, but each placement slips slightly.
     for (let i = -1; i <= 1; i++) {
@@ -160,6 +224,49 @@ class TestComposition {
       }));
     }
 
+    this._addEchoCircle(elements, anchorElement, {
+      intent,
+      scale: 0.18,
+      dx: open.x * interval * 0.18,
+      dy: -open.y * interval * 1.2,
+      jitter: 10,
+      color: this.palette.blue,
+      cluster: 0,
+      relationshipType: "align"
+    });
+
+    this._addEchoPolygon(elements, anchorElement, {
+      intent,
+      scale: 0.28,
+      dx: open.x * interval * 0.22,
+      dy: open.y * interval * 1.25,
+      jitter: 14,
+      color: this.palette.yellow,
+      sides: 4,
+      rotation: random(-0.15, 0.15),
+      distortion: 0.10,
+      cluster: 0,
+      relationshipType: "align"
+    });
+
+    const lineLength = random(330, 480);
+    for (let i = -1; i <= 1; i++) {
+      const x = axisX + open.x * (i * 42 + random(-10, 10));
+      const y1 = anchor.y - open.y * lineLength * 0.52;
+      const y2 = anchor.y + open.y * lineLength * 0.52;
+      elements.push(this._line({
+        role: "axis",
+        x1: x,
+        y1: this._clamp(y1, 65, this.height - 65),
+        x2: x + random(-10, 10) * b.irregularity,
+        y2: this._clamp(y2 + i * random(-22, 22), 65, this.height - 65),
+        importance: i === 0 ? 0.52 : 0.34,
+        intent,
+        cluster: 0,
+        relationship: { type: "align", targetRole: "anchor" }
+      }));
+    }
+
     return elements;
   }
 
@@ -175,7 +282,7 @@ class TestComposition {
     const centerGap = lerp(250, 70, b.overlap);
     const elements = [];
 
-    elements.push(this._circle({
+    const anchorElement = this._circle({
       role: "anchor",
       x: centerX - centerGap * 0.5,
       y: y + random(-45, 45),
@@ -184,9 +291,10 @@ class TestComposition {
       importance: 0.98,
       intent,
       cluster: 0
-    }));
+    });
+    elements.push(anchorElement);
 
-    elements.push(this._polygon({
+    const counterElement = this._polygon({
       role: "counterweight",
       x: centerX + centerGap * 0.5,
       y: y + random(-55, 55),
@@ -197,7 +305,8 @@ class TestComposition {
       importance: 0.92,
       intent,
       cluster: 1
-    }));
+    });
+    elements.push(counterElement);
 
     // Small forms become pressure points near the collision zone.
     const count = Math.max(2, b.secondaryCount - 1);
@@ -217,6 +326,43 @@ class TestComposition {
       }));
     }
 
+    this._addOrbitCluster(elements, { x: centerX, y }, {
+      intent,
+      count: 2,
+      distanceMin: 50,
+      distanceMax: 105,
+      sizeMin: 18,
+      sizeMax: 34,
+      color: this.palette.ochre,
+      cluster: 0,
+      relationshipType: "align",
+      targetRole: "midpoint"
+    });
+
+    this._addEchoCircle(elements, anchorElement, {
+      intent,
+      scale: 0.16,
+      dx: (counterElement.position.x - anchorElement.position.x) * 0.45,
+      dy: random(-40, 40),
+      jitter: 10,
+      color: this.palette.red,
+      cluster: 0,
+      relationshipType: "align"
+    });
+
+    const conflictAngle = random(-0.95, -0.45);
+    const conflictHalf = random(390, 520);
+    elements.push(this._line({
+      role: "gesture",
+      x1: this._clamp(centerX - Math.cos(conflictAngle) * conflictHalf, 60, this.width - 60),
+      y1: this._clamp(y - Math.sin(conflictAngle) * conflictHalf, 60, this.height - 60),
+      x2: this._clamp(centerX + Math.cos(conflictAngle) * conflictHalf, 60, this.width - 60),
+      y2: this._clamp(y + Math.sin(conflictAngle) * conflictHalf, 60, this.height - 60),
+      importance: 0.76,
+      intent,
+      relationship: { type: "intersect", targetRole: "anchor/counterweight" }
+    }));
+
     return elements;
   }
 
@@ -229,8 +375,10 @@ class TestComposition {
       this._zone(0.34, 0.50, 0.28, 0.46, 0.20)
     ]);
     const elements = [];
+    const protectedZone = this._makeProtectedZone(anchor, b.negativeSpace);
+    this.lastProtectedZone = protectedZone;
 
-    elements.push(this._circle({
+    const anchorElement = this._circle({
       role: "anchor",
       x: anchor.x,
       y: anchor.y,
@@ -239,17 +387,22 @@ class TestComposition {
       importance: 0.82,
       intent,
       cluster: 0
-    }));
+    });
+    elements.push(anchorElement);
 
     const count = Math.max(2, b.secondaryCount);
     const open = this._openDirections(anchor);
     for (let i = 0; i < count; i++) {
       const t = count === 1 ? 0 : i / (count - 1);
-      const pos = this._offsetFromAnchor(
-        anchor,
-        open.x * lerp(170, 560, t),
-        open.y * lerp(60, 330, t),
-        70
+      const pos = this._avoidZone(
+        this._offsetFromAnchor(
+          anchor,
+          open.x * lerp(170, 560, t),
+          open.y * lerp(60, 330, t),
+          70
+        ),
+        protectedZone,
+        80
       );
       const x = pos.x;
       const y = pos.y;
@@ -275,6 +428,48 @@ class TestComposition {
       );
     }
 
+    this._addOrbitCluster(elements, anchorElement.position, {
+      intent,
+      count: 2,
+      distanceMin: anchorElement.geometry.radius * 0.72,
+      distanceMax: anchorElement.geometry.radius * 1.05,
+      sizeMin: 18,
+      sizeMax: 34,
+      color: this.palette.ochre,
+      cluster: 0,
+      relationshipType: "orbit",
+      targetRole: anchorElement.composition.role
+    });
+
+    const arcStart = random(-PI * 0.8, -PI * 0.2);
+    elements.push(this._arc({
+      role: "orbit",
+      x: anchor.x,
+      y: anchor.y,
+      radius: anchorElement.geometry.radius * random(1.45, 1.85),
+      startAngle: arcStart,
+      endAngle: arcStart + random(PI * 0.65, PI * 1.05),
+      importance: 0.42,
+      intent,
+      cluster: 0,
+      relationship: { type: "orbit", targetRole: "anchor" }
+    }));
+
+    if (random() < 0.7) {
+      elements.push(this._arc({
+        role: "echo",
+        x: anchor.x,
+        y: anchor.y,
+        radius: anchorElement.geometry.radius * random(1.95, 2.25),
+        startAngle: arcStart + random(0.18, 0.42),
+        endAngle: arcStart + random(PI * 0.42, PI * 0.72),
+        importance: 0.28,
+        intent,
+        cluster: 0,
+        relationship: { type: "echo", targetRole: "orbit" }
+      }));
+    }
+
     return elements;
   }
 
@@ -288,7 +483,7 @@ class TestComposition {
     const elements = [];
     const open = this._openDirections(anchor);
 
-    elements.push(this._polygon({
+    const anchorElement = this._polygon({
       role: "anchor",
       x: anchor.x,
       y: anchor.y,
@@ -300,7 +495,8 @@ class TestComposition {
       intent,
       cluster: 0,
       distortion: 0.35 + b.irregularity * 0.45
-    }));
+    });
+    elements.push(anchorElement);
 
     // Repeated forms begin on an implied structure and then progressively break away.
     const count = Math.max(3, b.secondaryCount);
@@ -325,6 +521,39 @@ class TestComposition {
       }));
     }
 
+    this._addEchoPolygon(elements, anchorElement, {
+      intent,
+      scale: 0.28,
+      dx: open.x * random(90, 150),
+      dy: -open.y * random(70, 130),
+      jitter: 20,
+      color: this.palette.ochre,
+      sides: 4,
+      rotation: random(-0.2, 0.2) + 0.2,
+      distortion: 0.32,
+      cluster: 0
+    });
+
+    const structureBaseAngle = random(-0.12, 0.12);
+    for (let i = 0; i < 3; i++) {
+      const fracture = i / 2;
+      const angle = structureBaseAngle + open.x * fracture * random(0.18, 0.52);
+      const cx = anchor.x + open.x * (i - 1) * random(65, 105);
+      const cy = anchor.y + open.y * (i - 1) * random(45, 80);
+      const half = random(190, 280);
+      elements.push(this._line({
+        role: i === 0 ? "axis" : "gesture",
+        x1: this._clamp(cx - Math.cos(angle) * half, 60, this.width - 60),
+        y1: this._clamp(cy - Math.sin(angle) * half, 60, this.height - 60),
+        x2: this._clamp(cx + Math.cos(angle) * half, 60, this.width - 60),
+        y2: this._clamp(cy + Math.sin(angle) * half, 60, this.height - 60),
+        importance: 0.48 - fracture * 0.10,
+        intent,
+        cluster: fracture < 0.5 ? 0 : 1,
+        relationship: { type: "align", targetRole: "structure" }
+      }));
+    }
+
     return elements;
   }
 
@@ -337,8 +566,10 @@ class TestComposition {
       this._zone(0.54, 0.68, 0.22, 0.38, 0.20)
     ]);
     const elements = [];
+    const protectedZone = this._makeProtectedZone(origin, b.negativeSpace);
+    this.lastProtectedZone = protectedZone;
 
-    elements.push(this._circle({
+    const anchorElement = this._circle({
       role: "anchor",
       x: origin.x,
       y: origin.y,
@@ -347,7 +578,8 @@ class TestComposition {
       importance: 0.84,
       intent,
       cluster: 0
-    }));
+    });
+    elements.push(anchorElement);
 
     const count = Math.max(3, b.secondaryCount);
     const open = this._openDirections(origin);
@@ -358,8 +590,16 @@ class TestComposition {
       const t = (i + 1) / count;
       const angle = baseAngle + random(-0.35, 0.35) * intent.ambiguity + t * 0.42;
       const distance = lerp(150, 520 * b.spread, t);
-      const x = origin.x + Math.cos(angle) * distance;
-      const y = origin.y + Math.sin(angle) * distance;
+      const candidate = this._avoidZone(
+        {
+          x: origin.x + Math.cos(angle) * distance,
+          y: origin.y + Math.sin(angle) * distance
+        },
+        protectedZone,
+        72
+      );
+      const x = candidate.x;
+      const y = candidate.y;
       const isCircle = i % 2 === 0;
       const common = {
         role: i === count - 1 ? "counterweight" : "secondary",
@@ -382,10 +622,95 @@ class TestComposition {
       );
     }
 
+    this._addEchoCircle(elements, anchorElement, {
+      intent,
+      scale: 0.16,
+      dx: Math.cos(baseAngle) * random(75, 110),
+      dy: Math.sin(baseAngle) * random(75, 110),
+      jitter: 10,
+      color: this.palette.yellow,
+      cluster: 0
+    });
+
+    this._addOrbitCluster(elements, {
+      x: origin.x + Math.cos(baseAngle) * 85,
+      y: origin.y + Math.sin(baseAngle) * 85
+    }, {
+      intent,
+      count: 2,
+      distanceMin: 22,
+      distanceMax: 55,
+      sizeMin: 14,
+      sizeMax: 28,
+      color: this.palette.yellow,
+      cluster: 0,
+      relationshipType: "echo",
+      targetRole: anchorElement.composition.role
+    });
+
+    const searchEnd = {
+      x: origin.x + Math.cos(baseAngle) * random(420, 610),
+      y: origin.y + Math.sin(baseAngle) * random(420, 610)
+    };
+    elements.push(this._line({
+      role: "gesture",
+      x1: origin.x + Math.cos(baseAngle) * anchorElement.geometry.radius * 0.7,
+      y1: origin.y + Math.sin(baseAngle) * anchorElement.geometry.radius * 0.7,
+      x2: this._clamp(searchEnd.x, 70, this.width - 70),
+      y2: this._clamp(searchEnd.y, 70, this.height - 70),
+      importance: 0.44,
+      intent,
+      relationship: { type: "connect", targetRole: "path" }
+    }));
+
+    elements.push(this._arc({
+      role: "gesture",
+      x: origin.x + Math.cos(baseAngle) * random(180, 260),
+      y: origin.y + Math.sin(baseAngle) * random(180, 260),
+      radius: random(120, 190),
+      startAngle: baseAngle - random(1.0, 1.35),
+      endAngle: baseAngle + random(0.2, 0.65),
+      importance: 0.34,
+      intent,
+      cluster: 1,
+      relationship: { type: "echo", targetRole: "path" }
+    }));
+
     return elements;
   }
 
-  _circle({ role, x, y, radius, color, importance, intent, cluster = 1 }) {
+  _line({ role, x1, y1, x2, y2, importance, intent, cluster = 0, relationship = null }) {
+    return {
+      type: "line",
+      geometry: { x1, y1, x2, y2 },
+      composition: { role, importance, cluster },
+      appearance: {
+        watercolorStrength: 0,
+        inkStrength: 0.82,
+        opacity: 1
+      },
+      relationship,
+      dynamics: this._dynamics(intent, role)
+    };
+  }
+
+  _arc({ role, x, y, radius, startAngle, endAngle, importance, intent, cluster = 0, relationship = null }) {
+    return {
+      type: "arc",
+      position: { x, y },
+      geometry: { radius, startAngle, endAngle },
+      composition: { role, importance, cluster },
+      appearance: {
+        watercolorStrength: 0,
+        inkStrength: 0.68,
+        opacity: 1
+      },
+      relationship,
+      dynamics: this._dynamics(intent, role)
+    };
+  }
+
+  _circle({ role, x, y, radius, color, importance, intent, cluster = 1, relationship = null }) {
     return {
       type: "circle",
       position: { x, y },
@@ -397,11 +722,12 @@ class TestComposition {
         inkStrength: 0,
         opacity: 1
       },
+      relationship,
       dynamics: this._dynamics(intent, role)
     };
   }
 
-  _polygon({ role, x, y, radius, sides, rotation, color, importance, intent, cluster = 1, distortion = 0.12 }) {
+  _polygon({ role, x, y, radius, sides, rotation, color, importance, intent, cluster = 1, distortion = 0.12, relationship = null }) {
     return {
       type: "polygon",
       position: { x, y },
@@ -418,6 +744,7 @@ class TestComposition {
         inkStrength: 0,
         opacity: 1
       },
+      relationship,
       dynamics: this._dynamics(intent, role)
     };
   }
@@ -431,6 +758,93 @@ class TestComposition {
       energy: intent.energy,
       weight: role === "anchor" ? 0.9 : role === "counterweight" ? 0.65 : 0.5
     };
+  }
+
+
+  _addEchoCircle(elements, source, { intent, scale = 0.25, dx = 0, dy = 0, jitter = 0, color = null, role = "accent", cluster = null, relationshipType = "echo" }) {
+    const sourcePos = this._elementPosition(source);
+    const sourceRadius = this._elementRadius(source);
+    const pos = this._offsetFromAnchor(sourcePos, dx, dy, jitter);
+
+    const echo = this._circle({
+      role,
+      x: pos.x,
+      y: pos.y,
+      radius: sourceRadius * scale * random(0.9, 1.1),
+      color: color || source.appearance?.color || this.palette.ochre,
+      importance: 0.34,
+      intent,
+      cluster: cluster ?? source.composition?.cluster ?? 0,
+      relationship: {
+        type: relationshipType,
+        targetRole: source.composition?.role ?? "anchor"
+      }
+    });
+
+    elements.push(echo);
+    return echo;
+  }
+
+  _addEchoPolygon(elements, source, { intent, scale = 0.28, dx = 0, dy = 0, jitter = 0, color = null, role = "accent", cluster = null, sides = null, rotation = null, distortion = 0.12, relationshipType = "echo" }) {
+    const sourcePos = this._elementPosition(source);
+    const sourceRadius = this._elementRadius(source);
+    const pos = this._offsetFromAnchor(sourcePos, dx, dy, jitter);
+    const polygon = this._polygon({
+      role,
+      x: pos.x,
+      y: pos.y,
+      radius: sourceRadius * scale * random(0.9, 1.1),
+      sides: sides ?? source.geometry?.sides ?? 4,
+      rotation: rotation ?? source.geometry?.rotation ?? 0,
+      color: color || source.appearance?.color || this.palette.ochre,
+      importance: 0.34,
+      intent,
+      cluster: cluster ?? source.composition?.cluster ?? 0,
+      distortion,
+      relationship: {
+        type: relationshipType,
+        targetRole: source.composition?.role ?? "anchor"
+      }
+    });
+
+    elements.push(polygon);
+    return polygon;
+  }
+
+  _addOrbitCluster(elements, center, { intent, count = 2, distanceMin = 30, distanceMax = 80, sizeMin = 14, sizeMax = 30, color = null, role = "accent", cluster = 0, relationshipType = "orbit", targetRole = "anchor" }) {
+    const point = this._elementPosition(center);
+    const startAngle = random(TWO_PI);
+
+    for (let i = 0; i < count; i++) {
+      const angle = startAngle + (TWO_PI / count) * i + random(-0.35, 0.35);
+      const distance = random(distanceMin, distanceMax);
+      const x = this._clamp(point.x + Math.cos(angle) * distance, 80, this.width - 80);
+      const y = this._clamp(point.y + Math.sin(angle) * distance, 80, this.height - 80);
+
+      elements.push(this._circle({
+        role,
+        x,
+        y,
+        radius: random(sizeMin, sizeMax),
+        color: color || this.palette.ochre,
+        importance: 0.30,
+        intent,
+        cluster,
+        relationship: {
+          type: relationshipType,
+          targetRole
+        }
+      }));
+    }
+  }
+
+  _elementPosition(source) {
+    if (source.position) return { x: source.position.x, y: source.position.y };
+    return { x: source.x, y: source.y };
+  }
+
+  _elementRadius(source) {
+    return source.geometry?.radius ?? source.radius ?? 40;
   }
 
   _makePolygon(cx, cy, radius, sides, rotation = 0, distortion = 0.12) {
@@ -473,6 +887,71 @@ class TestComposition {
     return items[items.length - 1];
   }
 
+
+
+  _makeProtectedZone(anchor, negativeSpace) {
+    // Place a soft circular exclusion zone in a region away from the anchor.
+    // High-isolation intents receive larger protected areas; lower-isolation
+    // intents still get breathing room without becoming sparse by formula.
+    const candidates = [
+      { x: this.width * 0.22, y: this.height * 0.22 },
+      { x: this.width * 0.78, y: this.height * 0.22 },
+      { x: this.width * 0.22, y: this.height * 0.78 },
+      { x: this.width * 0.78, y: this.height * 0.78 }
+    ];
+
+    // Favor corners farther from the anchor, but retain seeded variation.
+    const weighted = candidates.map((point) => {
+      const d = Math.hypot(point.x - anchor.x, point.y - anchor.y);
+      return {
+        ...point,
+        weight: Math.max(0.1, d / Math.hypot(this.width, this.height))
+      };
+    });
+
+    const center = this._weightedChoice(weighted);
+    const radius = lerp(
+      Math.min(this.width, this.height) * 0.10,
+      Math.min(this.width, this.height) * 0.24,
+      this._clamp(negativeSpace, 0, 1)
+    );
+
+    return {
+      x: center.x + random(-45, 45),
+      y: center.y + random(-45, 45),
+      radius
+    };
+  }
+
+  _avoidZone(point, zone, padding = 0) {
+    if (!zone) return point;
+
+    const dx = point.x - zone.x;
+    const dy = point.y - zone.y;
+    const distance = Math.hypot(dx, dy);
+    const minimumDistance = zone.radius + padding;
+
+    if (distance >= minimumDistance) return point;
+
+    // Push the candidate just outside the protected region. If it lands
+    // exactly at the center, choose a seeded direction instead.
+    const angle = distance > 0.001
+      ? Math.atan2(dy, dx)
+      : random(TWO_PI);
+
+    return {
+      x: this._clamp(
+        zone.x + Math.cos(angle) * minimumDistance,
+        80,
+        this.width - 80
+      ),
+      y: this._clamp(
+        zone.y + Math.sin(angle) * minimumDistance,
+        80,
+        this.height - 80
+      )
+    };
+  }
 
   _openDirections(anchor) {
     return {

@@ -1,3 +1,92 @@
+# abstractArtist — Change Log
+
+## v0.3a — Continuous Ink Paths
+
+### Changed
+- straight ink gestures now draw each uninterrupted run as one continuous p5 polyline rather than many separate `line()` calls
+- arcs use the same continuous-path approach
+- intentional breaks are preserved by ending and restarting the path
+- removes the darker alpha buildup that could appear as dots at segment junctions
+- segment spacing, jitter, multiple passes, and seeded randomness remain unchanged
+
+### Current visual question
+
+> Do ink lines still feel irregular and handmade while losing the visible dots at their internal segment joints?
+
+## v0.3 — Lines and Arcs
+
+### Added
+- logical `line` and `arc` composition elements
+- dedicated `InkRenderer` on the existing `inkLayer`
+- multi-pass imperfect ink lines with slight jitter and occasional broken segments
+- multi-pass imperfect partial arcs
+- centralized ink tuning parameters in `settings.js`
+
+### Intent-specific use
+- `restlessSolitude`: long directional gesture plus an incomplete echo arc around the anchor
+- `fragileOrder`: a small family of near-parallel structural axes
+- `controlledConflict`: a strong line deliberately intersects the opposing masses
+- `quietCuriosity`: one or two partial orbital arcs around the anchor
+- `breakingStructure`: structural lines begin aligned and progressively fracture
+- `searching`: a directional gesture and partial path arc extend outward from the origin
+
+### Preserved
+- all existing anchor-zone, negative-space, hierarchy, and relationship behavior
+- seeded reproducibility
+- watercolor and paper rendering
+- renderer/composition separation
+
+### Current artistic question
+
+> Do lines and arcs make the intent and compositional forces easier to read without overwhelming the protected negative space or turning the work into a diagram?
+
+## v0.2f — Simple Relationship Behaviors
+
+### Added
+- first-pass relationship behaviors expressed through composition rather than rendering
+- small `echo`, `align`, and `orbit` accents that make some elements visibly respond to other elements
+- relationship metadata on logical elements for future debugging and renderer use
+- console output now reports relationship type per element
+
+### Applied as light compositional behaviors
+- `restlessSolitude`: a small echo near the anchor
+- `fragileOrder`: aligned echoes reinforcing the structured sequence
+- `controlledConflict`: pressure-point accents near the collision zone
+- `quietCuriosity`: a small orbital cluster around the anchor
+- `breakingStructure`: an echoed polygon that repeats and destabilizes the anchor form
+- `searching`: early step echoes near the beginning of the outward path
+
+### Intentionally unchanged
+- watercolor, paper, pigment, and surface rendering remain untouched
+- no explicit line connectors yet
+- relationships remain simple and compositional rather than fully generalized
+
+### Current artistic question
+
+> Do the compositions now feel more like elements are speaking to one another rather than merely being placed near one another?
+
+## v0.2e — Protected Negative Space
+
+### Added
+- seeded protected negative-space zones for the higher-isolation composition families
+- zone size responds to the intent-derived `negativeSpace` bias
+- major secondary forms are pushed out of protected regions rather than being allowed to fill every available area
+- protected-zone metadata is logged to the console for inspection without drawing debug graphics into the artwork
+
+### Applied first to
+- `restlessSolitude`
+- `quietCuriosity`
+- `searching`
+
+### Intentionally unchanged
+- `controlledConflict` remains dense around its collision area
+- watercolor, paper, pigment, and rendering behavior are untouched
+- seeded randomness and same-seed intent comparison remain intact
+
+### Current artistic question
+
+> Does the empty area now feel intentionally composed rather than merely leftover, while still varying enough from seed to seed?
+
 # CHANGELOG
 
 ## v0.2d — Anchor-Responsive Composition

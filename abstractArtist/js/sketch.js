@@ -5,6 +5,7 @@ let inkLayer;
 
 let paperRenderer;
 let watercolorRenderer;
+let inkRenderer;
 let intentEngine;
 let testComposition;
 
@@ -41,6 +42,11 @@ function setup() {
   watercolorRenderer = new WatercolorRenderer(
     washLayer,
     SETTINGS.watercolor
+  );
+
+  inkRenderer = new InkRenderer(
+    inkLayer,
+    SETTINGS.ink
   );
 
   intentEngine = new IntentEngine(INTENTS, SETTINGS.intent);
@@ -87,11 +93,12 @@ function renderArtwork(seedToUse, intentName = null) {
   inkLayer.clear();
 
   watercolorRenderer.renderElements(seed, currentElements);
+  inkRenderer.renderElements(seed, currentElements);
 
   updateArtworkStatus();
 
   console.log(
-    `abstractArtist v0.2d seed: ${seed} | intent: ${currentIntent.name}`
+    `abstractArtist v0.3 seed: ${seed} | intent: ${currentIntent.name}`
   );
   console.table(currentElements.map((element) => ({
     type: element.type,
@@ -99,9 +106,13 @@ function renderArtwork(seedToUse, intentName = null) {
     cluster: element.composition.cluster,
     tension: element.dynamics.tension.toFixed(2),
     isolation: element.dynamics.isolation.toFixed(2),
-    continuity: element.dynamics.continuity.toFixed(2)
+    continuity: element.dynamics.continuity.toFixed(2),
+    relationship: element.relationship?.type || '—'
   })));
   console.table(currentIntent.compositionBias);
+  if (testComposition.lastProtectedZone) {
+    console.log("Protected negative-space zone:", testComposition.lastProtectedZone);
+  }
 
   redraw();
 }
@@ -145,7 +156,7 @@ function keyPressed() {
 
   if (key === 's' || key === 'S') {
     saveCanvas(
-      `abstractArtist-v0.2d-${currentIntent.name}-${seed}`,
+      `abstractArtist-v0.3-${currentIntent.name}-${seed}`,
       'png'
     );
   }

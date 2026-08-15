@@ -67,6 +67,26 @@ const SETTINGS = {
     }
   },
 
+
+  ink: {
+    color: [42, 39, 35],
+    passes: 2,
+    jitter: 1.5, //increase to make the ink more irregular, decrease to make it more uniform
+    alphaMin: 150,
+    alphaMax: 255,
+    weightMin: 0.7,
+    weightMax: 4, //1.6 is default, increase to make the ink more pronounced, decrease to make it more subtle
+    breakChance: 0.05,
+
+    arcPasses: 4,
+    arcJitter: 1.5,
+    arcAlphaMin: 25,
+    arcAlphaMax: 150,
+    arcWeightMin: 0.65,
+    arcWeightMax: 2.4,
+    arcBreakChance: 0.06
+  },
+
   watercolor: {
     testCircle: {
       x: 600,
