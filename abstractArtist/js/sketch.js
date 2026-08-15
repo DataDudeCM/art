@@ -4,8 +4,10 @@ let textureLayer;
 let inkLayer;
 
 let paperRenderer;
-let seed;
+let watercolorRenderer;
+
 let paperTextureImage = null;
+let seed;
 
 function preload() {
   if (SETTINGS.paper.mode === "image" || SETTINGS.paper.mode === "hybrid") {
@@ -32,24 +34,25 @@ function setup() {
     paperTextureImage
   );
 
-  regenerateSurface();
+  watercolorRenderer = new WatercolorRenderer(
+    washLayer,
+    SETTINGS.watercolor
+  );
+
+  regenerateArtwork();
   noLoop();
 }
 
 function draw() {
   background(210);
 
-  // v0.1 intentionally renders only the paper surface.
   image(paperLayer, 0, 0);
-
-  // These layers exist now so later milestones do not have
-  // to restructure the sketch architecture.
   image(washLayer, 0, 0);
   image(textureLayer, 0, 0);
   image(inkLayer, 0, 0);
 }
 
-function regenerateSurface() {
+function regenerateArtwork() {
   seed = Math.floor(Math.random() * 999999);
 
   randomSeed(seed);
@@ -61,19 +64,21 @@ function regenerateSurface() {
   textureLayer.clear();
   inkLayer.clear();
 
-  console.log(`abstractArtist v0.1 paper seed: ${seed}`);
+  watercolorRenderer.renderTestStudy(seed);
+
+  console.log(`abstractArtist v0.2a seed: ${seed}`);
 
   redraw();
 }
 
 function keyPressed() {
   if (key === 'r' || key === 'R') {
-    regenerateSurface();
+    regenerateArtwork();
   }
 
   if (key === 's' || key === 'S') {
     saveCanvas(
-      `abstractArtist-v0.1-paper-${seed}`,
+      `abstractArtist-v0.2a-${seed}`,
       'png'
     );
   }
@@ -82,6 +87,6 @@ function keyPressed() {
     const modes = ["procedural", "image", "hybrid"];
     const idx = modes.indexOf(SETTINGS.paper.mode);
     SETTINGS.paper.mode = modes[(idx + 1) % modes.length];
-    regenerateSurface();
+    regenerateArtwork();
   }
 }
