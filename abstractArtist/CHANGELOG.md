@@ -29,3 +29,22 @@ Once the paper surface feels convincing, move to **v0.2 — Paint Primitives**:
 - watercolor polygon
 - reusable wobbly geometry
 - layered wash behavior
+
+## v0.2b — Intent Plumbing
+
+### Added
+- named artistic intents in `js/intent/intents.js`
+- `IntentEngine` for seeded intent selection
+- `TestComposition` as an upstream logical composition layer
+- logical element descriptors containing geometry, composition role, appearance, and `dynamics` metadata
+- intent-aware spatial separation and directional bias in the current test composition
+- console logging of seed, intent, and element dynamics
+- intent name in saved artwork filenames
+
+### Refactored
+- `WatercolorRenderer` now consumes logical element descriptors instead of inventing the test composition itself
+- geometry for test polygons is now created by the composition layer rather than the renderer
+
+### Intentionally deferred
+- Formal Dynamics behavior is metadata only for now; no `FormalDynamics`, `PlaneField`, or `RhythmPattern` implementation yet
+- full composition templates, relationships, protected negative space, and palette semantics remain later milestones

@@ -5,9 +5,13 @@ let inkLayer;
 
 let paperRenderer;
 let watercolorRenderer;
+let intentEngine;
+let testComposition;
 
 let paperTextureImage = null;
 let seed;
+let currentIntent = null;
+let currentElements = [];
 
 function preload() {
   if (SETTINGS.paper.mode === "image" || SETTINGS.paper.mode === "hybrid") {
@@ -39,6 +43,9 @@ function setup() {
     SETTINGS.watercolor
   );
 
+  intentEngine = new IntentEngine(INTENTS);
+  testComposition = new TestComposition(width, height);
+
   regenerateArtwork();
   noLoop();
 }
@@ -52,11 +59,14 @@ function draw() {
   image(inkLayer, 0, 0);
 }
 
-function regenerateArtwork() {
+function regenerateArtwork(intentName = null) {
   seed = Math.floor(Math.random() * 999999);
 
   randomSeed(seed);
   noiseSeed(seed);
+
+  currentIntent = intentEngine.chooseIntent(intentName);
+  currentElements = testComposition.create(currentIntent);
 
   paperRenderer.render(seed);
 
@@ -64,9 +74,18 @@ function regenerateArtwork() {
   textureLayer.clear();
   inkLayer.clear();
 
-  watercolorRenderer.renderTestStudy(seed);
+  watercolorRenderer.renderElements(seed, currentElements);
 
-  console.log(`abstractArtist v0.2a seed: ${seed}`);
+  console.log(
+    `abstractArtist v0.2b seed: ${seed} | intent: ${currentIntent.name}`
+  );
+  console.table(currentElements.map((element) => ({
+    type: element.type,
+    role: element.composition.role,
+    tension: element.dynamics.tension.toFixed(2),
+    isolation: element.dynamics.isolation.toFixed(2),
+    continuity: element.dynamics.continuity.toFixed(2)
+  })));
 
   redraw();
 }
@@ -78,7 +97,7 @@ function keyPressed() {
 
   if (key === 's' || key === 'S') {
     saveCanvas(
-      `abstractArtist-v0.2a-${seed}`,
+      `abstractArtist-v0.2b-${currentIntent.name}-${seed}`,
       'png'
     );
   }
@@ -87,6 +106,6 @@ function keyPressed() {
     const modes = ["procedural", "image", "hybrid"];
     const idx = modes.indexOf(SETTINGS.paper.mode);
     SETTINGS.paper.mode = modes[(idx + 1) % modes.length];
-    regenerateArtwork();
+    regenerateArtwork(currentIntent?.name);
   }
 }

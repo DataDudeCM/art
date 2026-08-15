@@ -1,0 +1,1882 @@
+# abstractArtist
+
+## Project Intent
+
+Build a reusable p5.js generative painting engine that creates abstract, Kandinsky-inspired compositions with convincing watercolor, ink, and paper texture.
+
+This is not intended to reproduce a specific Kandinsky painting. The goal is to develop a visual grammar based on:
+
+- geometric abstraction
+- strong visual hierarchy
+- asymmetrical balance
+- controlled overlap
+- rhythmic repetition
+- expressive line work
+- curated color relationships
+- controlled randomness
+- watercolor and paper texture
+
+The engine should remain modular enough that the same composition could later be rendered with different aesthetics such as ink, charcoal, clean vector geometry, or other painterly styles.
+
+The engine should also be capable of beginning from an **artistic intent**: an internal emotional or conceptual direction that influences composition, relationships, hierarchy, color behavior, and negative space before rendering begins.
+
+---
+
+# Design Invariants
+
+These rules protect the architecture and should not be violated casually.
+
+1. **Artistic intent decides WHY the artwork exists.**
+2. **Composition decides WHAT matters within that intent.**
+3. **Relationships decide HOW elements speak to one another.**
+4. **Formal dynamics decide HOW visual forces behave.**
+5. **Geometry decides WHERE an element exists.**
+6. **Renderers decide HOW an element looks and feels materially.**
+7. **Elements do not draw themselves.**
+8. **Randomness must be seeded.**
+9. **Randomness should normally be weighted, biased, clustered, or constrained rather than purely uniform.**
+10. **Negative space is intentionally generated.**
+11. **Watercolor, ink, paper, and texture remain separate rendering layers.**
+12. **Visual hierarchy is explicit: anchor → secondary → medium → accent.**
+13. **New features must fit an existing subsystem or justify a new one.**
+14. **Composition logic must remain independent of rendering style.**
+15. **No artistic parameter should be buried as a magic number if it may reasonably need tuning later.**
+
+Core principle:
+
+> **Intent decides why. Composition decides what matters. Relationships decide how things speak. Formal dynamics decide how visual forces behave. Geometry decides where. Watercolor and ink decide how it feels physically.**
+
+---
+
+# High-Level Architecture
+
+```text
+Sketch
+│
+├── Artistic Intent Engine
+│   ├── chooses emotional / conceptual direction
+│   ├── defines expressive forces
+│   ├── biases palette and hierarchy
+│   └── guides composition without dictating a fixed layout
+│
+├── Composition Engine
+│   ├── chooses layout
+│   ├── creates focal areas
+│   ├── balances visual weight
+│   └── generates shape instructions
+│
+├── Shape Vocabulary
+│   ├── circles / rings
+│   ├── polygons
+│   ├── lines
+│   ├── arcs
+│   ├── bars
+│   └── accent marks
+│
+├── Relationship Engine
+│   ├── attraction
+│   ├── alignment
+│   ├── intersection
+│   ├── orbit
+│   └── opposition
+│
+├── Formal Dynamics
+│   ├── point behavior
+│   ├── line behavior
+│   ├── plane forces
+│   ├── tension / weight
+│   ├── rhythm / interval
+│   └── visual time
+│
+├── Watercolor Renderer
+│   ├── layered washes
+│   ├── edge wobble
+│   ├── pigment variation
+│   └── pooling / bloom
+│
+├── Ink Renderer
+│   ├── sketchy lines
+│   ├── heavy structural marks
+│   └── dry-brush accents
+│
+└── Surface System
+    ├── paper texture
+    ├── grain
+    ├── stains
+    └── splatter
+```
+
+The composition engine produces intent. The rendering systems interpret that intent visually.
+
+Example:
+
+```js
+// Composition intent:
+"Put a large red circular anchor here."
+
+// Rendering decision:
+"Render it as 35 translucent irregular watercolor passes,
+// with pigment pooling along portions of the edge."
+```
+
+---
+
+# Core Data Model
+
+Every generated element should be represented as a logical object containing geometry, compositional role, and appearance metadata.
+
+Example:
+
+```js
+{
+  type: "circle",
+
+  position: {
+    x: 640,
+    y: 370
+  },
+
+  geometry: {
+    radius: 140,
+    rotation: 0
+  },
+
+  composition: {
+    role: "anchor",
+    importance: 0.9,
+    cluster: 1
+  },
+
+  appearance: {
+    paletteIndex: 2,
+    watercolorStrength: 0.8,
+    inkStrength: 0.2,
+    opacity: 0.65
+  }
+}
+```
+
+The element describes itself, but **does not render itself**.
+
+Renderers consume these objects and decide how they appear.
+
+---
+
+# Artistic Intent Engine
+
+The Artistic Intent Engine sits above composition. It defines the internal direction of the piece before specific shapes or layouts are chosen.
+
+Its purpose is not to encode simplistic emotion labels such as `happy` or `sad`, and it should not prescribe one visual formula. Instead, it defines a field of expressive forces that the composition engine interprets.
+
+This protects the project from becoming a system that merely generates attractive abstract arrangements. The goal is for formal decisions to arise from an expressive premise.
+
+## Intent Data Model
+
+A first-pass intent may look like this:
+
+```js
+const intent = {
+  name: "restlessSolitude",
+
+  tension: 0.75,
+  isolation: 0.65,
+  energy: 0.55,
+  harmony: 0.30,
+  ambiguity: 0.80,
+  fragility: 0.45,
+
+  movement: "diagonal"
+};
+```
+
+Values should generally fall in the range `0..1`, while directional or categorical qualities may use named values.
+
+These values are **not rendering controls**. They are expressive inputs that influence downstream systems.
+
+## How Intent Influences Composition
+
+Examples:
+
+```text
+high isolation
+→ larger protected negative-space regions
+→ fewer clusters
+→ greater physical separation between major masses
+
+high tension
+→ more intersections
+→ stronger scale contrast
+→ opposing angles
+→ less comfortable spacing
+
+high harmony
+→ more echoes
+→ stronger alignment
+→ more related color relationships
+
+high ambiguity
+→ partial forms
+→ broken rings
+→ unresolved gestures
+→ overlapping translucent structures
+
+high fragility
+→ thinner marks
+→ incomplete contours
+→ pale or interrupted structures
+
+high energy
+→ stronger directional movement
+→ denser rhythm fields
+→ more assertive gesture marks
+```
+
+These mappings should remain probabilistic and tunable. They bias decisions; they do not force deterministic formulas.
+
+## Named Intents
+
+Named intents provide a human-readable artistic starting point. Initial candidates:
+
+```js
+INTENTS.restlessSolitude
+INTENTS.fragileOrder
+INTENTS.controlledConflict
+INTENTS.quietCuriosity
+INTENTS.breakingStructure
+INTENTS.searching
+```
+
+A named intent should simply be a reusable configuration of expressive forces.
+
+Example:
+
+```js
+INTENTS.restlessSolitude = {
+  tension: 0.72,
+  isolation: 0.82,
+  energy: 0.58,
+  harmony: 0.28,
+  ambiguity: 0.76,
+  fragility: 0.42,
+  movement: "diagonal"
+};
+```
+
+The same intent should still produce many visibly different works because composition, relationships, geometry, and rendering remain generative.
+
+## Intent vs Preset
+
+Intent and style preset must remain separate concepts.
+
+```text
+INTENT
+What is this piece trying to feel like or explore?
+
+COMPOSITION
+What visual strategy expresses that?
+
+PRESET / RENDERING
+What material or stylistic language should express it?
+```
+
+For example, the same `restlessSolitude` intent might be rendered with:
+
+- pale watercolor
+- aggressive ink
+- charcoal
+- clean vector geometry
+
+The expressive premise stays constant while the material language changes.
+
+## Intent and Color
+
+Palette selection should eventually be able to respond to intent. Colors may carry loose semantic properties such as energy, warmth, visual weight, or aggression. These properties are biases, not universal symbolic truths.
+
+Example:
+
+```js
+{
+  hex: "#c7352d",
+  energy: 0.9,
+  warmth: 0.9,
+  weight: 0.65,
+  aggression: 0.7
+}
+```
+
+This allows palette choice to become part of expression rather than only visual coordination.
+
+## Design Rule
+
+The engine should never confuse technical sophistication with artistic meaning. Better watercolor simulation, richer textures, or more complex geometry do not automatically produce a stronger artwork.
+
+When adding a major generative behavior, ask:
+
+> **What expressive purpose can this behavior serve?**
+
+If the answer is only "it looks interesting," the feature may still be useful, but it belongs in rendering or style rather than in the core expressive logic.
+
+---
+
+# Composition Engine
+
+The composition engine is the most important downstream system.
+
+It should not scatter random shapes uniformly across the canvas. It should generate a composition map with meaningful zones, roles, balance, tension, and negative space.
+
+## Primary Composition Roles
+
+### Anchor
+
+The dominant visual mass.
+
+Typical forms:
+
+- one large circle or ring
+- overlapping shape cluster
+- heavy black structural form
+- concentrated watercolor mass
+
+Typical count:
+
+```text
+1–2
+```
+
+### Secondary Cluster
+
+Supports or challenges the anchor.
+
+Typical forms:
+
+- smaller circles
+- polygons
+- arcs
+- repeated marks
+- partial washes
+
+Typical count:
+
+```text
+3–6 large secondary elements
+```
+
+### Counterweight
+
+A visual mass placed away from the anchor to balance the page without creating symmetry.
+
+### Rhythm Field
+
+Repeated smaller marks that establish visual tempo.
+
+Examples:
+
+- dots
+- short lines
+- repeated rings
+- small polygons
+- rhythmic dashes
+
+### Gesture
+
+One or more large directional marks crossing significant portions of the composition.
+
+Examples:
+
+- sweeping lines
+- long arcs
+- diagonals
+- structural ink strokes
+
+---
+
+# Composition Templates
+
+The engine should eventually support multiple composition strategies.
+
+```js
+const COMPOSITION_TYPES = [
+  "diagonal",
+  "orbit",
+  "cluster",
+  "split",
+  "spiral",
+  "scatter"
+];
+```
+
+## Diagonal
+
+Major elements follow a broad directional axis.
+
+```text
+●
+   ◯
+       △
+          ─────
+               ●
+```
+
+Purpose:
+
+- movement
+- tension
+- directional flow
+
+## Cluster
+
+Visual activity concentrates strongly in one part of the canvas.
+
+```text
+        ◯△●
+       ─╱●◯
+
+
+                    ●
+```
+
+Purpose:
+
+- generous negative space
+- watercolor-friendly breathing room
+- asymmetric balance
+
+## Orbit
+
+A dominant form becomes a center of gravity.
+
+Smaller elements:
+
+- orbit it
+- echo it
+- intersect it
+- connect to it
+
+## Split
+
+Two opposing visual masses create tension.
+
+```text
+LEFT FORCE            RIGHT FORCE
+
+●●●                       △△
+◯                          ╱
+────                       ◯
+```
+
+## Spiral
+
+Elements loosely follow a rotational path rather than a literal geometric spiral.
+
+## Scatter
+
+The loosest composition type.
+
+Scatter still obeys:
+
+- hierarchy
+- exclusion zones
+- clustering
+- visual weighting
+
+It must never mean "uniform random placement."
+
+---
+
+# Composition Field
+
+The engine may use an invisible compositional field to influence placement.
+
+Possible field components:
+
+```js
+class CompositionField {
+  constructor() {
+    this.attractors = [];
+    this.repellers = [];
+    this.axes = [];
+    this.exclusionZones = [];
+  }
+}
+```
+
+Elements may respond to:
+
+```text
+distanceFromAnchor
+angleToMainAxis
+localDensity
+desiredNegativeSpace
+clusterMembership
+repulsionFromEdges
+relationshipTargets
+```
+
+Example behaviors:
+
+- triangles prefer intersections
+- circles prefer anchors or orbital zones
+- long lines connect major clusters
+- accent marks populate low-density transition zones
+- large elements avoid protected negative-space regions
+
+---
+
+# Shape Vocabulary
+
+Initial vocabulary:
+
+```text
+CircleElement
+RingElement
+LineElement
+ArcElement
+PolygonElement
+AccentElement
+```
+
+Six types are enough for the first complete engine.
+
+---
+
+# Circle Element
+
+Possible roles:
+
+- anchor
+- secondary mass
+- orbital object
+- transparent wash
+- accent
+
+Properties may include:
+
+```text
+radius
+eccentricity
+rotation
+edgeJitter
+fillStrength
+outlineStrength
+watercolorStrength
+inkStrength
+```
+
+---
+
+# Ring Element
+
+Useful for layered circular structures and spatial rhythm.
+
+Possible appearances:
+
+```text
+◉
+◎
+◌
+```
+
+Rings should remain imperfect when rendered.
+
+Potential behaviors:
+
+- nested rings
+- partial rings
+- displaced concentric rings
+- broken ink rings
+- watercolor halos
+
+---
+
+# Line Element
+
+Lines are relationships, gestures, and structural forces—not filler.
+
+Possible roles:
+
+```text
+connector
+gesture
+separator
+axis
+burst
+```
+
+Example:
+
+```js
+line.role = "connector";
+line.from = elementA;
+line.to = elementB;
+```
+
+Lines may:
+
+- connect elements
+- cross shapes intentionally
+- establish direction
+- define visual tension
+- create rhythm
+
+---
+
+# Polygon Element
+
+Initial polygons:
+
+- triangles
+- quadrilaterals
+- irregular 4–7 sided forms
+
+Potential behaviors:
+
+- intersect circles
+- echo line angles
+- act as counterweights
+- become translucent watercolor fields
+
+---
+
+# Arc Element
+
+Arcs soften the rigidity of the geometric system.
+
+Uses:
+
+- sweeping gestures
+- partial circles
+- orbital fragments
+- directional motion
+- broken circular echoes
+
+---
+
+# Accent Element
+
+Small visual punctuation.
+
+Examples:
+
+```text
+.
+..
+///
++
+×
+|
+```
+
+Possible media:
+
+- ink
+- watercolor
+- dry brush
+- splatter
+- graphite-like marks
+
+Typical count:
+
+```text
+20–50
+```
+
+---
+
+# Relationship Engine
+
+Elements should frequently exist because of relationships with other elements.
+
+Possible relationship types:
+
+```text
+connect
+intersect
+orbit
+echo
+oppose
+align
+contain
+```
+
+## Connect
+
+Creates a visual link between two elements.
+
+## Intersect
+
+Places one element deliberately through another.
+
+## Orbit
+
+Creates small related elements around a dominant form.
+
+## Echo
+
+Repeats one or more traits from another element:
+
+- scale
+- angle
+- color
+- form
+- orientation
+
+The echo should normally vary enough to avoid literal duplication.
+
+## Oppose
+
+Creates a visual counterweight elsewhere in the composition.
+
+## Align
+
+Shares a directional axis with another element.
+
+## Contain
+
+Places one visual structure inside another.
+
+---
+
+# Formal Dynamics — Point, Line, and Plane
+
+This subsystem translates artistic intent and compositional relationships into the behavior of elementary visual forces before final geometry is committed.
+
+It is informed by Kandinsky's *Point and Line to Plane*, but it must not encode his associations as rigid universal laws. The useful principle is broader:
+
+> **Formal elements are not neutral.**
+
+A point, line, interval, edge, or empty region can carry visual weight, direction, tension, rhythm, and temporal character depending on its context.
+
+Formal Dynamics sits between the Relationship Engine and Geometry:
+
+```text
+Intent
+  ↓
+Composition
+  ↓
+Relationships
+  ↓
+Formal Dynamics
+  ↓
+Geometry
+  ↓
+Rendering
+```
+
+## Point Behavior
+
+A point is defined relationally rather than only by absolute pixel size.
+
+Its visual role depends on:
+
+- size relative to the canvas
+- size relative to nearby elements
+- isolation versus clustering
+- contrast
+- distance from other forms
+- position within the plane
+
+Possible point metadata:
+
+```js
+{
+  role: "accent",
+  weight: 0.25,
+  isolation: 0.8,
+  pulse: 0.4,
+  localContrast: 0.7
+}
+```
+
+A tiny isolated point may carry more compositional force than a larger point inside a dense cluster.
+
+## Line Behavior
+
+A line is not merely a connector between coordinates. It may also behave as a visual force.
+
+Possible line metadata:
+
+```js
+{
+  direction: 0.62,
+  tension: 0.75,
+  weight: 0.35,
+  velocity: 0.8,
+  resistance: 0.25,
+  continuity: 0.55,
+  visualDuration: 0.7
+}
+```
+
+These values influence geometry without directly dictating rendering style.
+
+Examples:
+
+```text
+high tension
+→ sharper directional disagreement
+→ stronger angular deviation
+→ increased intersection pressure
+
+high continuity
+→ longer uninterrupted paths
+→ smoother eye movement
+
+high resistance
+→ bends, interruptions, deflections
+→ visible opposition to another directional force
+```
+
+Orientation may contribute to expressive character, but no fixed equation such as `diagonal = tension` should become mandatory. Orientation should remain one factor among context, scale, placement, rhythm, and intent.
+
+## Plane Forces
+
+The canvas is an active compositional field rather than a neutral container.
+
+Introduce a reusable plane model:
+
+```js
+class PlaneField {
+  tensionAt(x, y) {}
+  weightAt(x, y) {}
+  directionalBiasAt(x, y) {}
+  edgePressureAt(x, y) {}
+}
+```
+
+Possible tendencies include:
+
+```text
+center   → stability / resolution
+edges    → pressure / instability
+corners  → concentrated directional tension
+upper regions → relative lightness / openness
+lower regions → relative weight / grounding
+```
+
+These are defaults or biases, not universal truths. Presets and intents should be able to modify them.
+
+The PlaneField should extend the existing CompositionField rather than compete with it. Composition establishes large-scale zones and purpose; PlaneField describes local expressive pressure inside those zones.
+
+## Rhythm and Interval
+
+Rhythm should be generated from relationships among repetition, spacing, interruption, direction, and variation rather than from simple repeated marks.
+
+Suggested model:
+
+```js
+{
+  interval: 0.5,
+  acceleration: 0.2,
+  variation: 0.45,
+  interruption: 0.3,
+  direction: "rising",
+  density: 0.6
+}
+```
+
+Rhythmic patterns may:
+
+- accelerate
+- decelerate
+- stutter
+- echo
+- decay
+- collide
+- pause
+- restart
+
+This should upgrade the existing Rhythm Field from decorative repetition into an intentional temporal structure.
+
+## Visual Time
+
+A composition is experienced over time as the eye travels through it.
+
+Formal Dynamics may therefore track visual duration and traversal behavior.
+
+Examples:
+
+```text
+quiet / contemplative intent
+→ long smooth paths
+→ fewer interruptions
+→ broader intervals
+→ slower visual traversal
+
+restless / unstable intent
+→ short broken paths
+→ abrupt turns
+→ compressed intervals
+→ competing directional cues
+```
+
+This does not create animation. It controls the implied time of viewing within a static image.
+
+## Intent Mapping
+
+Formal Dynamics provides a bridge from expressive intent to geometry.
+
+Example:
+
+```text
+restlessSolitude
+→ sparse point clusters
+→ one highly isolated accent
+→ interrupted diagonal movement
+→ unstable edge pressure
+→ uneven rhythmic spacing
+
+fragileOrder
+→ repeated vertical / horizontal structures
+→ slight directional deviations
+→ low-weight lines
+→ breaks in continuity
+→ restrained rhythm with occasional failure
+```
+
+These mappings must remain probabilistic and tunable.
+
+## Design Rules
+
+1. Do not treat Kandinsky's formal associations as immutable laws.
+2. Use formal analysis to create expressive behavior, not stylistic imitation.
+3. A formal behavior should be explainable in terms of intent or compositional role.
+4. Do not add complexity unless it changes how the eye experiences the composition.
+5. Prefer relational values over fixed pixel values when possible.
+6. Keep formal behavior independent from material rendering.
+
+---
+
+# Visual Hierarchy
+
+Hierarchy should be explicitly generated.
+
+Suggested starting ranges:
+
+```text
+anchors:          1–2
+large secondary:  3–6
+medium elements:  8–15
+small accents:    20–50
+```
+
+Scale should usually follow weighted distributions rather than uniform randomness.
+
+Example:
+
+```js
+let size = randomGaussian(60, 25);
+```
+
+This naturally creates a dominant scale with occasional outliers.
+
+---
+
+# Negative Space
+
+Negative space must be intentionally protected.
+
+Possible implementation:
+
+```js
+composition.exclusionZones = [
+  {
+    x: 0.65,
+    y: 0.15,
+    radius: 0.22
+  }
+];
+```
+
+Large and medium elements should be restricted from protected areas.
+
+Small accents may occasionally enter them depending on the composition.
+
+Negative space prevents generative abstraction from becoming visual mush.
+
+---
+
+# Controlled Overlap
+
+Overlap is desirable, but total occlusion is not.
+
+Starting parameter:
+
+```js
+maxOverlap = 0.4;
+```
+
+Exact polygon collision detection is not required initially.
+
+Approximate bounding-circle or bounding-box checks are acceptable for early versions.
+
+---
+
+# Palette Architecture
+
+Do not generate arbitrary RGB colors.
+
+Use curated palettes.
+
+Example:
+
+```js
+const palettes = [
+  {
+    name: "earth-primary",
+
+    paper: "#eee4d2",
+
+    colors: [
+      "#d6a620",
+      "#b8322b",
+      "#294f75",
+      "#5b7d4b",
+      "#d67c32"
+    ],
+
+    ink: "#25221e"
+  }
+];
+```
+
+Target:
+
+- 4–6 chromatic colors
+- one dark ink color
+- one paper tone
+
+Watercolor rendering may alter apparent saturation and value naturally through opacity and layering.
+
+---
+
+# Watercolor Renderer
+
+Watercolor must be treated as a renderer rather than simply transparent fill.
+
+Suggested interface:
+
+```js
+class WatercolorRenderer {
+  drawCircle(element) {}
+  drawPolygon(element) {}
+  drawWash(element) {}
+  drawBloom(element) {}
+}
+```
+
+---
+
+# Watercolor Construction
+
+A watercolor circle should **not** be:
+
+```js
+ellipse(x, y, diameter);
+```
+
+Instead it should be composed from multiple translucent irregular passes.
+
+Conceptually:
+
+```js
+for (let i = 0; i < washLayers; i++) {
+  drawIrregularCircle(...);
+}
+```
+
+Each pass may vary:
+
+```js
+x += random(-jitter, jitter);
+y += random(-jitter, jitter);
+
+radius *= random(0.97, 1.03);
+
+alpha = random(3, 12);
+```
+
+Important:
+
+Random variation should eventually become correlated with noise so the result looks like pigment behavior rather than vibrating geometry.
+
+---
+
+# Irregular Geometry
+
+Create reusable geometry generators rather than relying on perfect p5 primitives.
+
+Example:
+
+```js
+makeWobblyRing(x, y, radius, points, jitter)
+```
+
+Concept:
+
+```js
+for (let a = 0; a < TWO_PI; a += step) {
+  let r2 = radius + noise(...) * jitter;
+
+  vertex(
+    x + cos(a) * r2,
+    y + sin(a) * r2
+  );
+}
+```
+
+Useful for:
+
+- circles
+- rings
+- watercolor blooms
+- stains
+- polygon edge disturbance
+- soft boundaries
+
+---
+
+# Pigment Granulation
+
+Texture should exist inside painted regions, not only on top of the finished image.
+
+Possible method:
+
+```js
+addPigmentSpeckles(mask);
+```
+
+Granulation may use:
+
+- noise-driven density
+- tiny low-opacity pigment dots
+- clustered pigment deposits
+- irregular transparency variation
+
+Example concept:
+
+```js
+if (noise(x * scale, y * scale) > threshold) {
+  point(x, y);
+}
+```
+
+---
+
+# Pigment Pooling
+
+Watercolor often darkens around portions of edges.
+
+Simulate this using:
+
+1. a faint darker irregular contour
+2. partial contour emphasis
+3. uneven alpha
+4. noise-controlled pooling regions
+
+Example:
+
+```js
+if (noise(angle * 2) > 0.55) {
+  drawEdgeSection();
+}
+```
+
+Avoid uniform outlines.
+
+---
+
+# Blooms and Bleeds
+
+Later watercolor refinements may include:
+
+- soft bloom rings
+- outward pigment displacement
+- partial edge diffusion
+- pigment accumulation
+- pale interior water spots
+- overlapping wash interactions
+
+These belong inside `WatercolorRenderer`, not individual element classes.
+
+---
+
+# Paper Surface System
+
+Paper should be rendered once into its own graphics layer.
+
+```js
+paperLayer = createGraphics(width, height);
+```
+
+Possible components:
+
+## Grain
+
+Thousands of extremely subtle tonal variations.
+
+## Large-Scale Tonal Variation
+
+Use low-frequency noise for natural unevenness.
+
+## Fibers
+
+Sparse short lines with very low opacity.
+
+## Stains
+
+3–10 large, faint, irregular tonal patches.
+
+Potential interface:
+
+```js
+paperRenderer.render(paperLayer);
+```
+
+---
+
+# Ink Renderer
+
+Watercolor alone may become too soft.
+
+Ink provides structure and contrast.
+
+```js
+inkLayer = createGraphics(width, height);
+```
+
+Potential functions:
+
+```js
+drawSketchLine()
+drawDryBrushLine()
+drawBrokenLine()
+drawDotCluster()
+drawSketchArc()
+```
+
+Ink should often use multiple imperfect passes rather than a single digitally perfect stroke.
+
+---
+
+# Rendering Layers
+
+Initial p5 graphics buffers:
+
+```js
+let paperLayer;
+let washLayer;
+let inkLayer;
+let textureLayer;
+```
+
+Composite order:
+
+```js
+image(paperLayer, 0, 0);
+image(washLayer, 0, 0);
+image(textureLayer, 0, 0);
+image(inkLayer, 0, 0);
+```
+
+Potential watercolor blending:
+
+```js
+washLayer.blendMode(MULTIPLY);
+```
+
+Blend modes should be tested visually rather than assumed to be physically accurate.
+
+---
+
+# Render Order
+
+Recommended painting order:
+
+```text
+paper
+↓
+large pale washes
+↓
+major shapes
+↓
+secondary shapes
+↓
+lines and arcs
+↓
+dark accents
+↓
+pigment artifacts
+↓
+final surface texture
+```
+
+This order should create depth while preserving structural clarity.
+
+---
+
+# Generation Workflow
+
+Generation should occur in explicit phases.
+
+```js
+function generateArtwork() {
+  clearArtwork();
+
+  const intent = chooseIntent();
+
+  createComposition(intent);
+
+  createAnchorElements();
+  createSecondaryElements();
+  createRelationships();
+  applyFormalDynamics(intent);
+  createAccentMarks();
+
+  renderWatercolor();
+  renderInk();
+  renderTexture();
+}
+```
+
+Intent happens before composition, and composition happens before rendering.
+
+This is an important architectural rule.
+
+---
+
+# Seeded Randomness
+
+Every generated composition must be reproducible.
+
+Example:
+
+```js
+let seed = floor(random(999999));
+
+randomSeed(seed);
+noiseSeed(seed);
+
+console.log(`Seed: ${seed}`);
+```
+
+Saved artwork should include the seed in the filename.
+
+Example:
+
+```js
+saveCanvas(
+  `watercolor-abstract-${seed}`,
+  "png"
+);
+```
+
+---
+
+# Art-Directed Randomness
+
+Avoid using raw `random()` everywhere.
+
+Prefer reusable helpers such as:
+
+```js
+weightedChoice()
+biasedRandom()
+clusteredRandom()
+gaussianRandom()
+randomAround()
+chance()
+```
+
+Examples:
+
+```js
+const shape = weightedChoice([
+  ["circle", 0.30],
+  ["ring", 0.18],
+  ["polygon", 0.20],
+  ["arc", 0.15],
+  ["line", 0.17]
+]);
+```
+
+Randomness should create variation **inside a design system**, not replace design.
+
+---
+
+# Global Settings
+
+Centralize artistic parameters.
+
+```js
+const SETTINGS = {
+
+  composition: {
+    density: 0.55,
+    asymmetry: 0.8,
+    chaos: 0.4,
+    negativeSpace: 0.35,
+    maxOverlap: 0.4
+  },
+
+  watercolor: {
+    layers: 35,
+    jitter: 4,
+    bleed: 0.6,
+    granulation: 0.5,
+    pooling: 0.4
+  },
+
+  ink: {
+    amount: 0.45,
+    roughness: 2.5,
+    thickness: 1.2
+  },
+
+  paper: {
+    grain: 0.25,
+    stain: 0.12
+  }
+};
+```
+
+Do not scatter tunable constants throughout implementation files.
+
+---
+
+# Presets
+
+Once the engine becomes stable, define style presets instead of changing core algorithms.
+
+Potential presets:
+
+```js
+PRESETS.quiet
+PRESETS.explosive
+PRESETS.geometric
+PRESETS.gestural
+PRESETS.washedOut
+PRESETS.inkHeavy
+```
+
+A preset changes parameters.
+
+It should not duplicate the engine.
+
+---
+
+# Keyboard Controls
+
+Initial controls:
+
+```text
+R = regenerate composition
+S = save image
+P = change palette
+I = toggle ink
+T = toggle texture
+W = toggle watercolor
+```
+
+Additional controls can be introduced later only if they remain useful.
+
+---
+
+# Proposed Project Structure
+
+```text
+abstractArtist/
+│
+├── DESIGN.md
+├── CHANGELOG.md
+├── index.html
+│
+└── js/
+    ├── sketch.js
+    ├── settings.js
+    ├── palettes.js
+    │
+    ├── intent/
+    │   ├── intents.js
+    │   └── IntentEngine.js
+    │
+    ├── composition/
+    │   ├── Composition.js
+    │   └── relationships.js
+    │
+    ├── dynamics/
+    │   ├── FormalDynamics.js
+    │   ├── PlaneField.js
+    │   └── RhythmPattern.js
+    │
+    ├── elements/
+    │   ├── ArtElement.js
+    │   ├── CircleElement.js
+    │   ├── LineElement.js
+    │   └── PolygonElement.js
+    │
+    ├── renderers/
+    │   ├── WatercolorRenderer.js
+    │   ├── InkRenderer.js
+    │   └── PaperRenderer.js
+    │
+    └── utilities/
+        ├── random.js
+        └── geometry.js
+```
+
+This structure may evolve, but the architectural boundaries should remain.
+
+---
+
+# Build Strategy
+
+Build vertically while preserving the target architecture.
+
+Prototype code should go into its eventual subsystem rather than accumulating inside `sketch.js`.
+
+Do not create temporary implementations that bypass the design unless there is a compelling reason.
+
+---
+
+# Milestones
+
+## v0.1 — Surface
+
+Goal:
+
+- working p5.js project
+- graphics layers
+- convincing paper background
+- paper grain
+- subtle tonal variation
+
+Definition of done:
+
+> The empty canvas already looks like a plausible physical watercolor surface.
+
+---
+
+## v0.2 — Paint Primitives
+
+Goal:
+
+- watercolor circle
+- watercolor polygon
+- wobbly geometry utility
+- layered wash behavior
+
+Definition of done:
+
+> A circle and polygon look painted rather than like transparent vector shapes.
+
+---
+
+## v0.3 — Ink Primitives
+
+Goal:
+
+- sketchy line
+- broken line
+- imperfect arc
+- basic accent marks
+
+Definition of done:
+
+> Ink marks contrast effectively with the watercolor while still appearing handmade.
+
+---
+
+## v0.4 — Elements
+
+Goal:
+
+- logical `ArtElement`
+- circle
+- ring
+- line
+- polygon
+- arc
+- accent metadata
+
+Definition of done:
+
+> The system can describe a composition without rendering it.
+
+---
+
+## v0.5 — Artistic Intent
+
+Goal:
+
+- intent data model
+- 4–6 named intents
+- intent-to-composition bias functions
+- intent-aware palette selection hooks
+- preserve variability within each intent
+
+Definition of done:
+
+> Two works generated from the same intent feel emotionally related without sharing the same layout.
+
+---
+
+## v0.6 — Composition
+
+Goal:
+
+- anchor
+- secondary cluster
+- counterweight
+- rhythm
+- gesture
+- at least two composition templates
+- protected negative space
+
+Definition of done:
+
+> Generated layouts read as compositions rather than collections of random shapes.
+
+---
+
+## v0.7 — Relationships
+
+Goal:
+
+Implement:
+
+```text
+connect
+intersect
+orbit
+echo
+oppose
+align
+contain
+```
+
+Definition of done:
+
+> Many elements visibly exist because of their relationships with other elements.
+
+---
+
+## v0.8 — Formal Dynamics
+
+Goal:
+
+- point behavior
+- line tension / continuity
+- plane forces
+- rhythmic interval and interruption
+- visual-time behavior
+- intent-to-formal-dynamics mapping
+
+Definition of done:
+
+> Two compositions with similar geometry can feel meaningfully different because point, line, rhythm, and plane behavior respond differently to intent.
+
+---
+
+## v0.9 — Art Direction
+
+Goal:
+
+- weighted randomness
+- visual hierarchy
+- controlled overlap
+- clustering
+- distribution control
+- asymmetrical balance
+
+Definition of done:
+
+> Multiple seeds feel related stylistically while still producing genuinely different compositions.
+
+---
+
+## v1.0 — Texture Polish
+
+Goal:
+
+- pigment granulation
+- pooling
+- blooms
+- stains
+- splatter
+- dry-brush artifacts
+
+Definition of done:
+
+> Surface behavior contributes materially to the artwork instead of functioning as decorative noise.
+
+---
+
+## v1.1 — Controls
+
+Goal:
+
+- palette switching
+- chaos
+- density
+- negative space
+- watercolor strength
+- ink strength
+- texture strength
+- presets
+
+Definition of done:
+
+> Artistic character can be changed without editing implementation code.
+
+---
+
+## v1.2 — Generative Painting Engine
+
+Goal:
+
+- complete architecture
+- stable seeded output
+- reliable save behavior
+- reusable palette system
+- multiple composition families
+- polished watercolor/ink rendering
+- coherent settings and presets
+
+Definition of done:
+
+> The project functions as a reusable abstract painting system rather than a single p5.js sketch.
+
+---
+
+# Git Strategy
+
+Create a meaningful commit at every stable milestone.
+
+Suggested tags or commit labels:
+
+```text
+v0.1-surface
+v0.2-watercolor-primitives
+v0.3-ink-primitives
+v0.4-elements
+v0.5-artistic-intent
+v0.6-composition
+v0.7-relationships
+v0.8-formal-dynamics
+v0.9-art-direction
+v1.0-texture-polish
+v1.1-controls
+v1.2-engine
+```
+
+Do not move to the next milestone while the current one is unstable unless experimentation is happening on a separate branch.
+
+---
+
+# CHANGELOG.md Strategy
+
+`CHANGELOG.md` should behave like an artistic laboratory notebook, not a formal software release log.
+
+Record:
+
+- visual discoveries
+- failed experiments worth remembering
+- parameter ranges that work
+- parameter ranges that fail
+- rendering performance observations
+- accidental effects worth preserving
+- unresolved artistic questions
+
+Example:
+
+```text
+v0.2
+
+- Added layered watercolor circles.
+- Increased edge jitter.
+- Pigment still looks too uniformly digital.
+- Multiple faint passes look better than fewer dark passes.
+- Next: try noise-correlated contour variation.
+```
+
+This helps preserve discoveries that may otherwise disappear during experimentation.
+
+---
+
+# Development Rule for Future Changes
+
+Before adding a feature, ask:
+
+```text
+1. Does it affect WHY something exists?
+   → Composition or Relationship Engine
+
+2. Does it affect WHAT the element is?
+   → Shape Vocabulary / Element Model
+
+3. Does it affect HOW a visual force behaves?
+   → Formal Dynamics
+
+4. Does it affect WHERE something goes?
+   → Composition / Geometry
+
+5. Does it affect HOW it looks?
+   → Renderer
+
+6. Does it affect the physical surface?
+   → Surface System
+
+7. Is it a tunable artistic choice?
+   → settings.js
+
+8. Is it a reusable probability/distribution behavior?
+   → utilities/random.js
+```
+
+If the feature does not clearly belong anywhere, determine whether:
+
+- the architecture needs a new subsystem, or
+- the feature does not belong in the project.
+
+---
+
+# Immediate Next Step
+
+Begin **v0.1 — Surface**.
+
+Build only:
+
+1. p5.js project shell
+2. rendering buffers
+3. warm paper base
+4. low-frequency tonal variation
+5. subtle grain
+6. sparse fiber texture
+7. faint stains
+
+Do **not** begin composition generation yet.
+
+Once the paper surface is convincing, proceed to **v0.2 — Paint Primitives**.
+
+---
+
+# Project Philosophy
+
+The engine should create art through constrained possibility.
+
+The goal is not maximum randomness and not perfect order.
+
+The goal is a productive tension between:
+
+```text
+geometry        ↔ gesture
+structure       ↔ spontaneity
+clarity         ↔ ambiguity
+ink             ↔ watercolor
+order           ↔ chaos
+system          ↔ accident
+```
+
+The code creates the conditions.
+
+The artwork emerges from the interaction of those conditions.

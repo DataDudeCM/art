@@ -4,81 +4,28 @@ class WatercolorRenderer {
     this.s = settings;
   }
 
-  renderTestStudy(seed) {
+  renderElements(seed, elements) {
     this.g.clear();
     this.g.blendMode(MULTIPLY);
 
     this.g.randomSeed(seed + 1000);
     this.g.noiseSeed(seed + 1000);
 
-    // -----------------------------
-    // RED ANCHOR CIRCLE
-    // -----------------------------
-
-    const redX = this.g.random(330, 500);
-    const redY = this.g.random(480, 650);
-    const redRadius = this.g.random(160, 220);
-
-    this.drawCircle(
-      redX,
-      redY,
-      redRadius,
-      [176, 82, 72]
-    );
-
-    // -----------------------------
-    // BLUE TRIANGLE
-    // -----------------------------
-
-    const triX = this.g.random(480, 650);
-    const triY = this.g.random(420, 620);
-
-    const triSize = this.g.random(220, 340);
-    const triRotation = this.g.random(-0.6, 0.6);
-
-    const triangle = this._makePolygon(
-      triX,
-      triY,
-      triSize,
-      3,
-      triRotation
-    );
-
-    this.drawPolygon(
-      triangle,
-      [65, 95, 145]
-    );
-
-    // -----------------------------
-    // OCHRE CIRCLE
-    // -----------------------------
-
-    this.drawCircle(
-      this.g.random(720, 900),
-      this.g.random(280, 470),
-      this.g.random(70, 125),
-      [201, 154, 56]
-    );
-
-    // -----------------------------
-    // GREEN QUADRILATERAL
-    // -----------------------------
-
-    const quadX = this.g.random(700, 850);
-    const quadY = this.g.random(700, 850);
-
-    const quad = this._makePolygon(
-      quadX,
-      quadY,
-      this.g.random(180, 280),
-      4,
-      this.g.random(-0.8, 0.8)
-    );
-
-    this.drawPolygon(
-      quad,
-      [83, 116, 75]
-    );
+    for (const element of elements) {
+      if (element.type === "circle") {
+        this.drawCircle(
+          element.position.x,
+          element.position.y,
+          element.geometry.radius,
+          element.appearance.color
+        );
+      } else if (element.type === "polygon") {
+        this.drawPolygon(
+          element.geometry.points,
+          element.appearance.color
+        );
+      }
+    }
   }
 
   drawCircle(x, y, radius, colorArr) {
