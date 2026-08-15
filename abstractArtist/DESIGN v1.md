@@ -18,32 +18,28 @@ This is not intended to reproduce a specific Kandinsky painting. The goal is to 
 
 The engine should remain modular enough that the same composition could later be rendered with different aesthetics such as ink, charcoal, clean vector geometry, or other painterly styles.
 
-The engine should also be capable of beginning from an **artistic intent**: an internal emotional or conceptual direction that influences composition, relationships, hierarchy, color behavior, and negative space before rendering begins.
-
 ---
 
 # Design Invariants
 
 These rules protect the architecture and should not be violated casually.
 
-1. **Artistic intent decides WHY the artwork exists.**
-2. **Composition decides WHAT matters within that intent.**
-3. **Relationships decide HOW elements speak to one another.**
-4. **Geometry decides WHERE an element exists.**
-5. **Renderers decide HOW an element looks and feels materially.**
-6. **Elements do not draw themselves.**
-7. **Randomness must be seeded.**
-8. **Randomness should normally be weighted, biased, clustered, or constrained rather than purely uniform.**
-9. **Negative space is intentionally generated.**
-10. **Watercolor, ink, paper, and texture remain separate rendering layers.**
-11. **Visual hierarchy is explicit: anchor → secondary → medium → accent.**
-12. **New features must fit an existing subsystem or justify a new one.**
-13. **Composition logic must remain independent of rendering style.**
-14. **No artistic parameter should be buried as a magic number if it may reasonably need tuning later.**
+1. **Composition decides WHY an element exists.**
+2. **Geometry decides WHERE an element exists.**
+3. **Renderers decide HOW an element looks.**
+4. **Elements do not draw themselves.**
+5. **Randomness must be seeded.**
+6. **Randomness should normally be weighted, biased, clustered, or constrained rather than purely uniform.**
+7. **Negative space is intentionally generated.**
+8. **Watercolor, ink, paper, and texture remain separate rendering layers.**
+9. **Visual hierarchy is explicit: anchor → secondary → medium → accent.**
+10. **New features must fit an existing subsystem or justify a new one.**
+11. **Composition logic must remain independent of rendering style.**
+12. **No artistic parameter should be buried as a magic number if it may reasonably need tuning later.**
 
 Core principle:
 
-> **Intent decides why. Composition decides what matters. Relationships decide how things speak. Geometry decides where. Watercolor and ink decide how it feels physically.**
+> **Geometry decides where. Watercolor decides how. Composition decides why.**
 
 ---
 
@@ -51,12 +47,6 @@ Core principle:
 
 ```text
 Sketch
-│
-├── Artistic Intent Engine
-│   ├── chooses emotional / conceptual direction
-│   ├── defines expressive forces
-│   ├── biases palette and hierarchy
-│   └── guides composition without dictating a fixed layout
 │
 ├── Composition Engine
 │   ├── chooses layout
@@ -153,165 +143,9 @@ Renderers consume these objects and decide how they appear.
 
 ---
 
-# Artistic Intent Engine
-
-The Artistic Intent Engine sits above composition. It defines the internal direction of the piece before specific shapes or layouts are chosen.
-
-Its purpose is not to encode simplistic emotion labels such as `happy` or `sad`, and it should not prescribe one visual formula. Instead, it defines a field of expressive forces that the composition engine interprets.
-
-This protects the project from becoming a system that merely generates attractive abstract arrangements. The goal is for formal decisions to arise from an expressive premise.
-
-## Intent Data Model
-
-A first-pass intent may look like this:
-
-```js
-const intent = {
-  name: "restlessSolitude",
-
-  tension: 0.75,
-  isolation: 0.65,
-  energy: 0.55,
-  harmony: 0.30,
-  ambiguity: 0.80,
-  fragility: 0.45,
-
-  movement: "diagonal"
-};
-```
-
-Values should generally fall in the range `0..1`, while directional or categorical qualities may use named values.
-
-These values are **not rendering controls**. They are expressive inputs that influence downstream systems.
-
-## How Intent Influences Composition
-
-Examples:
-
-```text
-high isolation
-→ larger protected negative-space regions
-→ fewer clusters
-→ greater physical separation between major masses
-
-high tension
-→ more intersections
-→ stronger scale contrast
-→ opposing angles
-→ less comfortable spacing
-
-high harmony
-→ more echoes
-→ stronger alignment
-→ more related color relationships
-
-high ambiguity
-→ partial forms
-→ broken rings
-→ unresolved gestures
-→ overlapping translucent structures
-
-high fragility
-→ thinner marks
-→ incomplete contours
-→ pale or interrupted structures
-
-high energy
-→ stronger directional movement
-→ denser rhythm fields
-→ more assertive gesture marks
-```
-
-These mappings should remain probabilistic and tunable. They bias decisions; they do not force deterministic formulas.
-
-## Named Intents
-
-Named intents provide a human-readable artistic starting point. Initial candidates:
-
-```js
-INTENTS.restlessSolitude
-INTENTS.fragileOrder
-INTENTS.controlledConflict
-INTENTS.quietCuriosity
-INTENTS.breakingStructure
-INTENTS.searching
-```
-
-A named intent should simply be a reusable configuration of expressive forces.
-
-Example:
-
-```js
-INTENTS.restlessSolitude = {
-  tension: 0.72,
-  isolation: 0.82,
-  energy: 0.58,
-  harmony: 0.28,
-  ambiguity: 0.76,
-  fragility: 0.42,
-  movement: "diagonal"
-};
-```
-
-The same intent should still produce many visibly different works because composition, relationships, geometry, and rendering remain generative.
-
-## Intent vs Preset
-
-Intent and style preset must remain separate concepts.
-
-```text
-INTENT
-What is this piece trying to feel like or explore?
-
-COMPOSITION
-What visual strategy expresses that?
-
-PRESET / RENDERING
-What material or stylistic language should express it?
-```
-
-For example, the same `restlessSolitude` intent might be rendered with:
-
-- pale watercolor
-- aggressive ink
-- charcoal
-- clean vector geometry
-
-The expressive premise stays constant while the material language changes.
-
-## Intent and Color
-
-Palette selection should eventually be able to respond to intent. Colors may carry loose semantic properties such as energy, warmth, visual weight, or aggression. These properties are biases, not universal symbolic truths.
-
-Example:
-
-```js
-{
-  hex: "#c7352d",
-  energy: 0.9,
-  warmth: 0.9,
-  weight: 0.65,
-  aggression: 0.7
-}
-```
-
-This allows palette choice to become part of expression rather than only visual coordination.
-
-## Design Rule
-
-The engine should never confuse technical sophistication with artistic meaning. Better watercolor simulation, richer textures, or more complex geometry do not automatically produce a stronger artwork.
-
-When adding a major generative behavior, ask:
-
-> **What expressive purpose can this behavior serve?**
-
-If the answer is only "it looks interesting," the feature may still be useful, but it belongs in rendering or style rather than in the core expressive logic.
-
----
-
 # Composition Engine
 
-The composition engine is the most important downstream system.
+The composition engine is the most important system.
 
 It should not scatter random shapes uniformly across the canvas. It should generate a composition map with meaningful zones, roles, balance, tension, and negative space.
 
@@ -1103,9 +937,7 @@ Generation should occur in explicit phases.
 function generateArtwork() {
   clearArtwork();
 
-  const intent = chooseIntent();
-
-  createComposition(intent);
+  createComposition();
 
   createAnchorElements();
   createSecondaryElements();
@@ -1118,7 +950,7 @@ function generateArtwork() {
 }
 ```
 
-Intent happens before composition, and composition happens before rendering.
+Composition happens before rendering.
 
 This is an important architectural rule.
 
@@ -1275,10 +1107,6 @@ abstractArtist/
     ├── settings.js
     ├── palettes.js
     │
-    ├── intent/
-    │   ├── intents.js
-    │   └── IntentEngine.js
-    │
     ├── composition/
     │   ├── Composition.js
     │   └── relationships.js
@@ -1379,23 +1207,7 @@ Definition of done:
 
 ---
 
-## v0.5 — Artistic Intent
-
-Goal:
-
-- intent data model
-- 4–6 named intents
-- intent-to-composition bias functions
-- intent-aware palette selection hooks
-- preserve variability within each intent
-
-Definition of done:
-
-> Two works generated from the same intent feel emotionally related without sharing the same layout.
-
----
-
-## v0.6 — Composition
+## v0.5 — Composition
 
 Goal:
 
@@ -1413,7 +1225,7 @@ Definition of done:
 
 ---
 
-## v0.7 — Relationships
+## v0.6 — Relationships
 
 Goal:
 
@@ -1435,7 +1247,7 @@ Definition of done:
 
 ---
 
-## v0.8 — Art Direction
+## v0.7 — Art Direction
 
 Goal:
 
@@ -1452,7 +1264,7 @@ Definition of done:
 
 ---
 
-## v0.9 — Texture Polish
+## v0.8 — Texture Polish
 
 Goal:
 
@@ -1469,7 +1281,7 @@ Definition of done:
 
 ---
 
-## v1.0 — Controls
+## v0.9 — Controls
 
 Goal:
 
@@ -1488,7 +1300,7 @@ Definition of done:
 
 ---
 
-## v1.1 — Generative Painting Engine
+## v1.0 — Generative Painting Engine
 
 Goal:
 
