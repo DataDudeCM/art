@@ -43,10 +43,10 @@ function setup() {
     SETTINGS.watercolor
   );
 
-  intentEngine = new IntentEngine(INTENTS);
-  testComposition = new TestComposition(width, height);
+  intentEngine = new IntentEngine(INTENTS, SETTINGS.intent);
+  testComposition = new TestComposition(width, height, SETTINGS.composition);
 
-  regenerateArtwork();
+  generateNewArtwork();
   noLoop();
 }
 
@@ -59,13 +59,25 @@ function draw() {
   image(inkLayer, 0, 0);
 }
 
-function regenerateArtwork(intentName = null) {
+function generateNewArtwork(intentName = null) {
   seed = Math.floor(Math.random() * 999999);
+  renderArtwork(seed, intentName);
+}
 
+function renderArtwork(seedToUse, intentName = null) {
+  seed = seedToUse;
+
+  // Reset the p5 random streams before BOTH intent choice and composition.
+  // This keeps a seed reproducible, including when comparing named intents.
   randomSeed(seed);
   noiseSeed(seed);
 
   currentIntent = intentEngine.chooseIntent(intentName);
+
+  // Re-seed after intent selection so explicit named-intent comparisons use
+  // exactly the same compositional random stream for the same seed.
+  randomSeed(seed + 101);
+  noiseSeed(seed + 101);
   currentElements = testComposition.create(currentIntent);
 
   paperRenderer.render(seed);
@@ -76,28 +88,64 @@ function regenerateArtwork(intentName = null) {
 
   watercolorRenderer.renderElements(seed, currentElements);
 
+  updateArtworkStatus();
+
   console.log(
-    `abstractArtist v0.2b seed: ${seed} | intent: ${currentIntent.name}`
+    `abstractArtist v0.2d seed: ${seed} | intent: ${currentIntent.name}`
   );
   console.table(currentElements.map((element) => ({
     type: element.type,
     role: element.composition.role,
+    cluster: element.composition.cluster,
     tension: element.dynamics.tension.toFixed(2),
     isolation: element.dynamics.isolation.toFixed(2),
     continuity: element.dynamics.continuity.toFixed(2)
   })));
+  console.table(currentIntent.compositionBias);
 
   redraw();
 }
 
+function cycleIntent(direction) {
+  const nextName = intentEngine.getAdjacentIntentName(
+    currentIntent?.name,
+    direction
+  );
+
+  // Critical test feature: preserve the seed while changing only intent.
+  renderArtwork(seed, nextName);
+}
+
+function updateArtworkStatus() {
+  const intentEl = document.getElementById("intentValue");
+  const seedEl = document.getElementById("seedValue");
+
+  if (intentEl) intentEl.textContent = currentIntent?.name || "—";
+  if (seedEl) seedEl.textContent = seed ?? "—";
+}
+
 function keyPressed() {
   if (key === 'r' || key === 'R') {
-    regenerateArtwork();
+    // New seed, same intent: useful for judging family resemblance.
+    generateNewArtwork(currentIntent?.name);
+  }
+
+  if (key === 'n' || key === 'N') {
+    // New seed and a newly selected intent.
+    generateNewArtwork();
+  }
+
+  if (key === '[') {
+    cycleIntent(-1);
+  }
+
+  if (key === ']') {
+    cycleIntent(1);
   }
 
   if (key === 's' || key === 'S') {
     saveCanvas(
-      `abstractArtist-v0.2b-${currentIntent.name}-${seed}`,
+      `abstractArtist-v0.2d-${currentIntent.name}-${seed}`,
       'png'
     );
   }
@@ -106,6 +154,6 @@ function keyPressed() {
     const modes = ["procedural", "image", "hybrid"];
     const idx = modes.indexOf(SETTINGS.paper.mode);
     SETTINGS.paper.mode = modes[(idx + 1) % modes.length];
-    regenerateArtwork(currentIntent?.name);
+    renderArtwork(seed, currentIntent?.name);
   }
 }

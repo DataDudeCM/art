@@ -43,6 +43,30 @@ const SETTINGS = {
     stainJitter: 20
   },
 
+  intent: {
+    composition: {
+      negativeSpaceMin: 0.18,
+      negativeSpaceMax: 0.52,
+      spreadMin: 0.72,
+      spreadMax: 1.34,
+      scaleContrastMin: 0.72,
+      scaleContrastMax: 1.32,
+      secondaryCountMin: 2,
+      secondaryCountMax: 5
+    }
+  },
+
+  composition: {
+    palette: {
+      red: [176, 82, 72],
+      blue: [65, 95, 145],
+      yellow: [201, 154, 56],
+      green: [83, 116, 75],
+      ochre: [170, 116, 62],
+      violet: [111, 83, 124]
+    }
+  },
+
   watercolor: {
     testCircle: {
       x: 600,

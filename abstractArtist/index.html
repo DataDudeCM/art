@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>abstractArtist v0.1</title>
+  <title>abstractArtist v0.2c</title>
 <style>
   html, body {
     margin: 0;
@@ -56,6 +56,23 @@
     text-align: center;
   }
 
+  #artStatus {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 10;
+    padding: 8px 10px;
+    background: rgba(216, 211, 199, 0.9);
+    border: 1px solid rgba(120, 105, 85, 0.25);
+    border-radius: 8px;
+    font: 12px/1.4 system-ui, sans-serif;
+    color: #3f3a33;
+  }
+
+  #artStatus strong {
+    font-weight: 650;
+  }
+
 </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.2/p5.min.js"></script>
@@ -66,6 +83,11 @@
     <span id="zoomValue">100%</span>
     <button id="zoomIn">+</button>
     <button id="zoomReset">Reset</button>
+  </div>
+  <div id="artStatus">
+    <strong>Intent:</strong> <span id="intentValue">—</span><br>
+    <strong>Seed:</strong> <span id="seedValue">—</span><br>
+    [ / ] intent · R new seed · N random intent
   </div>
   <script src="js/settings.js"></script>
   <script src="js/intent/intents.js"></script>
