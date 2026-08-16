@@ -1,12 +1,15 @@
 
 function preload() {
-  brush = loadImage('../brushes/Acrylic Glaze.png');
+  brush = loadImage('../common/brushes/Acrylic Glaze.png');
 }
 
 function setup() {
   createCanvas(800, 600);
-  background(240);
-  palette = palettes[1];  // pick a palette from palettes.js
+
+  palette = getPalette("earthMagenta");
+
+  background(getLightColor(palette));
+
 }
 
 function draw() {
@@ -15,6 +18,17 @@ function draw() {
     let angle = atan2(mouseY - pmouseY, mouseX - pmouseX);
 
     // brush, position, size, color, angle, transparency, count
-    paintStroke(brush, mouseX, mouseY, 20, angle, color('Black'), 50, 5);
+    paintStroke(brush, mouseX, mouseY, 
+      {size: 50, angle: angle, color: getAccentColor(palette), 
+        alpha: 50, count: 5, spacing: 0.05, spread: 0.5, angleJitter: 0.5, forwardOnly: true});
+
+    // Basic usage:
+//
+// paintStroke(brushImg, 400, 300, {
+//   size: 180,
+//   angle: radians(30),
+//   color: "#202020",
+//   alpha: 90
+// });
   }
 }

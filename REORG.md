@@ -31,7 +31,7 @@ art/
 │   └── pixel/
 │
 ├── geometry/
-├── sound-interactive/
+├── sound/
 ├── experiments/
 ├── archive/
 │
