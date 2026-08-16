@@ -5,6 +5,7 @@ let palette;
 let controls = {};
 
 let brushesReady = false;
+let brushColor;
 
 
 // --------------------------------------------------
@@ -14,7 +15,8 @@ let brushesReady = false;
 function setup() {
   createCanvas(800, 600);
 
-  palette = getPalette("earthMagenta");
+palette = getPalette("earthMagenta");
+brushColor = getColors(palette)[0];
 
   createBrushControls();
 
@@ -122,7 +124,7 @@ function draw() {
       {
         size: controls.size.value(),
         angle,
-        color: getAccentColor(palette),
+        color: brushColor,
         alpha: controls.alpha.value(),
         count: controls.count.value(),
         spacing: controls.spacing.value(),
@@ -142,6 +144,23 @@ function draw() {
 // --------------------------------------------------
 // UI
 // --------------------------------------------------
+function populateBrushPicker() {
+
+    controls.brushSelect.elt.innerHTML = "";
+
+    for (const name of Object.keys(brushes)) {
+
+      controls.brushSelect.option(
+        name,
+        name
+      );
+
+    }
+
+    controls.brushSelect.removeAttribute(
+      "disabled"
+    );
+}
 
 function createBrushControls() {
 
@@ -177,108 +196,104 @@ function createBrushControls() {
   // Brush picker
   // ------------------------------------------------
 
-const brushRow = createDiv();
-  brushRow.parent(panel);
-  brushRow.style("margin-bottom", "10px");
+  const brushRow = createDiv();
+    brushRow.parent(panel);
+    brushRow.style("margin-bottom", "10px");
 
-  createSpan("Brush: ")
-    .parent(brushRow);
+    createSpan("Brush: ")
+      .parent(brushRow);
 
-  controls.brushSelect =
-    createSelect();
+    controls.brushSelect =
+      createSelect();
 
-  controls.brushSelect
-    .parent(brushRow);
+    controls.brushSelect
+      .parent(brushRow);
 
-  controls.brushSelect.option(
-    "Loading brushes..."
-  );
+    controls.brushSelect.option(
+      "Loading brushes..."
+    );
 
-  controls.brushSelect.attribute(
-    "disabled",
-    ""
-  );
+    controls.brushSelect.attribute(
+      "disabled",
+      ""
+    );
 
-  controls.brushSelect.changed(() => {
+    controls.brushSelect.changed(() => {
 
     brush =
       brushes[
         controls.brushSelect.value()
       ];
 
-  });
+    });
 
-  function populateBrushPicker() {
+// ------------------------------------------------
+// Palette picker
+// ------------------------------------------------
 
-    controls.brushSelect.elt.innerHTML = "";
-
-    for (const name of Object.keys(brushes)) {
-
-      controls.brushSelect.option(
-        name,
-        name
-      );
-
-    }
-
-    controls.brushSelect.removeAttribute(
-      "disabled"
-    );
-  }
-
-  // ------------------------------------------------
-  // Palette picker
-  // ------------------------------------------------
-
-  const paletteRow =
-    createDiv();
-
+  const paletteRow = createDiv();
   paletteRow.parent(panel);
+  paletteRow.style("margin-bottom", "8px");
 
-  paletteRow.style(
-    "margin-bottom",
-    "14px"
-  );
+  createSpan("Palette: ").parent(paletteRow);
 
-  createSpan("Palette: ")
-    .parent(paletteRow);
+  controls.paletteSelect = createSelect();
+  controls.paletteSelect.parent(paletteRow);
 
-  controls.paletteSelect =
-    createSelect();
+  for (const name of getPaletteNames()) {
+    const p = getPalette(name);
 
-  controls.paletteSelect
-    .parent(paletteRow);
-
-  for (
-    const name of
-    getPaletteNames()
-  ) {
-
-    const p =
-      getPalette(name);
-
-    /*
-     * Display the friendly palette name,
-     * but keep the registry key as the value.
-     */
     controls.paletteSelect.option(
       p.name,
       name
     );
   }
 
-  controls.paletteSelect
-    .selected("earthMagenta");
+  controls.paletteSelect.selected("earthMagenta");
 
-  controls.paletteSelect
-    .changed(() => {
+  controls.paletteSelect.changed(() => {
 
-      palette =
-        getPalette(
-          controls.paletteSelect.value()
-        );
+    palette = getPalette(
+      controls.paletteSelect.value()
+    );
 
-    });
+    populateColorPicker();
+  });
+
+
+  // ------------------------------------------------
+  // Color picker
+  // ------------------------------------------------
+
+  const colorRow = createDiv();
+  colorRow.parent(panel);
+  colorRow.style("margin-bottom", "14px");
+
+  createSpan("Color: ").parent(colorRow);
+
+  controls.colorSelect = createSelect();
+  controls.colorSelect.parent(colorRow);
+
+  controls.colorSwatch = createSpan("");
+
+  controls.colorSwatch.parent(colorRow);
+
+  controls.colorSwatch.style("display", "inline-block");
+  controls.colorSwatch.style("width", "24px");
+  controls.colorSwatch.style("height", "24px");
+  controls.colorSwatch.style("margin-left", "8px");
+  controls.colorSwatch.style("vertical-align", "middle");
+  controls.colorSwatch.style("border", "1px solid #777");
+
+  controls.colorSelect.changed(() => { 
+
+    brushColor =
+      controls.colorSelect.value();
+
+    updateColorSwatch();
+  });
+
+  populateColorPicker();
 
 
   // ------------------------------------------------
@@ -495,10 +510,38 @@ function createControl(
     });
 }
 
+function populateColorPicker() {
+
+  controls.colorSelect.elt.innerHTML = "";
+
+  const colors = getColors(palette);
+
+  for (const hex of colors) {
+    controls.colorSelect.option(
+      hex,
+      hex
+    );
+  }
+
+  if (colors.length > 0) {
+    brushColor = colors[0];
+    controls.colorSelect.selected(brushColor);
+  }
+
+  updateColorSwatch();
+}
 
 // --------------------------------------------------
 // Canvas reset
 // --------------------------------------------------
+
+function updateColorSwatch() {
+
+  controls.colorSwatch.style(
+    "background-color",
+    brushColor
+  );
+}
 
 function clearCanvas() {
 
