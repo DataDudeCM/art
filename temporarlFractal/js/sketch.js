@@ -18,45 +18,45 @@ let showField = false;
 let paused = false;
 
 const SETTINGS = {
+  // Field resolution
   cellSize: 8,
 
+  // Population
   rootCount: 5,
   maxGeneration: 7,
-
   stepsPerFrame: 3,
 
   // Memory
   depositAmount: 0.015,
   depositRadius: 2,
-
-  // Higher = history lasts longer even after visible marks fade.
   memoryDecay: 0.992,
   memorySaturation: 0.8,
+  memoryCapacity: 2.5,
 
-  // Walker sensing
+  // Walker sensing / motion
   probeDistance: 16,
   probeAngle: 0.45,
-
-  turnStep: 0.055,
+  turnStep: 0.55, // default 0.055
   gradientInfluence: 0.18,
   noiseTurn: 0.035,
   jitter: 0.01,
   maxTurn: 0.18,
-
   driftScale: 0.0025,
 
   // Branching
   branchMinAge: 20,
   branchChance: 0.0085,
+  branchMemoryRange: 3,
 
-  // Visible marks fade while invisible memory remains.
-  fadeAlpha: 4,
-
-  // Memory needed before a new cycle can grow from old history.
+  // Reseeding
   reseedMemoryThreshold: 0.25,
+  reseedCandidatePool: 30,
 
-  // Number of strongest memory cells considered as potential roots.
-  reseedCandidatePool: 30
+  // Rendering
+  pathAlphaMin: 10,
+  pathAlphaMax: 30,
+  nodeMemoryThreshold: 1.1,
+  nodeChance: 0.14
 };
 
 
@@ -67,60 +67,18 @@ const SETTINGS = {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
-
   initSketch();
 }
 
 
 function initSketch() {
   seed = floor(random(1000000));
-
   randomSeed(seed);
   noiseSeed(seed);
 
-  // ----------------------------------------------------------
-  // Shared palette.js
-  // ----------------------------------------------------------
-
-  currentPalette = getPalette("evidenceOfEncounter");
-
-  // Don't use the paper color as a walker color.
-  paletteColors = currentPalette.colors
-    .filter(c => c.role !== "paper")
-    .map(c => c.hex);
-
-  paperColor =
-    getColorByRole(currentPalette, "paper", false) ||
-    getLightColor(currentPalette);
-
-  // ----------------------------------------------------------
-  // Memory field
-  // ----------------------------------------------------------
-
-  cols = floor(width / SETTINGS.cellSize) + 1;
-  rows = floor(height / SETTINGS.cellSize) + 1;
-
-  memoryField = new Float32Array(cols * rows);
-
-  // ----------------------------------------------------------
-  // Graphics layers
-  // ----------------------------------------------------------
-
-  paperLayer = createGraphics(width, height);
-  artLayer = createGraphics(width, height);
-
-  paperLayer.pixelDensity(1);
-  artLayer.pixelDensity(1);
-
-  artLayer.colorMode(RGB, 255, 255, 255, 255);
-
-  buildPaperLayer();
-
-  artLayer.clear();
-
-  // ----------------------------------------------------------
-  // Walkers
-  // ----------------------------------------------------------
+  initPalette();
+  initMemoryField();
+  initLayers();
 
   walkers = [];
   nextWalkerId = 0;
@@ -135,13 +93,46 @@ function initSketch() {
 }
 
 
+function initPalette() {
+  currentPalette = randomPalette();
+
+  paletteColors = currentPalette.colors
+    .filter(c => c.role !== "paper")
+    .map(c => c.hex);
+
+  paperColor =
+    getColorByRole(currentPalette, "paper", false) ||
+    getLightColor(currentPalette);
+}
+
+
+function initMemoryField() {
+  cols = floor(width / SETTINGS.cellSize) + 1;
+  rows = floor(height / SETTINGS.cellSize) + 1;
+  memoryField = new Float32Array(cols * rows);
+}
+
+
+function initLayers() {
+  paperLayer = createGraphics(width, height);
+  artLayer = createGraphics(width, height);
+
+  paperLayer.pixelDensity(1);
+  artLayer.pixelDensity(1);
+
+  artLayer.colorMode(RGB, 255, 255, 255, 255);
+
+  buildPaperLayer();
+  artLayer.clear();
+}
+
+
 // ============================================================
 // MAIN LOOP
 // ============================================================
 
 function draw() {
   if (!paused) {
-    //fadeArtLayer();
     stepSystem();
     decayMemoryField();
 
@@ -161,27 +152,27 @@ function draw() {
   drawHUD();
 }
 
+
 // ============================================================
-// INITIAL ROOTS
+// WALKER POPULATION
 // ============================================================
 
 function seedRoots() {
   const cx = width * 0.5;
   const cy = height * 0.5;
-
   const startAngle = random(TWO_PI);
 
   for (let i = 0; i < SETTINGS.rootCount; i++) {
-    const a =
+    const angle =
       startAngle +
       map(i, 0, SETTINGS.rootCount, 0, TWO_PI);
 
-    const r = random(10, 55);
+    const radius = random(10, 55);
 
     spawnWalker(
-      cx + cos(a) * r,
-      cy + sin(a) * r,
-      a + random(-0.8, 0.8),
+      cx + cos(angle) * radius,
+      cy + sin(angle) * radius,
+      angle + random(-0.8, 0.8),
       0,
       i % paletteColors.length,
       random() < 0.5 ? -1 : 1,
@@ -190,10 +181,6 @@ function seedRoots() {
   }
 }
 
-
-// ============================================================
-// RESEED FROM MEMORY
-// ============================================================
 
 function seedFromMemory() {
   const candidates = [];
@@ -212,14 +199,11 @@ function seedFromMemory() {
     }
   }
 
-  // Nothing meaningful left in memory.
-  // Start a genuinely new lineage.
   if (candidates.length === 0) {
     seedRoots();
     return;
   }
 
-  // Strongest memories first.
   candidates.sort((a, b) => b.strength - a.strength);
 
   const poolSize = min(
@@ -248,32 +232,6 @@ function seedFromMemory() {
 }
 
 
-// ============================================================
-// SYSTEM
-// ============================================================
-
-function stepSystem() {
-  for (let step = 0; step < SETTINGS.stepsPerFrame; step++) {
-    // Snapshot length so walkers born during this pass begin
-    // participating on the next pass rather than recursively
-    // exploding immediately.
-    const count = walkers.length;
-
-    for (let i = count - 1; i >= 0; i--) {
-      if (!walkers[i]) continue;
-
-      walkers[i].step();
-    }
-
-    walkers = walkers.filter(w => !w.dead);
-  }
-}
-
-
-// ============================================================
-// WALKER CREATION
-// ============================================================
-
 function spawnWalker(
   x,
   y,
@@ -297,12 +255,27 @@ function spawnWalker(
 }
 
 
+function stepSystem() {
+  for (let step = 0; step < SETTINGS.stepsPerFrame; step++) {
+    // New children start participating on the next pass.
+    const count = walkers.length;
+
+    for (let i = count - 1; i >= 0; i--) {
+      if (walkers[i]) {
+        walkers[i].step();
+      }
+    }
+
+    walkers = walkers.filter(walker => !walker.dead);
+  }
+}
+
+
 // ============================================================
 // MEMORY WALKER
 // ============================================================
 
 class MemoryWalker {
-
   constructor(
     x,
     y,
@@ -313,19 +286,14 @@ class MemoryWalker {
     parentId = -1
   ) {
     this.id = nextWalkerId++;
-
     this.parentId = parentId;
 
     this.pos = createVector(x, y);
     this.prev = this.pos.copy();
 
     this.angle = angle;
-
     this.generation = generation;
-
-    this.colorIndex =
-      colorIndex % paletteColors.length;
-
+    this.colorIndex = colorIndex % paletteColors.length;
     this.orbitDir = orbitDir;
 
     this.speed =
@@ -341,7 +309,6 @@ class MemoryWalker {
     this.turnBias = random(-0.02, 0.02);
 
     this.age = 0;
-
     this.energy = 1;
 
     this.lifespan =
@@ -359,51 +326,21 @@ class MemoryWalker {
 
 
   step() {
-    // Position before this movement.
     this.prev.set(this.pos);
 
-    // --------------------------------------------------------
-    // Turn
-    // --------------------------------------------------------
-
-    const turn = this.computeTurn();
-
-    this.angle += turn;
-
-    // --------------------------------------------------------
-    // Move
-    // --------------------------------------------------------
+    this.angle += this.computeTurn();
 
     this.pos.x += cos(this.angle) * this.speed;
     this.pos.y += sin(this.angle) * this.speed;
 
-    // --------------------------------------------------------
-    // WRAP
-    //
-    // Important:
-    // wrapPosition() tells us if teleportation occurred.
-    //
-    // If so:
-    //   1. don't draw this segment
-    //   2. reset prev to the new wrapped position
-    //
-    // This prevents horizontal/vertical lines across canvas.
-    // --------------------------------------------------------
-
     const wrapped = wrapPosition(this.pos);
 
+    // Never connect the pre-wrap and post-wrap positions.
     if (wrapped) {
       this.prev.set(this.pos);
     }
 
-    // --------------------------------------------------------
-    // Memory
-    // --------------------------------------------------------
-
-    const mem = sampleField(
-      this.pos.x,
-      this.pos.y
-    );
+    const memory = sampleField(this.pos.x, this.pos.y);
 
     depositField(
       this.pos.x,
@@ -419,56 +356,12 @@ class MemoryWalker {
       SETTINGS.depositRadius
     );
 
-    // --------------------------------------------------------
-    // Draw
-    // --------------------------------------------------------
-
-    this.draw(mem, wrapped);
-
-    // --------------------------------------------------------
-    // Life
-    // --------------------------------------------------------
+    this.draw(memory, wrapped);
 
     this.age++;
-
     this.energy *= 0.9975;
 
-    // --------------------------------------------------------
-    // Branching
-    // --------------------------------------------------------
-
-    if (
-      this.generation < SETTINGS.maxGeneration &&
-      this.age > SETTINGS.branchMinAge
-    ) {
-      const p =
-        SETTINGS.branchChance *
-
-        map(
-          constrain(mem, 0, 3),
-          0,
-          3,
-          0.7,
-          2.2
-        ) *
-
-        map(
-          this.age,
-          SETTINGS.branchMinAge,
-          this.lifespan,
-          0.8,
-          1.35,
-          true
-        );
-
-      if (random() < p) {
-        this.branch(mem);
-      }
-    }
-
-    // --------------------------------------------------------
-    // Death
-    // --------------------------------------------------------
+    this.maybeBranch(memory);
 
     if (
       this.age > this.lifespan ||
@@ -489,39 +382,25 @@ class MemoryWalker {
     );
 
     const left = sampleField(
-      this.pos.x +
-        cos(this.angle - spread) * probe,
-
-      this.pos.y +
-        sin(this.angle - spread) * probe
+      this.pos.x + cos(this.angle - spread) * probe,
+      this.pos.y + sin(this.angle - spread) * probe
     );
 
     const right = sampleField(
-      this.pos.x +
-        cos(this.angle + spread) * probe,
-
-      this.pos.y +
-        sin(this.angle + spread) * probe
+      this.pos.x + cos(this.angle + spread) * probe,
+      this.pos.y + sin(this.angle + spread) * probe
     );
 
     let turn = this.turnBias;
 
-    // --------------------------------------------------------
-    // Prefer less-used territory
-    // --------------------------------------------------------
-
+    // Prefer less-used territory.
     if (left < right) {
       turn -= SETTINGS.turnStep;
-    }
-    else if (right < left) {
+    } else if (right < left) {
       turn += SETTINGS.turnStep;
     }
 
-    // --------------------------------------------------------
-    // Dense historical area:
-    // introduce uncertainty
-    // --------------------------------------------------------
-
+    // Dense memory produces uncertainty.
     if (ahead > SETTINGS.memorySaturation) {
       turn +=
         random([-1, 1]) *
@@ -529,14 +408,8 @@ class MemoryWalker {
         1.5;
     }
 
-    // --------------------------------------------------------
-    // Follow contours of historical memory
-    // --------------------------------------------------------
-
-    const gradient = sampleGradient(
-      this.pos.x,
-      this.pos.y
-    );
+    // Follow contours of accumulated memory.
+    const gradient = sampleGradient(this.pos.x, this.pos.y);
 
     if (gradient.magSq() > 0.00001) {
       const contourAngle =
@@ -544,23 +417,16 @@ class MemoryWalker {
         this.orbitDir * HALF_PI;
 
       turn +=
-        angleDifference(
-          contourAngle,
-          this.angle
-        ) *
+        angleDifference(contourAngle, this.angle) *
         SETTINGS.gradientInfluence;
     }
 
-    // --------------------------------------------------------
-    // Organic drift
-    // --------------------------------------------------------
-
+    // Organic drift.
     const drift = map(
       noise(
         this.pos.x * SETTINGS.driftScale,
         this.pos.y * SETTINGS.driftScale,
-        this.age * 0.01 +
-          this.id * 0.07
+        this.age * 0.01 + this.id * 0.07
       ),
       0,
       1,
@@ -568,15 +434,10 @@ class MemoryWalker {
       1
     );
 
-    turn +=
-      drift *
-      SETTINGS.noiseTurn;
+    turn += drift * SETTINGS.noiseTurn;
+    turn += random(-SETTINGS.jitter, SETTINGS.jitter);
 
-    turn += random(
-      -SETTINGS.jitter,
-      SETTINGS.jitter
-    );
-
+    // High-memory territory becomes more turbulent.
     const memoryFactor = map(
       constrain(ahead, 0, SETTINGS.memorySaturation),
       0,
@@ -595,13 +456,49 @@ class MemoryWalker {
   }
 
 
-  draw(mem, wrapped) {
+  maybeBranch(memory) {
+    if (
+      this.generation >= SETTINGS.maxGeneration ||
+      this.age <= SETTINGS.branchMinAge
+    ) {
+      return;
+    }
+
+    const memoryFactor = map(
+      constrain(memory, 0, SETTINGS.branchMemoryRange),
+      0,
+      SETTINGS.branchMemoryRange,
+      0.7,
+      2.2
+    );
+
+    const ageFactor = map(
+      this.age,
+      SETTINGS.branchMinAge,
+      this.lifespan,
+      0.8,
+      1.35,
+      true
+    );
+
+    const branchProbability =
+      SETTINGS.branchChance *
+      memoryFactor *
+      ageFactor;
+
+    if (random() < branchProbability) {
+      this.branch(memory);
+    }
+  }
+
+
+  draw(memory, wrapped) {
     const rgb = hexToRgb(
       paletteColors[this.colorIndex]
     );
 
     const memoryStrength = constrain(
-      mem / SETTINGS.memorySaturation,
+      memory / SETTINGS.memorySaturation,
       0,
       1
     );
@@ -610,11 +507,11 @@ class MemoryWalker {
       memoryStrength,
       0,
       1,
-      1, // minimum alpha 
-      10 // maximum alpha 
+      SETTINGS.pathAlphaMin,
+      SETTINGS.pathAlphaMax
     );
 
-    const alpha =
+    const nodeAlpha =
       map(
         this.generation,
         0,
@@ -622,16 +519,15 @@ class MemoryWalker {
         28,
         8
       ) +
-
       map(
-        constrain(mem, 0, 3),
+        constrain(memory, 0, SETTINGS.branchMemoryRange),
         0,
-        3,
+        SETTINGS.branchMemoryRange,
         0,
         18
       );
 
-    const sw =
+    const strokeWidth =
       map(
         this.generation,
         0,
@@ -639,18 +535,13 @@ class MemoryWalker {
         2.25,
         0.55
       ) *
-
       map(
-        constrain(mem, 0, 3),
+        constrain(memory, 0, SETTINGS.branchMemoryRange),
         0,
-        3,
+        SETTINGS.branchMemoryRange,
         1.0,
         1.65
       );
-
-    // --------------------------------------------------------
-    // Never draw a segment produced by wrapping.
-    // --------------------------------------------------------
 
     if (!wrapped) {
       artLayer.stroke(
@@ -660,7 +551,7 @@ class MemoryWalker {
         strokeAlpha
       );
 
-      artLayer.strokeWeight(sw);
+      artLayer.strokeWeight(strokeWidth);
 
       artLayer.line(
         this.prev.x,
@@ -670,13 +561,9 @@ class MemoryWalker {
       );
     }
 
-    // --------------------------------------------------------
-    // Evidence nodes
-    // --------------------------------------------------------
-
     if (
-      mem > 1.1 &&
-      random() < 0.14
+      memory > SETTINGS.nodeMemoryThreshold &&
+      random() < SETTINGS.nodeChance
     ) {
       artLayer.noFill();
 
@@ -684,14 +571,14 @@ class MemoryWalker {
         rgb.r,
         rgb.g,
         rgb.b,
-        alpha * 0.65
+        nodeAlpha * 0.65
       );
 
       artLayer.strokeWeight(
-        max(0.4, sw * 0.55)
+        max(0.4, strokeWidth * 0.55)
       );
 
-      const s =
+      const nodeSize =
         random(4, 18) *
         map(
           this.generation,
@@ -704,19 +591,18 @@ class MemoryWalker {
       artLayer.ellipse(
         this.pos.x,
         this.pos.y,
-        s,
-        s
+        nodeSize,
+        nodeSize
       );
     }
   }
 
 
-  branch(mem) {
+  branch(memory) {
     const childAngle =
       this.angle +
       random(-1.35, 1.35) +
-      this.orbitDir *
-        random(-0.3, 0.3);
+      this.orbitDir * random(-0.3, 0.3);
 
     let childColor = this.colorIndex;
 
@@ -724,50 +610,41 @@ class MemoryWalker {
       childColor =
         (
           this.colorIndex +
-          floor(
-            random(
-              1,
-              paletteColors.length
-            )
-          )
+          floor(random(1, paletteColors.length))
         ) %
         paletteColors.length;
     }
 
-    const child =
-      new MemoryWalker(
-        this.pos.x,
-        this.pos.y,
-        childAngle,
-        this.generation + 1,
-        childColor,
-        random() < 0.5 ? -1 : 1,
-        this.id
-      );
+    const child = new MemoryWalker(
+      this.pos.x,
+      this.pos.y,
+      childAngle,
+      this.generation + 1,
+      childColor,
+      random() < 0.5 ? -1 : 1,
+      this.id
+    );
 
     child.speed = max(
       0.45,
-      this.speed *
-        random(0.85, 1.15)
+      this.speed * random(0.85, 1.15)
     );
 
     child.turnBias =
       this.turnBias +
       random(-0.01, 0.01);
 
-    child.energy =
-      this.energy * 0.92;
+    child.energy = this.energy * 0.92;
 
     walkers.push(child);
 
-    // Branching costs the parent.
+    // Branching costs the parent and leaves a stronger memory trace.
     this.energy *= 0.92;
 
-    // Branch moments strongly affect memory.
     depositField(
       this.pos.x,
       this.pos.y,
-      0.6 + mem * 0.2,
+      0.6 + memory * 0.2,
       SETTINGS.depositRadius + 1
     );
   }
@@ -778,30 +655,12 @@ class MemoryWalker {
 // MEMORY FIELD
 // ============================================================
 
-function depositField(
-  x,
-  y,
-  amount,
-  radius
-) {
-  const gx = floor(
-    x / SETTINGS.cellSize
-  );
+function depositField(x, y, amount, radius) {
+  const gx = floor(x / SETTINGS.cellSize);
+  const gy = floor(y / SETTINGS.cellSize);
 
-  const gy = floor(
-    y / SETTINGS.cellSize
-  );
-
-  for (
-    let oy = -radius;
-    oy <= radius;
-    oy++
-  ) {
-    for (
-      let ox = -radius;
-      ox <= radius;
-      ox++
-    ) {
+  for (let oy = -radius; oy <= radius; oy++) {
+    for (let ox = -radius; ox <= radius; ox++) {
       const xx = gx + ox;
       const yy = gy + oy;
 
@@ -814,32 +673,30 @@ function depositField(
         continue;
       }
 
-      const d2 =
+      const distanceSquared =
         ox * ox +
         oy * oy;
 
-      if (
-        d2 >
-        radius * radius
-      ) {
+      if (distanceSquared > radius * radius) {
         continue;
       }
 
       const falloff =
         1 -
-        d2 /
-          (
-            radius * radius +
-            0.0001
-          );
+        distanceSquared /
+          (radius * radius + 0.0001);
 
-      const index =
-        yy * cols + xx;
+      const index = yy * cols + xx;
 
+      // Diminishing returns prevent the field from instantly saturating.
       memoryField[index] +=
         amount *
         falloff *
-        (1 - memoryField[index] / 2.5);
+        (
+          1 -
+          memoryField[index] /
+          SETTINGS.memoryCapacity
+        );
     }
   }
 }
@@ -847,41 +704,28 @@ function depositField(
 
 function sampleField(x, y) {
   const gx = constrain(
-    floor(
-      x / SETTINGS.cellSize
-    ),
+    floor(x / SETTINGS.cellSize),
     0,
     cols - 1
   );
 
   const gy = constrain(
-    floor(
-      y / SETTINGS.cellSize
-    ),
+    floor(y / SETTINGS.cellSize),
     0,
     rows - 1
   );
 
-  return memoryField[
-    gy * cols + gx
-  ];
+  return memoryField[gy * cols + gx];
 }
 
 
 function sampleGradient(x, y) {
   const d = SETTINGS.cellSize;
 
-  const left =
-    sampleField(x - d, y);
-
-  const right =
-    sampleField(x + d, y);
-
-  const up =
-    sampleField(x, y - d);
-
-  const down =
-    sampleField(x, y + d);
+  const left = sampleField(x - d, y);
+  const right = sampleField(x + d, y);
+  const up = sampleField(x, y - d);
+  const down = sampleField(x, y + d);
 
   return createVector(
     right - left,
@@ -891,18 +735,10 @@ function sampleGradient(x, y) {
 
 
 function decayMemoryField() {
-  for (
-    let i = 0;
-    i < memoryField.length;
-    i++
-  ) {
-    memoryField[i] *=
-      SETTINGS.memoryDecay;
+  for (let i = 0; i < memoryField.length; i++) {
+    memoryField[i] *= SETTINGS.memoryDecay;
 
-    if (
-      memoryField[i] <
-      0.0001
-    ) {
+    if (memoryField[i] < 0.0001) {
       memoryField[i] = 0;
     }
   }
@@ -910,27 +746,25 @@ function decayMemoryField() {
 
 
 // ============================================================
-// EDGE WRAPPING
+// WRAPPING
 // ============================================================
 
-function wrapPosition(v) {
+function wrapPosition(position) {
   let wrapped = false;
 
-  if (v.x < 0) {
-    v.x += width;
+  if (position.x < 0) {
+    position.x += width;
     wrapped = true;
-  }
-  else if (v.x >= width) {
-    v.x -= width;
+  } else if (position.x >= width) {
+    position.x -= width;
     wrapped = true;
   }
 
-  if (v.y < 0) {
-    v.y += height;
+  if (position.y < 0) {
+    position.y += height;
     wrapped = true;
-  }
-  else if (v.y >= height) {
-    v.y -= height;
+  } else if (position.y >= height) {
+    position.y -= height;
     wrapped = true;
   }
 
@@ -939,71 +773,24 @@ function wrapPosition(v) {
 
 
 // ============================================================
-// VISIBLE ART FADE
-// ============================================================
-
-function fadeArtLayer() {
-  const p = hexToRgb(paperColor);
-
-  artLayer.noStroke();
-
-  artLayer.fill(
-    p.r,
-    p.g,
-    p.b,
-    SETTINGS.fadeAlpha
-  );
-
-  artLayer.rect(
-    0,
-    0,
-    width,
-    height
-  );
-}
-
-
-// ============================================================
 // PAPER
 // ============================================================
 
 function buildPaperLayer() {
-  const p = hexToRgb(paperColor);
+  const base = hexToRgb(paperColor);
 
-  paperLayer.background(
-    paperColor
-  );
-
+  paperLayer.background(paperColor);
   paperLayer.noStroke();
 
-  // ----------------------------------------------------------
-  // Soft tonal stains
-  // ----------------------------------------------------------
-
+  // Soft tonal stains.
   for (let i = 0; i < 18; i++) {
-    const alpha =
-      random(6, 16);
+    const stainAlpha = random(6, 16);
 
     paperLayer.fill(
-      constrain(
-        p.r - random(2, 10),
-        0,
-        255
-      ),
-
-      constrain(
-        p.g - random(2, 8),
-        0,
-        255
-      ),
-
-      constrain(
-        p.b - random(2, 6),
-        0,
-        255
-      ),
-
-      alpha
+      constrain(base.r - random(2, 10), 0, 255),
+      constrain(base.g - random(2, 8), 0, 255),
+      constrain(base.b - random(2, 6), 0, 255),
+      stainAlpha
     );
 
     paperLayer.ellipse(
@@ -1014,105 +801,63 @@ function buildPaperLayer() {
     );
   }
 
-  // ----------------------------------------------------------
-  // Grain
-  // ----------------------------------------------------------
+  // Grain.
+  const grainCount = width * height * 0.015;
 
-  const grainCount =
-    width *
-    height *
-    0.015;
-
-  for (
-    let i = 0;
-    i < grainCount;
-    i++
-  ) {
+  for (let i = 0; i < grainCount; i++) {
     const x = random(width);
     const y = random(height);
-
-    const v =
-      random(-12, 12);
+    const variation = random(-12, 12);
 
     paperLayer.stroke(
-      constrain(
-        p.r + v,
-        0,
-        255
-      ),
-
-      constrain(
-        p.g + v,
-        0,
-        255
-      ),
-
-      constrain(
-        p.b + v,
-        0,
-        255
-      ),
-
+      constrain(base.r + variation, 0, 255),
+      constrain(base.g + variation, 0, 255),
+      constrain(base.b + variation, 0, 255),
       random(8, 20)
     );
 
     paperLayer.point(x, y);
   }
 
-  // ----------------------------------------------------------
-  // Fibers
-  // ----------------------------------------------------------
-
-  paperLayer.stroke(
-    255,
-    255,
-    255,
-    12
-  );
+  // Sparse fibers.
+  paperLayer.stroke(255, 255, 255, 12);
 
   for (let i = 0; i < 1500; i++) {
     const x = random(width);
     const y = random(height);
-
-    const a = random(TWO_PI);
-    const len = random(3, 10);
+    const angle = random(TWO_PI);
+    const length = random(3, 10);
 
     paperLayer.line(
       x,
       y,
-      x + cos(a) * len,
-      y + sin(a) * len
+      x + cos(angle) * length,
+      y + sin(angle) * length
     );
   }
 }
 
 
 // ============================================================
-// MEMORY DEBUG VIEW
+// DEBUG / HUD
 // ============================================================
 
 function drawFieldDebug() {
   background(0);
   noStroke();
 
-  let maxValue = 0;
+  const maxValue = getMaxMemory();
 
-  // Find current maximum memory strength
-  for (let i = 0; i < memoryField.length; i++) {
-    if (memoryField[i] > maxValue) {
-      maxValue = memoryField[i];
-    }
+  if (maxValue <= 0) {
+    return;
   }
-
-  // Avoid divide-by-zero
-  if (maxValue <= 0) return;
 
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
-      const v = memoryField[y * cols + x];
+      const value = memoryField[y * cols + x];
 
       const brightness = map(
-        v,
+        value,
         0,
         maxValue,
         0,
@@ -1129,76 +874,46 @@ function drawFieldDebug() {
       );
     }
   }
-
-  fill(255);
-  textSize(12);
-  text(
-    `max memory: ${maxValue.toFixed(2)}`,
-    20,
-    height - 25
-  );
 }
 
-// ============================================================
-// HUD
-// ============================================================
 
-function drawHUD() {
-
-  let maxMemory = 0;
+function getMaxMemory() {
+  let maxValue = 0;
 
   for (let i = 0; i < memoryField.length; i++) {
-    if (memoryField[i] > maxMemory) {
-      maxMemory = memoryField[i];
+    if (memoryField[i] > maxValue) {
+      maxValue = memoryField[i];
     }
   }
+
+  return maxValue;
+}
+
+
+function drawHUD() {
+  const maxMemory = getMaxMemory();
+
   noStroke();
-
   fill(20, 100);
-
-  rect(
-    12,
-    12,
-    310,
-    98,
-    8
-  );
+  rect(12, 12, 310, 98, 8);
 
   fill(255, 230);
-
   textSize(12);
   textAlign(LEFT, TOP);
 
-  text(
-    `seed: ${seed}`,
-    22,
-    22
-  );
-
-  text(
-    `palette: ${currentPalette.name}`,
-    22,
-    38
-  );
-
-  text(
-    `walkers: ${walkers.length}`,
-    22,
-    54
-  );
-
+  text(`seed: ${seed}`, 22, 22);
+  text(`palette: ${currentPalette.name}`, 22, 38);
+  text(`walkers: ${walkers.length}`, 22, 54);
   text(
     "[R] regenerate   [S] save   [M] memory   [SPACE] pause",
     22,
     70
   );
-
   text(
     `max memory: ${maxMemory.toFixed(2)}`,
     22,
     86
   );
-
 }
 
 
@@ -1206,22 +921,18 @@ function drawHUD() {
 // UTILITIES
 // ============================================================
 
-function angleDifference(
-  target,
-  current
-) {
-  let a =
-    target - current;
+function angleDifference(target, current) {
+  let delta = target - current;
 
-  while (a > PI) {
-    a -= TWO_PI;
+  while (delta > PI) {
+    delta -= TWO_PI;
   }
 
-  while (a < -PI) {
-    a += TWO_PI;
+  while (delta < -PI) {
+    delta += TWO_PI;
   }
 
-  return a;
+  return delta;
 }
 
 
@@ -1241,47 +952,22 @@ function hexToRgb(hex) {
 // ============================================================
 
 function keyPressed() {
-  if (
-    key === "r" ||
-    key === "R"
-  ) {
+  if (key === "r" || key === "R") {
     initSketch();
-  }
-
-  else if (
-    key === "s" ||
-    key === "S"
-  ) {
+  } else if (key === "s" || key === "S") {
     saveCanvas(
       `temporal-memory-${seed}`,
       "png"
     );
-  }
-
-  else if (
-    key === "m" ||
-    key === "M"
-  ) {
-    showField =
-      !showField;
-  }
-
-  else if (key === " ") {
-    paused =
-      !paused;
+  } else if (key === "m" || key === "M") {
+    showField = !showField;
+  } else if (key === " ") {
+    paused = !paused;
   }
 }
 
 
-// ============================================================
-// RESIZE
-// ============================================================
-
 function windowResized() {
-  resizeCanvas(
-    windowWidth,
-    windowHeight
-  );
-
+  resizeCanvas(windowWidth, windowHeight);
   initSketch();
 }
