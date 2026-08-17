@@ -49,6 +49,18 @@ const PALETTES = {
     ]
   },
 
+  evidenceOfEncounter: {
+    name: "Evidence of Encounter",
+    tags: ["earthy", "muted", "warm", "drawing", "quiet"],
+    colors: [
+      { hex: "#25221e", role: "dark" },
+      { hex: "#26495C", role: "cool" },
+      { hex: "#C4A35A", role: "accent" },
+      { hex: "#C66B3D", role: "warm" },
+      { hex: "#EEE4D2", role: "paper" }
+    ]
+  },
+
   sunAndSea: {
     name: "Sun and Sea",
     tags: ["bright", "balanced", "warm-cool"],
