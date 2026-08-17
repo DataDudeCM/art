@@ -490,26 +490,26 @@ function getEmphasisStyle(event) {
 
     case "significant":
       return {
-        scale: 2.4,
-        alpha: 2.2,
-        weight: 1.8,
+        scale: 3.0,
+        alpha: 2.5,
+        weight: 2.0,
         passes: 5
       };
 
     case "strong":
       return {
         scale: 1.55,
-        alpha: 1.6,
-        weight: 1.35,
-        passes: 4
+        alpha: 1.45,
+        weight: 1.3,
+        passes: 3
       };
 
     default:
       return {
-        scale: 1,
-        alpha: 1.15,
-        weight: 1,
-        passes: 3
+        scale: 0.85,
+        alpha: 0.65,
+        weight: 0.8,
+        passes: 2
       };
   }
 }

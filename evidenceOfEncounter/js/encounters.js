@@ -38,14 +38,101 @@ function wrappedSeparation(a, b) {
   return createVector(dx, dy);
 }
 
-function getEncounterEmphasis(closeness) {
-  if (closeness > 0.78) {
-    return "significant";
+function getEncounterEmphasis(
+  type,
+  a,
+  b,
+  closeness
+) {
+  // Ordinary encounters form the background field.
+  if (closeness < 0.50) {
+    return "ordinary";
   }
 
-  if (closeness > 0.48) {
+  const headingDifference =
+    abs(
+      angleDifference(
+        a.velocity.heading(),
+        b.velocity.heading()
+      )
+    );
+
+  // -------------------------------------------
+  // APPROACH
+  //
+  // Significant only when the agents are both
+  // very close and strongly converging.
+  // -------------------------------------------
+
+  if (type === "approach") {
+    const separation =
+      wrappedSeparation(a, b);
+
+    const relativeVelocity =
+      p5.Vector.sub(
+        b.velocity,
+        a.velocity
+      );
+
+    const closing =
+      separation
+        .copy()
+        .normalize()
+        .dot(
+          relativeVelocity
+            .copy()
+            .normalize()
+        );
+
+    if (
+      closeness > 0.78 &&
+      closing < -0.82
+    ) {
+      return "significant";
+    }
+
     return "strong";
   }
+
+
+  // -------------------------------------------
+  // PARALLEL
+  //
+  // Significant when two agents get very close
+  // while moving unusually coherently.
+  // -------------------------------------------
+
+  if (type === "parallel") {
+    if (
+      closeness > 0.72 &&
+      headingDifference < PI / 16
+    ) {
+      return "significant";
+    }
+
+    return "strong";
+  }
+
+
+  // -------------------------------------------
+  // CROSSING
+  //
+  // Significant when the encounter is close
+  // and the trajectories strongly oppose /
+  // cross one another.
+  // -------------------------------------------
+
+  if (type === "crossing") {
+    if (
+      closeness > 0.78 &&
+      headingDifference > PI * 0.40
+    ) {
+      return "significant";
+    }
+
+    return "strong";
+  }
+
 
   return "ordinary";
 }
@@ -225,28 +312,50 @@ function makeEncounterEvent(
     distance,
     closeness,
 
-    emphasis:
-      getEncounterEmphasis(closeness)
+  emphasis:
+    getEncounterEmphasis(
+      type,
+      a,
+      b,
+      closeness
+    )
   };
 }
 
 
 function encounterRecordChance(event) {
+  let baseChance;
 
   switch (event.type) {
-
     case "approach":
-      return 0.24;
+      baseChance = 0.24;
+      break;
 
     case "parallel":
-      return 0.12;
+      baseChance = 0.12;
+      break;
 
     case "crossing":
-      return 0.16;
+      baseChance = 0.16;
+      break;
 
     default:
       return 0;
   }
+
+
+  switch (event.emphasis) {
+    case "significant":
+      return baseChance;
+
+    case "strong":
+      return baseChance * 0.75;
+
+    case "ordinary":
+      return baseChance * 0.35;
+  }
+
+  return 0;
 }
 
 

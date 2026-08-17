@@ -1,7 +1,7 @@
 const ART_WIDTH = 1100;
 const ART_HEIGHT = 800;
 
-const AGENT_COUNT = 150;
+const AGENT_COUNT = 50;
 
 let SHOW_AGENTS = true;
 
