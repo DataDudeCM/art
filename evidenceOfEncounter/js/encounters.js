@@ -10,6 +10,45 @@ const ENCOUNTER_COOLDOWN = 18;
 // Tracks when a pair last produced a mark.
 const encounterHistory = new Map();
 
+function wrappedSeparation(a, b) {
+  let dx =
+    b.position.x -
+    a.position.x;
+
+  let dy =
+    b.position.y -
+    a.position.y;
+
+  if (dx > width / 2) {
+    dx -= width;
+  }
+
+  if (dx < -width / 2) {
+    dx += width;
+  }
+
+  if (dy > height / 2) {
+    dy -= height;
+  }
+
+  if (dy < -height / 2) {
+    dy += height;
+  }
+
+  return createVector(dx, dy);
+}
+
+function getEncounterEmphasis(closeness) {
+  if (closeness > 0.78) {
+    return "significant";
+  }
+
+  if (closeness > 0.48) {
+    return "strong";
+  }
+
+  return "ordinary";
+}
 
 function detectEncounters(agents) {
   for (let i = 0; i < agents.length - 1; i++) {
@@ -20,10 +59,11 @@ function detectEncounters(agents) {
 
       const b = agents[j];
 
-      const d = p5.Vector.dist(
-        a.position,
-        b.position
-      );
+      const separation =
+        wrappedSeparation(a, b);
+
+      const d =
+        separation.mag();
 
       if (d > ENCOUNTER_DISTANCE) {
         continue;
@@ -66,10 +106,8 @@ function detectEncounters(agents) {
 
 function classifyEncounter(a, b, distance) {
 
-  const separation = p5.Vector.sub(
-    b.position,
-    a.position
-  );
+  const separation =
+    wrappedSeparation(a, b);
 
   const relativeVelocity = p5.Vector.sub(
     b.velocity,
@@ -151,10 +189,22 @@ function makeEncounterEvent(
   distance
 ) {
 
-  const midpoint = p5.Vector.add(
-    a.position,
-    b.position
-  ).mult(0.5);
+  const separation =
+    wrappedSeparation(a, b);
+
+  const midpoint =
+    a.position
+      .copy()
+      .add(
+        separation.copy().mult(0.5)
+      );
+
+  // Wrap the midpoint back onto the canvas.
+  midpoint.x =
+    (midpoint.x + width) % width;
+
+  midpoint.y =
+    (midpoint.y + height) % height;
 
 
   const closeness = constrain(
@@ -173,8 +223,10 @@ function makeEncounterEvent(
     midpoint,
 
     distance,
+    closeness,
 
-    closeness
+    emphasis:
+      getEncounterEmphasis(closeness)
   };
 }
 

@@ -71,6 +71,9 @@ function renderEncounter(event) {
 // --------------------------------------------------
 
 function drawApproachMark(event) {
+  const style =
+    getEmphasisStyle(event);
+
   const direction = p5.Vector.sub(
     event.b.position,
     event.a.position
@@ -83,25 +86,30 @@ function drawApproachMark(event) {
     direction.x
   );
 
-  const length = lerp(
-    10,
-    38,
-    event.closeness
-  );
+  const length =
+    lerp(
+      10,
+      38,
+      event.closeness
+    ) *
+    style.scale;
 
-  const half = perpendicular
-    .copy()
-    .mult(length * 0.5);
+  const half =
+    perpendicular
+      .copy()
+      .mult(length * 0.5);
 
-  const p1 = p5.Vector.sub(
-    event.midpoint,
-    half
-  );
+  const p1 =
+    p5.Vector.sub(
+      event.midpoint,
+      half
+    );
 
-  const p2 = p5.Vector.add(
-    event.midpoint,
-    half
-  );
+  const p2 =
+    p5.Vector.add(
+      event.midpoint,
+      half
+    );
 
   const hex =
     weightedMarkColor();
@@ -110,29 +118,48 @@ function drawApproachMark(event) {
     p1,
     p2,
     hex,
-    lerp(16, 58, event.closeness),
-    lerp(0.45, 1.25, event.closeness),
-    3
+    lerp(
+      20,
+      65,
+      event.closeness
+    ) * style.alpha,
+    lerp(
+      0.5,
+      1.35,
+      event.closeness
+    ) * style.weight,
+    style.passes
   );
 
-  // Strong encounters sometimes leave a second,
-  // slightly displaced trace.
   if (
-    event.closeness > 0.55 &&
-    random() < 0.30
+    event.emphasis !== "ordinary" &&
+    random() < 0.45
   ) {
     const offset =
       direction
         .copy()
-        .mult(random(-3, 3));
+        .mult(
+          random(-4, 4)
+        );
 
     drawHandLine(
-      p5.Vector.add(p1, offset),
-      p5.Vector.add(p2, offset),
+      p5.Vector.add(
+        p1,
+        offset
+      ),
+      p5.Vector.add(
+        p2,
+        offset
+      ),
       hex,
-      random(8, 22),
-      random(0.35, 0.75),
-      2
+      random(15, 35) *
+        style.alpha,
+      random(0.4, 0.9) *
+        style.weight,
+      max(
+        2,
+        style.passes - 1
+      )
     );
   }
 }
@@ -146,6 +173,9 @@ function drawApproachMark(event) {
 // --------------------------------------------------
 
 function drawParallelMark(event) {
+  const style =
+    getEmphasisStyle(event);
+  
   const direction =
     p5.Vector.add(
       event.a.velocity,
@@ -158,11 +188,13 @@ function drawParallelMark(event) {
 
   direction.normalize();
 
-  const length = lerp(
-    12,
-    32,
-    event.closeness
-  );
+  const length =
+    lerp(
+      12,
+      32,
+      event.closeness
+    ) *
+    style.scale;
 
   const perpendicular =
     createVector(
@@ -219,9 +251,14 @@ function drawParallelMark(event) {
       p1,
       p2,
       hex,
-      random(9, 25),
-      random(0.3, 0.7),
-      2
+      random(14, 32) *
+        style.alpha,
+      random(0.35, 0.8) *
+        style.weight,
+      max(
+        2,
+        style.passes - 1
+      )
     );
   }
 }
@@ -236,6 +273,8 @@ function drawParallelMark(event) {
 // --------------------------------------------------
 
 function drawCrossingMark(event) {
+  const style =
+    getEmphasisStyle(event);
   const headingA =
     event.a.velocity.heading();
 
@@ -262,7 +301,8 @@ function drawCrossingMark(event) {
       8,
       26,
       event.closeness
-    );
+    ) *
+    style.scale;
 
   const startAngle =
     headingA +
@@ -280,8 +320,11 @@ function drawCrossingMark(event) {
     startAngle +
       spread * direction,
     weightedMarkColor(),
-    random(12, 38),
-    random(0.4, 0.95)
+    random(18, 48) *
+      style.alpha,
+    random(0.45, 1.05) *
+      style.weight,
+    style.passes
   );
 }
 
@@ -442,6 +485,35 @@ function drawWobblyLinePass(
 }
 
 
+function getEmphasisStyle(event) {
+  switch (event.emphasis) {
+
+    case "significant":
+      return {
+        scale: 2.4,
+        alpha: 2.2,
+        weight: 1.8,
+        passes: 5
+      };
+
+    case "strong":
+      return {
+        scale: 1.55,
+        alpha: 1.6,
+        weight: 1.35,
+        passes: 4
+      };
+
+    default:
+      return {
+        scale: 1,
+        alpha: 1.15,
+        weight: 1,
+        passes: 3
+      };
+  }
+}
+
 // --------------------------------------------------
 // HAND-DRAWN ARC
 // --------------------------------------------------
@@ -453,9 +525,9 @@ function drawHandArc(
   endAngle,
   hex,
   alpha,
-  weight
+  weight,
+  passes = 3
 ) {
-  const passes = 3;
 
   for (
     let pass = 0;
