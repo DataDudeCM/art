@@ -10,6 +10,12 @@ let flowStrengthSlider;
 let noiseScaleSlider;
 let angleSlider;
 
+let radialStrengthSlider;
+let radialRadiusSlider;
+let radialFalloffSlider;
+
+let radialFieldGroup;
+
 let controlPanel;
 let imageMapGroup;
 let flowFieldGroup;
@@ -77,6 +83,11 @@ function createUI() {
   modeSelect.option(
     "Flow Field",
     "flowField"
+  );
+
+  modeSelect.option(
+    "Radial Field",
+    "radialField"
   );
 
   modeSelect.selected(mode);
@@ -212,6 +223,63 @@ function createUI() {
   });
 
   // -----------------------
+  // Radial Field
+  // -----------------------
+
+  radialFieldGroup = createDiv();
+  radialFieldGroup.parent(controlPanel);
+
+  radialStrengthSlider =
+    createSliderControl(
+      "Strength",
+      -300,
+      300,
+      80,
+      1,
+      radialFieldGroup,
+      value => value,
+      () => {
+        if (mode === "radialField") {
+          tryRender();
+        }
+      }
+    );
+
+  radialRadiusSlider =
+    createSliderControl(
+      "Radius",
+      0.1,
+      1,
+      0.75,
+      0.01,
+      radialFieldGroup,
+      value =>
+        Number(value).toFixed(2),
+      () => {
+        if (mode === "radialField") {
+          tryRender();
+        }
+      }
+    );
+
+  radialFalloffSlider =
+    createSliderControl(
+      "Falloff",
+      0.25,
+      5,
+      1.5,
+      0.05,
+      radialFieldGroup,
+      value =>
+        Number(value).toFixed(2),
+      () => {
+        if (mode === "radialField") {
+          tryRender();
+        }
+      }
+    );
+
+  // -----------------------
   // View
   // -----------------------
 
@@ -329,16 +397,28 @@ function createSliderControl(
 }
 
 function updateControlVisibility() {
-  if (!imageMapGroup || !flowFieldGroup) {
+  if (
+    !imageMapGroup ||
+    !flowFieldGroup ||
+    !radialFieldGroup
+  ) {
     return;
   }
 
+  imageMapGroup.hide();
+  flowFieldGroup.hide();
+  radialFieldGroup.hide();
+
   if (mode === "imageMap") {
     imageMapGroup.show();
-    flowFieldGroup.hide();
-  } else {
-    imageMapGroup.hide();
+  }
+
+  if (mode === "flowField") {
     flowFieldGroup.show();
+  }
+
+  if (mode === "radialField") {
+    radialFieldGroup.show();
   }
 }
 

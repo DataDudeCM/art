@@ -157,6 +157,10 @@ function tryRender() {
   if (mode === "flowField") {
     renderFlowField();
   }
+
+  if (mode === "radialField") {
+    renderRadialField();
+  }
 }
 
 function renderImageMap() {
@@ -214,6 +218,39 @@ function renderFlowField() {
   renderDisplacementField(
     (x, y, index) =>
       getFlowFieldOffset(
+        x,
+        y,
+        index,
+        settings
+      )
+  );
+}
+
+function renderRadialField() {
+  if (!sourceImg) {
+    return;
+  }
+
+  const settings = {
+    width:
+      sourceImg.width,
+
+    height:
+      sourceImg.height,
+
+    strength:
+      radialStrengthSlider.value(),
+
+    radius:
+      radialRadiusSlider.value(),
+
+    falloff:
+      radialFalloffSlider.value()
+  };
+
+  renderDisplacementField(
+    (x, y, index) =>
+      getRadialFieldOffset(
         x,
         y,
         index,

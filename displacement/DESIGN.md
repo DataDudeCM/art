@@ -180,7 +180,7 @@ Output
 
 ---
 
-## Initial Milestone
+## Initial Milestone - DONE
 
 Version 1 is complete when the tool supports:
 
@@ -202,7 +202,8 @@ No additional displacement modes should be added until this combined version is 
 Potential later modes:
 
 - self-displacement
-- radial attraction / repulsion
+- use result as source
+- radial attraction / repulsion 
 - wave fields
 - edge-based displacement
 - drawing-driven displacement

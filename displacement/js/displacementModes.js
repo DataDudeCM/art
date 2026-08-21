@@ -41,3 +41,67 @@ function getFlowFieldOffset(
     dy: sin(angle) * settings.strength
   };
 }
+
+function getRadialFieldOffset(
+  x,
+  y,
+  index,
+  settings
+) {
+  const centerX =
+    settings.width / 2;
+
+  const centerY =
+    settings.height / 2;
+
+  const vx =
+    x - centerX;
+
+  const vy =
+    y - centerY;
+
+  const distance =
+    sqrt(vx * vx + vy * vy);
+
+  const maxRadius =
+    min(
+      settings.width,
+      settings.height
+    ) *
+    0.5 *
+    settings.radius;
+
+  if (
+    distance === 0 ||
+    distance > maxRadius
+  ) {
+    return {
+      dx: 0,
+      dy: 0
+    };
+  }
+
+  const nx =
+    vx / distance;
+
+  const ny =
+    vy / distance;
+
+  const normalizedDistance =
+    distance / maxRadius;
+
+  const influence =
+    pow(
+      1 - normalizedDistance,
+      settings.falloff
+    );
+
+  const displacement =
+    settings.strength *
+    influence;
+
+  return {
+    dx: nx * displacement,
+    dy: ny * displacement
+  };
+}
