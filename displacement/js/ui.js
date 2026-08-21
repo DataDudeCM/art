@@ -10,33 +10,78 @@ let flowStrengthSlider;
 let noiseScaleSlider;
 let angleSlider;
 
+let controlPanel;
+let imageMapGroup;
+let flowFieldGroup;
+
+let sourceInfo;
+let beforeAfterButton;
+
 function createUI() {
+  applyUIPalette();
+
+  controlPanel = createDiv();
+  controlPanel.id("control-panel");
+
   // -----------------------
-  // Source image
+  // Header
   // -----------------------
 
-  createSpan("Source image:")
-    .position(20, 18)
-    .style("color", "white");
+  const header = createDiv();
+  header.addClass("panel-header");
+  header.parent(controlPanel);
 
-  sourceInput = createFileInput(handleSourceFile);
-  sourceInput.position(120, 15);
+  const title = createDiv("DISPLACEMENT MAPPER");
+  title.addClass("panel-title");
+  title.parent(header);
+
+  const subtitle = createDiv(
+    "Pixel displacement laboratory"
+  );
+  subtitle.addClass("panel-subtitle");
+  subtitle.parent(header);
+
+  // -----------------------
+  // Source
+  // -----------------------
+
+  const sourceSection =
+    createSection("SOURCE");
+
+  sourceInput =
+    createFileInput(handleSourceFile);
+
+  sourceInput.addClass("file-input");
+  sourceInput.parent(sourceSection);
+
+  sourceInfo =
+    createDiv("No image loaded");
+
+  sourceInfo.addClass("source-info");
+  sourceInfo.parent(sourceSection);
 
   // -----------------------
   // Mode
   // -----------------------
 
-  createSpan("Mode:")
-    .position(20, 53)
-    .style("color", "white");
+  const modeSection =
+    createSection("MODE");
 
   modeSelect = createSelect();
-  modeSelect.position(120, 50);
 
-  modeSelect.option("Image Map", "imageMap");
-  modeSelect.option("Flow Field", "flowField");
+  modeSelect.option(
+    "Image Map",
+    "imageMap"
+  );
+
+  modeSelect.option(
+    "Flow Field",
+    "flowField"
+  );
 
   modeSelect.selected(mode);
+  modeSelect.addClass("mode-select");
+  modeSelect.parent(modeSection);
 
   modeSelect.changed(() => {
     mode = modeSelect.value();
@@ -46,231 +91,322 @@ function createUI() {
   });
 
   // -----------------------
-  // Image map controls
+  // Image Map
   // -----------------------
 
-  createSpan("Displacement:")
-    .position(20, 88)
-    .style("color", "white")
-    .addClass("image-map-control");
+  imageMapGroup = createDiv();
+  imageMapGroup.parent(controlPanel);
 
-  mapInput = createFileInput(handleMapFile);
-  mapInput.position(120, 85);
-  mapInput.addClass("image-map-control");
+  const imageMapSection =
+    createSection(
+      "DISPLACEMENT MAP",
+      imageMapGroup
+    );
 
-  createSpan("Horizontal:")
-    .position(20, 123)
-    .style("color", "white")
-    .addClass("image-map-control");
+  mapInput =
+    createFileInput(handleMapFile);
 
-  strengthXSlider = createSlider(
-    0,
-    200,
-    30,
-    1
-  );
+  mapInput.addClass("file-input");
+  mapInput.parent(imageMapSection);
 
-  strengthXSlider.position(120, 119);
-  strengthXSlider.size(220);
-  strengthXSlider.addClass(
-    "image-map-control"
-  );
+  strengthXSlider =
+    createSliderControl(
+      "Horizontal",
+      0,
+      200,
+      30,
+      1,
+      imageMapGroup,
+      value => value,
+      () => {
+        if (mode === "imageMap") {
+          tryRender();
+        }
+      }
+    );
 
-  strengthXSlider.input(() => {
-    if (mode === "imageMap") {
-      tryRender();
-    }
-  });
-
-  createSpan("Vertical:")
-    .position(20, 158)
-    .style("color", "white")
-    .addClass("image-map-control");
-
-  strengthYSlider = createSlider(
-    0,
-    200,
-    30,
-    1
-  );
-
-  strengthYSlider.position(120, 154);
-  strengthYSlider.size(220);
-  strengthYSlider.addClass(
-    "image-map-control"
-  );
-
-  strengthYSlider.input(() => {
-    if (mode === "imageMap") {
-      tryRender();
-    }
-  });
+  strengthYSlider =
+    createSliderControl(
+      "Vertical",
+      0,
+      200,
+      30,
+      1,
+      imageMapGroup,
+      value => value,
+      () => {
+        if (mode === "imageMap") {
+          tryRender();
+        }
+      }
+    );
 
   // -----------------------
-  // Flow field controls
+  // Flow Field
   // -----------------------
 
-  createSpan("Strength:")
-    .position(20, 88)
-    .style("color", "white")
-    .addClass("flow-field-control");
+  flowFieldGroup = createDiv();
+  flowFieldGroup.parent(controlPanel);
 
-  flowStrengthSlider = createSlider(
-    0,
-    200,
-    35,
-    1
+  flowStrengthSlider =
+    createSliderControl(
+      "Strength",
+      0,
+      200,
+      35,
+      1,
+      flowFieldGroup,
+      value => value,
+      () => {
+        if (mode === "flowField") {
+          tryRender();
+        }
+      }
+    );
+
+  noiseScaleSlider =
+    createSliderControl(
+      "Noise Scale",
+      0.001,
+      0.05,
+      0.008,
+      0.001,
+      flowFieldGroup,
+      value => Number(value).toFixed(3),
+      () => {
+        if (mode === "flowField") {
+          tryRender();
+        }
+      }
+    );
+
+  angleSlider =
+    createSliderControl(
+      "Angle Multiplier",
+      1,
+      8,
+      2,
+      1,
+      flowFieldGroup,
+      value => value,
+      () => {
+        if (mode === "flowField") {
+          tryRender();
+        }
+      }
+    );
+
+  // -----------------------
+  // View
+  // -----------------------
+
+  const viewSection =
+    createSection("VIEW");
+
+  beforeAfterButton =
+    createButton("SHOW BEFORE");
+
+  beforeAfterButton.addClass(
+    "secondary-button"
   );
 
-  flowStrengthSlider.position(120, 84);
-  flowStrengthSlider.size(220);
-  flowStrengthSlider.addClass(
-    "flow-field-control"
-  );
+  beforeAfterButton.parent(viewSection);
 
-  flowStrengthSlider.input(() => {
-    if (mode === "flowField") {
-      tryRender();
-    }
+  beforeAfterButton.mousePressed(() => {
+    showBefore = !showBefore;
+
+    updateBeforeAfterButton();
   });
 
-  createSpan("Noise scale:")
-    .position(20, 123)
-    .style("color", "white")
-    .addClass("flow-field-control");
+  const hint =
+    createDiv("SPACE toggles before / after");
 
-  noiseScaleSlider = createSlider(
-    0.001,
-    0.05,
-    0.008,
-    0.001
-  );
-
-  noiseScaleSlider.position(120, 119);
-  noiseScaleSlider.size(220);
-  noiseScaleSlider.addClass(
-    "flow-field-control"
-  );
-
-  noiseScaleSlider.input(() => {
-    if (mode === "flowField") {
-      tryRender();
-    }
-  });
-
-  createSpan("Angle mult:")
-    .position(20, 158)
-    .style("color", "white")
-    .addClass("flow-field-control");
-
-  angleSlider = createSlider(
-    1,
-    8,
-    2,
-    1
-  );
-
-  angleSlider.position(120, 154);
-  angleSlider.size(220);
-  angleSlider.addClass(
-    "flow-field-control"
-  );
-
-  angleSlider.input(() => {
-    if (mode === "flowField") {
-      tryRender();
-    }
-  });
+  hint.addClass("keyboard-hint");
+  hint.parent(viewSection);
 
   updateControlVisibility();
+  updateBeforeAfterButton();
 }
 
-function drawUI() {
-  fill(255);
-  noStroke();
+function createSection(
+  title,
+  parent = controlPanel
+) {
+  const section = createDiv();
+  section.addClass("control-section");
+  section.parent(parent);
 
-  textAlign(LEFT, TOP);
-  textSize(14);
+  const label = createDiv(title);
+  label.addClass("section-title");
+  label.parent(section);
 
-  if (mode === "imageMap") {
-    text(
-      `X strength: ${strengthXSlider.value()}`,
-      365,
-      122
+  return section;
+}
+
+function createSliderControl(
+  label,
+  min,
+  max,
+  initial,
+  step,
+  parent,
+  formatter,
+  onInput
+) {
+  const group = createDiv();
+  group.addClass("slider-control");
+  group.parent(parent);
+
+  const labelRow = createDiv();
+  labelRow.addClass("slider-label-row");
+  labelRow.parent(group);
+
+  const labelElement =
+    createSpan(label);
+
+  labelElement.addClass("slider-label");
+  labelElement.parent(labelRow);
+
+  const valueElement =
+    createSpan(formatter(initial));
+
+  valueElement.addClass("slider-value");
+  valueElement.parent(labelRow);
+
+  const slider =
+    createSlider(
+      min,
+      max,
+      initial,
+      step
     );
 
-    text(
-      `Y strength: ${strengthYSlider.value()}`,
-      365,
-      157
-    );
-  }
+  slider.addClass("control-slider");
+  slider.parent(group);
 
-  if (mode === "flowField") {
-    text(
-      `Strength: ${flowStrengthSlider.value()}`,
-      365,
-      87
+  slider.input(() => {
+    valueElement.html(
+      formatter(slider.value())
     );
 
-    text(
-      `Noise scale: ${nf(
-        noiseScaleSlider.value(),
-        1,
-        3
-      )}`,
-      365,
-      122
-    );
+    onInput();
+  });
 
-    text(
-      `Angle mult: ${angleSlider.value()}`,
-      365,
-      157
-    );
-  }
-
-  textSize(12);
-
-  if (sourceImg) {
-    text(
-      `Source: ${sourceImg.width} × ${sourceImg.height}`,
-      20,
-      192
-    );
-
-    text(
-      showBefore
-        ? "SPACE: showing BEFORE"
-        : "SPACE: showing AFTER",
-      250,
-      192
-    );
-  }
+  return slider;
 }
 
 function updateControlVisibility() {
-  const imageControls =
-    selectAll(".image-map-control");
-
-  const flowControls =
-    selectAll(".flow-field-control");
+  if (!imageMapGroup || !flowFieldGroup) {
+    return;
+  }
 
   if (mode === "imageMap") {
-    for (const control of imageControls) {
-      control.show();
-    }
-
-    for (const control of flowControls) {
-      control.hide();
-    }
+    imageMapGroup.show();
+    flowFieldGroup.hide();
   } else {
-    for (const control of imageControls) {
-      control.hide();
-    }
-
-    for (const control of flowControls) {
-      control.show();
-    }
+    imageMapGroup.hide();
+    flowFieldGroup.show();
   }
+}
+
+function updateSourceInfo() {
+  if (!sourceInfo) {
+    return;
+  }
+
+  if (!sourceImg) {
+    sourceInfo.html(
+      "No image loaded"
+    );
+
+    return;
+  }
+
+  sourceInfo.html(
+    `${sourceImg.width} × ${sourceImg.height}`
+  );
+}
+
+function updateBeforeAfterButton() {
+  if (!beforeAfterButton) {
+    return;
+  }
+
+  beforeAfterButton.html(
+    showBefore
+      ? "SHOW AFTER"
+      : "SHOW BEFORE"
+  );
+}
+
+function applyUIPalette() {
+  const palette =
+    getPalette("industrialSun");
+
+  if (!palette) {
+    return;
+  }
+
+  const dark =
+    getColorByRole(
+      palette,
+      "dark",
+      false
+    );
+
+  const warm =
+    getColorByRole(
+      palette,
+      "warm",
+      false
+    );
+
+  const cool =
+    getColorByRole(
+      palette,
+      "cool",
+      false
+    );
+
+  const neutral =
+    getColorByRole(
+      palette,
+      "neutral",
+      false
+    );
+
+  const light =
+    getColorByRole(
+      palette,
+      "light",
+      false
+    );
+
+  const root =
+    document.documentElement;
+
+  root.style.setProperty(
+    "--ui-dark",
+    dark
+  );
+
+  root.style.setProperty(
+    "--ui-warm",
+    warm
+  );
+
+  root.style.setProperty(
+    "--ui-cool",
+    cool
+  );
+
+  root.style.setProperty(
+    "--ui-neutral",
+    neutral
+  );
+
+  root.style.setProperty(
+    "--ui-light",
+    light
+  );
 }

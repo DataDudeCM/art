@@ -7,10 +7,16 @@ let showBefore = false;
 
 let mode = "imageMap";
 
-const UI_HEIGHT = 220;
+const PANEL_WIDTH = 320;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  const canvas = createCanvas(
+    windowWidth - PANEL_WIDTH,
+    windowHeight
+  );
+
+  canvas.position(0, 0);
+
   pixelDensity(1);
 
   noiseSeed(12345);
@@ -19,26 +25,37 @@ function setup() {
 }
 
 function draw() {
-  background(30);
+  const palette =
+    getPalette("industrialSun");
 
-  drawUI();
+  background(
+    getDarkColor(palette)
+  );
 
   if (!sourceImg) {
-    fill(180);
+    fill(
+      getColorByRole(
+        palette,
+        "neutral",
+        false
+      )
+    );
+
     noStroke();
+
     textSize(16);
     textAlign(CENTER, CENTER);
 
     text(
       "Choose a source image",
       width / 2,
-      UI_HEIGHT + (height - UI_HEIGHT) / 2
+      height / 2
     );
 
     return;
   }
 
-  let img =
+  const img =
     showBefore || !displacedImg
       ? sourceImg
       : displacedImg;
@@ -47,28 +64,36 @@ function draw() {
 }
 
 function displayImage(img) {
-  let availableWidth = width;
-  let availableHeight = height - UI_HEIGHT;
+  const margin = 32;
+
+  const availableWidth =
+    width - margin * 2;
+
+  const availableHeight =
+    height - margin * 2;
 
   let scaleFactor = min(
     availableWidth / img.width,
     availableHeight / img.height
   );
 
-  scaleFactor *= 0.95;
+  // Never enlarge small images.
+  scaleFactor = min(
+    scaleFactor,
+    1
+  );
 
-  let displayWidth =
+  const displayWidth =
     img.width * scaleFactor;
 
-  let displayHeight =
+  const displayHeight =
     img.height * scaleFactor;
 
-  let x =
+  const x =
     (width - displayWidth) / 2;
 
-  let y =
-    UI_HEIGHT +
-    (availableHeight - displayHeight) / 2;
+  const y =
+    (height - displayHeight) / 2;
 
   image(
     img,
@@ -81,7 +106,10 @@ function displayImage(img) {
 
 function handleSourceFile(file) {
   if (file.type !== "image") {
-    console.log("Source must be an image.");
+    console.log(
+      "Source must be an image."
+    );
+
     return;
   }
 
@@ -90,6 +118,8 @@ function handleSourceFile(file) {
 
     displacedImg = null;
     scaledMap = null;
+
+    updateSourceInfo();
 
     tryRender();
   });
@@ -100,6 +130,7 @@ function handleMapFile(file) {
     console.log(
       "Displacement map must be an image."
     );
+
     return;
   }
 
@@ -143,8 +174,11 @@ function renderImageMap() {
   scaledMap.loadPixels();
 
   const settings = {
-    strengthX: strengthXSlider.value(),
-    strengthY: strengthYSlider.value()
+    strengthX:
+      strengthXSlider.value(),
+
+    strengthY:
+      strengthYSlider.value()
   };
 
   renderDisplacementField(
@@ -164,9 +198,14 @@ function renderFlowField() {
   }
 
   const settings = {
-    strength: flowStrengthSlider.value(),
-    noiseScale: noiseScaleSlider.value(),
-    angleMult: angleSlider.value()
+    strength:
+      flowStrengthSlider.value(),
+
+    noiseScale:
+      noiseScaleSlider.value(),
+
+    angleMult:
+      angleSlider.value()
   };
 
   renderDisplacementField(
@@ -183,13 +222,16 @@ function renderFlowField() {
 function keyPressed() {
   if (key === " ") {
     showBefore = !showBefore;
+
+    updateBeforeAfterButton();
+
     return false;
   }
 }
 
 function windowResized() {
   resizeCanvas(
-    windowWidth,
+    windowWidth - PANEL_WIDTH,
     windowHeight
   );
 }
