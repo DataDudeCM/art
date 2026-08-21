@@ -355,32 +355,19 @@ function renderImageMap() {
 
   scaledMap.loadPixels();
 
-  const strengthX =
-    strengthXSlider.value();
-
-  const strengthY =
-    strengthYSlider.value();
+  const settings = {
+    strengthX: strengthXSlider.value(),
+    strengthY: strengthYSlider.value()
+  };
 
   renderDisplacementField(
-    (x, y, index) => {
-
-      const r =
-        scaledMap.pixels[index];
-
-      const g =
-        scaledMap.pixels[index + 1];
-
-      const normalizedX =
-        (r - 128) / 127;
-
-      const normalizedY =
-        (g - 128) / 127;
-
-      return {
-        dx: normalizedX * strengthX,
-        dy: normalizedY * strengthY
-      };
-    }
+    (x, y, index) =>
+      getImageMapOffset(
+        x,
+        y,
+        index,
+        settings
+      )
   );
 }
 
@@ -389,31 +376,20 @@ function renderFlowField() {
     return;
   }
 
-  const strength =
-    flowStrengthSlider.value();
-
-  const noiseScale =
-    noiseScaleSlider.value();
-
-  const angleMult =
-    angleSlider.value();
+  const settings = {
+    strength: flowStrengthSlider.value(),
+    noiseScale: noiseScaleSlider.value(),
+    angleMult: angleSlider.value()
+  };
 
   renderDisplacementField(
-    (x, y) => {
-
-      const n = noise(
-        x * noiseScale,
-        y * noiseScale
-      );
-
-      const angle =
-        n * TWO_PI * angleMult;
-
-      return {
-        dx: cos(angle) * strength,
-        dy: sin(angle) * strength
-      };
-    }
+    (x, y, index) =>
+      getFlowFieldOffset(
+        x,
+        y,
+        index,
+        settings
+      )
   );
 }
 
