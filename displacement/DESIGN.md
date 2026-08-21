@@ -109,6 +109,63 @@ displacement/
     └── displacementModes.js
 ```
 
+## UI Direction
+
+The current interface is temporary scaffolding.
+
+The intended layout is:
+
+- image workspace on the left
+- control panel on the right
+- source image selector
+- mode selector
+- mode-specific controls
+- before / after control
+- randomize where relevant
+- save output
+
+The image should scale to fit the remaining workspace while preserving its aspect ratio.
+
+Mode-specific controls should only appear when relevant.
+
+---
+
+## Saving
+
+Saving is part of the Version 1 feature set.
+
+The saved image must use the full-resolution processed image rather than the scaled browser preview.
+
+Display scaling and processing resolution must remain separate concerns.
+
+---
+
+## Rendering Strategy
+
+The initial renderer is CPU-based.
+
+This is appropriate for:
+
+- understanding displacement behavior
+- debugging new modes
+- still-image rendering
+- experimenting with displacement algorithms
+
+The architecture should not depend on CPU rendering, however.
+
+A future GPU / shader renderer may be introduced for interactive or animated displacement.
+
+Conceptually, both renderers follow the same model:
+
+```text
+Source Image
+    ↓
+Displacement Field
+    ↓
+Pixel Sampling
+    ↓
+Output
+
 ---
 
 ## Design Rules
@@ -135,6 +192,7 @@ Version 1 is complete when the tool supports:
 - mode switching without reloading the source image
 - Image Map X/Y strength controls
 - Flow Field strength, noise scale, angle multiplier, and randomize
+- save output
 
 No additional displacement modes should be added until this combined version is stable.
 

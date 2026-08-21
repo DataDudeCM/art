@@ -353,15 +353,7 @@ function renderImageMap() {
     sourceImg.height
   );
 
-  sourceImg.loadPixels();
   scaledMap.loadPixels();
-
-  displacedImg = createImage(
-    sourceImg.width,
-    sourceImg.height
-  );
-
-  displacedImg.loadPixels();
 
   const strengthX =
     strengthXSlider.value();
@@ -369,40 +361,27 @@ function renderImageMap() {
   const strengthY =
     strengthYSlider.value();
 
-  for (let y = 0; y < sourceImg.height; y++) {
-    for (let x = 0; x < sourceImg.width; x++) {
-      let i =
-        4 * (x + y * sourceImg.width);
+  renderDisplacementField(
+    (x, y, index) => {
 
-      let r =
-        scaledMap.pixels[i];
+      const r =
+        scaledMap.pixels[index];
 
-      let g =
-        scaledMap.pixels[i + 1];
+      const g =
+        scaledMap.pixels[index + 1];
 
-      let normalizedX =
+      const normalizedX =
         (r - 128) / 127;
 
-      let normalizedY =
+      const normalizedY =
         (g - 128) / 127;
 
-      let dx =
-        normalizedX * strengthX;
-
-      let dy =
-        normalizedY * strengthY;
-
-      copySourcePixel(
-        x,
-        y,
-        dx,
-        dy,
-        i
-      );
+      return {
+        dx: normalizedX * strengthX,
+        dy: normalizedY * strengthY
+      };
     }
-  }
-
-  displacedImg.updatePixels();
+  );
 }
 
 function renderFlowField() {
@@ -419,86 +398,23 @@ function renderFlowField() {
   const angleMult =
     angleSlider.value();
 
-  sourceImg.loadPixels();
+  renderDisplacementField(
+    (x, y) => {
 
-  displacedImg = createImage(
-    sourceImg.width,
-    sourceImg.height
-  );
-
-  displacedImg.loadPixels();
-
-  for (let y = 0; y < sourceImg.height; y++) {
-    for (let x = 0; x < sourceImg.width; x++) {
-      let i =
-        4 * (x + y * sourceImg.width);
-
-      let n = noise(
+      const n = noise(
         x * noiseScale,
         y * noiseScale
       );
 
-      let angle =
+      const angle =
         n * TWO_PI * angleMult;
 
-      let dx =
-        cos(angle) * strength;
-
-      let dy =
-        sin(angle) * strength;
-
-      copySourcePixel(
-        x,
-        y,
-        dx,
-        dy,
-        i
-      );
+      return {
+        dx: cos(angle) * strength,
+        dy: sin(angle) * strength
+      };
     }
-  }
-
-  displacedImg.updatePixels();
-}
-
-function copySourcePixel(
-  x,
-  y,
-  dx,
-  dy,
-  destinationIndex
-) {
-  let sx =
-    floor(x + dx);
-
-  let sy =
-    floor(y + dy);
-
-  sx = constrain(
-    sx,
-    0,
-    sourceImg.width - 1
   );
-
-  sy = constrain(
-    sy,
-    0,
-    sourceImg.height - 1
-  );
-
-  let sourceIndex =
-    4 * (sx + sy * sourceImg.width);
-
-  displacedImg.pixels[destinationIndex] =
-    sourceImg.pixels[sourceIndex];
-
-  displacedImg.pixels[destinationIndex + 1] =
-    sourceImg.pixels[sourceIndex + 1];
-
-  displacedImg.pixels[destinationIndex + 2] =
-    sourceImg.pixels[sourceIndex + 2];
-
-  displacedImg.pixels[destinationIndex + 3] =
-    sourceImg.pixels[sourceIndex + 3];
 }
 
 function updateControlVisibility() {
