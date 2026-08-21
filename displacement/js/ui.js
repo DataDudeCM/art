@@ -196,6 +196,21 @@ function createUI() {
       }
     );
 
+  const randomizeButton =
+    createButton("RANDOMIZE FIELD");
+
+  randomizeButton.addClass(
+    "secondary-button"
+  );
+
+  randomizeButton.parent(
+    flowFieldGroup
+  );
+
+  randomizeButton.mousePressed(() => {
+    randomizeFlowField();
+  });
+
   // -----------------------
   // View
   // -----------------------
@@ -216,6 +231,24 @@ function createUI() {
     showBefore = !showBefore;
 
     updateBeforeAfterButton();
+  });
+
+  const outputSection =
+    createSection("OUTPUT");
+
+  const saveButton =
+    createButton("SAVE IMAGE");
+
+  saveButton.addClass(
+    "primary-button"
+  );
+
+  saveButton.parent(
+    outputSection
+  );
+
+  saveButton.mousePressed(() => {
+    saveResult();
   });
 
   const hint =

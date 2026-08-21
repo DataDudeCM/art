@@ -6,6 +6,7 @@ let displacedImg = null;
 let showBefore = false;
 
 let mode = "imageMap";
+let flowSeed = 12345;
 
 const PANEL_WIDTH = 320;
 
@@ -19,7 +20,7 @@ function setup() {
 
   pixelDensity(1);
 
-  noiseSeed(12345);
+  noiseSeed(flowSeed);
 
   createUI();
 }
@@ -197,6 +198,8 @@ function renderFlowField() {
     return;
   }
 
+  noiseSeed(flowSeed);
+
   const settings = {
     strength:
       flowStrengthSlider.value(),
@@ -216,6 +219,38 @@ function renderFlowField() {
         index,
         settings
       )
+  );
+}
+
+function randomizeFlowField() {
+  flowSeed = floor(
+    random(0, 1000000)
+  );
+
+  noiseSeed(flowSeed);
+
+  if (mode === "flowField") {
+    tryRender();
+  }
+}
+
+function saveResult() {
+  if (!displacedImg) {
+    return;
+  }
+
+  const timestamp =
+    year() +
+    nf(month(), 2) +
+    nf(day(), 2) +
+    "-" +
+    nf(hour(), 2) +
+    nf(minute(), 2) +
+    nf(second(), 2);
+
+  displacedImg.save(
+    `displacement-${mode}-${timestamp}`,
+    "png"
   );
 }
 

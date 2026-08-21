@@ -157,7 +157,6 @@ A future GPU / shader renderer may be introduced for interactive or animated dis
 
 Conceptually, both renderers follow the same model:
 
-```text
 Source Image
     ↓
 Displacement Field
