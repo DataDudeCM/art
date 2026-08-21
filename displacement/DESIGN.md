@@ -201,14 +201,42 @@ No additional displacement modes should be added until this combined version is 
 
 Potential later modes:
 
-- self-displacement
-- use result as source
-- radial attraction / repulsion 
-- wave fields
-- edge-based displacement
-- drawing-driven displacement
-- particle-generated displacement
-- recursive displacement
-- independent RGB channel displacement
+* **Vortex / Twist** — rotate pixels around a chosen center, with radius and falloff. Probably the strongest next mode.
+* **Wave Field** — sinusoidal horizontal/vertical displacement. Could support wavelength, amplitude, angle, phase.
+* **Ripple** — concentric waves around a chosen center. Similar family to Radial, but oscillating rather than simply pushing/pulling.
+* **Directional Smear** — push pixels along a fixed direction, optionally modulated by noise or luminance. Could feel more painterly.
+* **Edge Field** — detect edges in the source and displace based on them. This is especially interesting because the image itself starts generating the force field.
+* **Self-Map** — use the source image itself as the displacement map. Very easy to understand, but can produce surprisingly gnarly results.
+* **RGB Split** — displace red, green, and blue independently. More glitch-oriented, but could be subtle rather than cheesy.
+* **Bands / Stripes** — displacement varies by horizontal, vertical, or angled bands. Could resemble analog scanning, folding, or woven distortion.
+* **Attractor Field** — one or more points pull or repel pixels. Radial is essentially one simple attractor; this would generalize it.
+* **Multiple Radial Fields** — several push/pull centers interacting at once. This could get very organic.
+* **Curl Noise** — a more fluid, swirling cousin of the current Flow Field. Less arbitrary-looking and more like currents or smoke.
+* **Vector Noise** — separate noise functions determine X and Y displacement rather than deriving both from one angle.
+* **Grid Warp** — distort space according to a warped lattice. Could feel architectural or geometric.
+* **Perspective / Funnel** — displacement increases toward a vanishing point or line.
+* **Shear Field** — progressively shift rows or columns, perhaps with nonlinear falloff.
+* **Fold / Crease** — distort pixels around a line rather than a point, almost like bending a sheet of paper.
+* **Lens / Bulge / Pinch** — technically related to Radial, but based on nonlinear spatial remapping rather than just directional displacement.
+* **Spiral Ripple** — combine vortex and ripple math so waves rotate as they radiate.
+* **Particle Field** — invisible particles generate local displacement around their trajectories.
+* **Drawing Field** — draw strokes on the image and have those strokes become directional displacement forces.
+* **Recursive Field** — subdivide the image and apply progressively smaller displacement structures recursively.
+* **Image Gradient Field** — calculate luminance gradients and move pixels uphill/downhill or perpendicular to the gradient.
+* **Color Field** — certain colors attract, repel, or redirect surrounding pixels.
+* **Threshold / Region Field** — only distort pixels inside selected brightness or color ranges.
+* **Pixel Sort / Displacement Hybrid** — not pure displacement anymore, but potentially a very interesting later direction.
+
+There are also more experimental ones that fit the generative-art side of this project particularly well: **gravity wells, magnetic dipoles, reaction-diffusion fields, Voronoi/cellular fields, strange attractors, pendulum-driven fields, and agent-generated fields**.
+
+If I were narrowing this to the **five most worth building soon**, I’d choose:
+
+1. **Vortex**
+2. **Edge Field**
+3. **Wave Field**
+4. **Curl Noise**
+5. **Multiple Attractors**
+
+Those five would give us five meaningfully different visual behaviors rather than minor variations of the same distortion.
 
 These are possibilities, not current requirements.
