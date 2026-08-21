@@ -1,7 +1,12 @@
 let sourceImg = null;
+let previewSourceImg = null;
+
 let mapImg = null;
 let scaledMap = null;
+
 let displacedImg = null;
+
+const PREVIEW_MAX_DIMENSION = 1200;
 
 let showBefore = false;
 
@@ -63,7 +68,7 @@ function draw() {
 
   const img =
     showBefore || !displacedImg
-      ? sourceImg
+      ? previewSourceImg
       : displacedImg;
 
   displayImage(img);
@@ -76,8 +81,42 @@ function draw() {
   }
 }
 
+function createPreviewSource() {
+  if (!sourceImg) {
+    previewSourceImg = null;
+    return;
+  }
+
+  previewSourceImg = sourceImg.get();
+
+  const longestSide = max(
+    previewSourceImg.width,
+    previewSourceImg.height
+  );
+
+  if (
+    longestSide <= PREVIEW_MAX_DIMENSION
+  ) {
+    return;
+  }
+
+  const scale =
+    PREVIEW_MAX_DIMENSION /
+    longestSide;
+
+  previewSourceImg.resize(
+    round(
+      previewSourceImg.width *
+      scale
+    ),
+    round(
+      previewSourceImg.height *
+      scale
+    )
+  );
+}
 function drawRadialCenterMarker() {
-  const bounds = getDisplayBounds(sourceImg);
+  const bounds = getDisplayBounds(previewSourceImg);
 
   const cx = bounds.x + bounds.w * radialCenterX;
   const cy = bounds.y + bounds.h * radialCenterY;
@@ -148,6 +187,7 @@ function handleSourceFile(file) {
 
   loadImage(file.data, img => {
     sourceImg = img;
+    createPreviewSource();
 
     displacedImg = null;
     scaledMap = null;
@@ -177,48 +217,81 @@ function handleMapFile(file) {
   });
 }
 
-function tryRender() {
-  if (!sourceImg) {
-    return;
+function renderCurrentMode(
+  workingSource
+) {
+  if (!workingSource || !sourceImg) {
+    return null;
   }
 
+  const renderScale =
+    workingSource.width /
+    sourceImg.width;
+
   if (mode === "imageMap") {
-    renderImageMap();
+    return renderImageMap(
+      workingSource,
+      renderScale
+    );
   }
 
   if (mode === "flowField") {
-    renderFlowField();
+    return renderFlowField(
+      workingSource,
+      renderScale
+    );
   }
 
   if (mode === "radialField") {
-    renderRadialField();
+    return renderRadialField(
+      workingSource,
+      renderScale
+    );
   }
+
+  return null;
 }
 
-function renderImageMap() {
-  if (!sourceImg || !mapImg) {
-    displacedImg = null;
+function tryRender() {
+  if (!previewSourceImg) {
     return;
+  }
+
+  displacedImg =
+    renderCurrentMode(
+      previewSourceImg
+    );
+}
+
+function renderImageMap(
+  workingSource,
+  renderScale
+) {
+  if (!workingSource || !mapImg) {
+    return null;
   }
 
   scaledMap = mapImg.get();
 
   scaledMap.resize(
-    sourceImg.width,
-    sourceImg.height
+    workingSource.width,
+    workingSource.height
   );
 
   scaledMap.loadPixels();
 
   const settings = {
     strengthX:
-      strengthXSlider.value(),
+      strengthXSlider.value() *
+      renderScale,
 
     strengthY:
-      strengthYSlider.value()
+      strengthYSlider.value() *
+      renderScale
   };
 
-  renderDisplacementField(
+  return renderDisplacementField(
+    workingSource,
     (x, y, index) =>
       getImageMapOffset(
         x,
@@ -229,27 +302,44 @@ function renderImageMap() {
   );
 }
 
-function renderFlowField() {
-  if (!sourceImg) {
-    return;
+function renderRadialField(
+  workingSource,
+  renderScale
+) {
+  if (!workingSource) {
+    return null;
   }
 
-  noiseSeed(flowSeed);
-
   const settings = {
+    width:
+      workingSource.width,
+
+    height:
+      workingSource.height,
+
+    centerX:
+      workingSource.width *
+      radialCenterX,
+
+    centerY:
+      workingSource.height *
+      radialCenterY,
+
     strength:
-      flowStrengthSlider.value(),
+      radialStrengthSlider.value() *
+      renderScale,
 
-    noiseScale:
-      noiseScaleSlider.value(),
+    radius:
+      radialRadiusSlider.value(),
 
-    angleMult:
-      angleSlider.value()
+    falloff:
+      radialFalloffSlider.value()
   };
 
-  renderDisplacementField(
+  return renderDisplacementField(
+    workingSource,
     (x, y, index) =>
-      getFlowFieldOffset(
+      getRadialFieldOffset(
         x,
         y,
         index,
@@ -299,7 +389,14 @@ function randomizeFlowField() {
 
 
 function saveResult() {
-  if (!displacedImg) {
+  if (!sourceImg) {
+    return;
+  }
+
+  const fullResolutionResult =
+    renderCurrentMode(sourceImg);
+
+  if (!fullResolutionResult) {
     return;
   }
 
@@ -312,7 +409,7 @@ function saveResult() {
     nf(minute(), 2) +
     nf(second(), 2);
 
-  displacedImg.save(
+  fullResolutionResult.save(
     `displacement-${mode}-${timestamp}`,
     "png"
   );
@@ -323,7 +420,7 @@ function mousePressed() {
     return;
   }
 
-  const bounds = getDisplayBounds(sourceImg);
+  const bounds = getDisplayBounds(previewSourceImg);
 
   const insideImage =
     mouseX >= bounds.x &&
