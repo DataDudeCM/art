@@ -302,6 +302,41 @@ function renderImageMap(
   );
 }
 
+function renderFlowField(
+  workingSource,
+  renderScale
+) {
+  if (!workingSource) {
+    return null;
+  }
+
+  noiseSeed(flowSeed);
+
+  const settings = {
+    strength:
+      flowStrengthSlider.value() *
+      renderScale,
+
+    noiseScale:
+      noiseScaleSlider.value() /
+      renderScale,
+
+    angleMult:
+      angleSlider.value()
+  };
+
+  return renderDisplacementField(
+    workingSource,
+    (x, y, index) =>
+      getFlowFieldOffset(
+        x,
+        y,
+        index,
+        settings
+      )
+  );
+}
+
 function renderRadialField(
   workingSource,
   renderScale
@@ -338,32 +373,6 @@ function renderRadialField(
 
   return renderDisplacementField(
     workingSource,
-    (x, y, index) =>
-      getRadialFieldOffset(
-        x,
-        y,
-        index,
-        settings
-      )
-  );
-}
-
-function renderRadialField() {
-  if (!sourceImg) {
-    return;
-  }
-
-  const settings = {
-    width: sourceImg.width,
-    height: sourceImg.height,
-    centerX: sourceImg.width * radialCenterX,
-    centerY: sourceImg.height * radialCenterY,
-    strength: radialStrengthSlider.value(),
-    radius: radialRadiusSlider.value(),
-    falloff: radialFalloffSlider.value()
-  };
-
-  renderDisplacementField(
     (x, y, index) =>
       getRadialFieldOffset(
         x,
