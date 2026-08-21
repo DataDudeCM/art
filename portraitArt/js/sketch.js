@@ -9,17 +9,26 @@ let faceLandmarker;
 let sourceImage = null;
 let detectionResult = null;
 
+let fragments = {
+  leftEye: null,
+  rightEye: null,
+  mouth: null
+};
+
 let statusText = "Loading MediaPipe...";
 
+const FRAGMENT_PREVIEW_SCALE = 0.5;
 
 // MediaPipe landmark indices for useful facial regions.
 
 const LEFT_EYE = [
-  33, 160, 158, 133, 153, 144
+  33, 7, 163, 144, 145, 153, 154, 155,
+  133, 173, 157, 158, 159, 160, 161, 246
 ];
 
 const RIGHT_EYE = [
-  362, 385, 387, 263, 373, 380
+  362, 382, 381, 380, 374, 373, 390, 249,
+  263, 466, 388, 387, 386, 385, 384, 398
 ];
 
 const LEFT_EYEBROW = [
@@ -78,10 +87,12 @@ window.draw = function () {
     return;
   }
 
+  const panelWidth = 320;
+
   const fit = calculateImageFit(
     sourceImage.width,
     sourceImage.height,
-    width,
+    width - panelWidth,
     height
   );
 
@@ -98,6 +109,7 @@ window.draw = function () {
       detectionResult,
       fit
     );
+    drawFragmentPanel();
   }
 };
 
@@ -143,6 +155,78 @@ async function initializeFaceLandmarker() {
   }
 }
 
+function drawFragmentPanel() {
+
+  const panelX =
+    width - 300;
+
+  const panelY =
+    120;
+
+  fill(240);
+  noStroke();
+  textSize(18);
+
+  text(
+    "Extracted Features",
+    panelX,
+    panelY
+  );
+
+
+  drawFragment(
+    fragments.leftEye,
+    "Left Eye",
+    panelX,
+    panelY + 40
+  );
+
+  drawFragment(
+    fragments.rightEye,
+    "Right Eye",
+    panelX,
+    panelY + 180
+  );
+
+  drawFragment(
+    fragments.mouth,
+    "Mouth",
+    panelX,
+    panelY + 320
+  );
+}
+
+function drawFragment(
+  fragment,
+  label,
+  x,
+  y
+) {
+
+  fill(200);
+  noStroke();
+  textSize(14);
+
+  text(label, x, y);
+
+  if (!fragment) {
+    return;
+  }
+
+  const displayW =
+    fragment.width * FRAGMENT_PREVIEW_SCALE;
+
+  const displayH =
+    fragment.height * FRAGMENT_PREVIEW_SCALE;
+
+  image(
+    fragment,
+    x,
+    y + 10,
+    displayW,
+    displayH
+  );
+}
 
 function handleFile(file) {
 
@@ -211,6 +295,8 @@ async function detectFace(dataUrl) {
         statusText =
           `Face detected — ${count} face found.`;
 
+        buildFragments();
+
       }
 
     }
@@ -228,6 +314,210 @@ async function detectFace(dataUrl) {
   img.src = dataUrl;
 }
 
+function buildFragments() {
+
+  if (
+    !sourceImage ||
+    !detectionResult ||
+    detectionResult.faceLandmarks.length === 0
+  ) {
+    return;
+  }
+
+  const landmarks =
+    detectionResult.faceLandmarks[0];
+
+  fragments.leftEye =
+    extractFeature(
+      landmarks,
+      LEFT_EYE,
+      {
+        left: 0.45,
+        right: 0.45,
+        top: 0.5,
+        bottom: 1
+      }
+    );
+
+  fragments.rightEye =
+    extractFeature(
+      landmarks,
+      RIGHT_EYE,
+      {
+        left: 0.45,
+        right: 0.45,
+        top: 0.5,
+        bottom: 1
+      }
+    );
+
+  fragments.mouth =
+    extractFeature(
+      landmarks,
+      OUTER_LIPS,
+      {
+        left: 0.4,
+        right: 0.4,
+        top: 0.5,
+        bottom: 0.35
+      }
+    );
+}
+
+function extractFeature(
+  landmarks,
+  indices,
+  padding = {}
+) {
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  const padLeft   = padding.left   ?? 0.35;
+  const padRight  = padding.right  ?? 0.35;
+  const padTop    = padding.top    ?? 0.35;
+  const padBottom = padding.bottom ?? 0.35;
+
+  for (const index of indices) {
+
+    const p = landmarks[index];
+
+    const x =
+      p.x * sourceImage.width;
+
+    const y =
+      p.y * sourceImage.height;
+
+    minX = min(minX, x);
+    minY = min(minY, y);
+    maxX = max(maxX, x);
+    maxY = max(maxY, y);
+  }
+
+
+  const featureWidth =
+    maxX - minX;
+
+  const featureHeight =
+    maxY - minY;
+
+
+  const leftPadding =
+    featureWidth * padLeft;
+
+  const rightPadding =
+    featureWidth * padRight;
+
+  const topPadding =
+    featureHeight * padTop;
+
+  const bottomPadding =
+    featureHeight * padBottom;
+
+
+  let cropX =
+    floor(minX - leftPadding);
+
+  let cropY =
+    floor(minY - topPadding);
+
+  let cropW =
+    ceil(
+      featureWidth +
+      leftPadding +
+      rightPadding
+    );
+
+  let cropH =
+    ceil(
+      featureHeight +
+      topPadding +
+      bottomPadding
+    );
+
+
+  // Keep crop within original image.
+
+  cropX =
+    constrain(
+      cropX,
+      0,
+      sourceImage.width - 1
+    );
+
+  cropY =
+    constrain(
+      cropY,
+      0,
+      sourceImage.height - 1
+    );
+
+  cropW =
+    min(
+      cropW,
+      sourceImage.width - cropX
+    );
+
+  cropH =
+    min(
+      cropH,
+      sourceImage.height - cropY
+    );
+
+
+  const fragment =
+    sourceImage.get(
+      cropX,
+      cropY,
+      cropW,
+      cropH
+    );
+
+
+  // Create transparency mask.
+
+  const maskGraphics =
+    createGraphics(
+      cropW,
+      cropH
+    );
+
+  maskGraphics.pixelDensity(1);
+
+  maskGraphics.clear();   // fully transparent background
+
+  maskGraphics.noStroke();
+  maskGraphics.fill(255, 255);  // fully opaque feature region
+
+
+  /*
+   * For this first experiment we're using
+   * a padded organic ellipse rather than the
+   * exact landmark polygon.
+   *
+   * That deliberately preserves some nearby
+   * pencil texture.
+   */
+
+  maskGraphics.ellipse(
+    cropW / 2,
+    cropH / 2,
+    cropW * 0.92,
+    cropH * 0.92
+  );
+
+
+  const maskImage =
+    maskGraphics.get();
+
+  fragment.mask(maskImage);
+
+  maskGraphics.remove();
+
+  return fragment;
+}
 
 function drawLandmarks(result, fit) {
 
