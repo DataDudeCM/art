@@ -12,6 +12,9 @@ let detectionResult = null;
 let fragments = {
   leftEye: null,
   rightEye: null,
+  leftEyebrow: null,
+  rightEyebrow: null,
+  nose: null,
   mouth: null
 };
 
@@ -87,7 +90,7 @@ window.draw = function () {
     return;
   }
 
-  const panelWidth = 320;
+  const panelWidth = 380;
 
   const fit = calculateImageFit(
     sourceImage.width,
@@ -157,11 +160,11 @@ async function initializeFaceLandmarker() {
 
 function drawFragmentPanel() {
 
-  const panelX =
-    width - 300;
+  const panelX = width - 360;
+  const panelY = 110;
 
-  const panelY =
-    120;
+  const col1 = panelX;
+  const col2 = panelX + 170;
 
   fill(240);
   noStroke();
@@ -173,26 +176,50 @@ function drawFragmentPanel() {
     panelY
   );
 
+  // Eyebrows
+  drawFragment(
+    fragments.leftEyebrow,
+    "Left Brow",
+    col1,
+    panelY + 40
+  );
 
+  drawFragment(
+    fragments.rightEyebrow,
+    "Right Brow",
+    col2,
+    panelY + 40
+  );
+
+  // Eyes
   drawFragment(
     fragments.leftEye,
     "Left Eye",
-    panelX,
-    panelY + 40
+    col1,
+    panelY + 150
   );
 
   drawFragment(
     fragments.rightEye,
     "Right Eye",
-    panelX,
-    panelY + 180
+    col2,
+    panelY + 150
   );
 
+  // Nose
+  drawFragment(
+    fragments.nose,
+    "Nose",
+    col1,
+    panelY + 290
+  );
+
+  // Mouth
   drawFragment(
     fragments.mouth,
     "Mouth",
-    panelX,
-    panelY + 320
+    col1,
+    panelY + 430
   );
 }
 
@@ -348,6 +375,42 @@ function buildFragments() {
         right: 0.45,
         top: 0.5,
         bottom: 1
+      }
+    );
+
+    fragments.leftEyebrow =
+      extractFeature(
+        landmarks,
+        LEFT_EYEBROW,
+        {
+          left: 0.45,
+          right: 0.45,
+          top: 0.7,
+          bottom: 0.7
+        }
+      );
+
+    fragments.rightEyebrow =
+      extractFeature(
+        landmarks,
+        RIGHT_EYEBROW,
+        {
+          left: 0.45,
+          right: 0.45,
+          top: 0.7,
+          bottom: 0.7
+        }
+      );
+
+  fragments.nose =
+    extractFeature(
+      landmarks,
+      NOSE,
+      {
+        left: 2.5,
+        right: 2.5,
+        top: 0,
+        bottom: 0.75
       }
     );
 
