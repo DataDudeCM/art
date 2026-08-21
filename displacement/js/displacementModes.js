@@ -48,11 +48,8 @@ function getRadialFieldOffset(
   index,
   settings
 ) {
-  const centerX =
-    settings.width / 2;
-
-  const centerY =
-    settings.height / 2;
+  const centerX = settings.centerX;
+  const centerY = settings.centerY;
 
   const vx =
     x - centerX;

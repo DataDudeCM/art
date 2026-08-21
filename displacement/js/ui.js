@@ -282,7 +282,13 @@ function createUI() {
   // -----------------------
   // View
   // -----------------------
+  const radialHint = createDiv(
+    "Click the image to place the center"
+  );
 
+  radialHint.addClass("keyboard-hint");
+  radialHint.parent(radialFieldGroup);
+  
   const viewSection =
     createSection("VIEW");
 

@@ -8,6 +8,11 @@ let showBefore = false;
 let mode = "imageMap";
 let flowSeed = 12345;
 
+let radialCenterX = 0.5;
+let radialCenterY = 0.5;
+
+let showRadialCenterMarker = true;
+
 const PANEL_WIDTH = 320;
 
 function setup() {
@@ -62,50 +67,77 @@ function draw() {
       : displacedImg;
 
   displayImage(img);
+  if (
+    mode === "radialField" &&
+    sourceImg &&
+    showRadialCenterMarker
+  ) {
+    drawRadialCenterMarker();
+  }
 }
 
-function displayImage(img) {
+function drawRadialCenterMarker() {
+  const bounds = getDisplayBounds(sourceImg);
+
+  const cx = bounds.x + bounds.w * radialCenterX;
+  const cy = bounds.y + bounds.h * radialCenterY;
+
+  const palette = getPalette("industrialSun");
+  const warm = getColorByRole(palette, "warm", false);
+  const light = getColorByRole(palette, "light", false);
+
+  stroke(warm);
+  strokeWeight(2);
+  noFill();
+  circle(cx, cy, 18);
+
+  stroke(light);
+  line(cx - 14, cy, cx + 14, cy);
+  line(cx, cy - 14, cx, cy + 14);
+}
+
+function getDisplayBounds(img) {
   const margin = 32;
 
-  const availableWidth =
-    width - margin * 2;
-
-  const availableHeight =
-    height - margin * 2;
+  const availableWidth = width - margin * 2;
+  const availableHeight = height - margin * 2;
 
   let scaleFactor = min(
     availableWidth / img.width,
     availableHeight / img.height
   );
 
-  // Never enlarge small images.
-  scaleFactor = min(
-    scaleFactor,
-    1
-  );
+  scaleFactor = min(scaleFactor, 1);
 
-  const displayWidth =
-    img.width * scaleFactor;
+  const displayWidth = img.width * scaleFactor;
+  const displayHeight = img.height * scaleFactor;
 
-  const displayHeight =
-    img.height * scaleFactor;
+  const x = (width - displayWidth) / 2;
+  const y = (height - displayHeight) / 2;
 
-  const x =
-    (width - displayWidth) / 2;
+  return {
+    x,
+    y,
+    w: displayWidth,
+    h: displayHeight
+  };
+}
 
-  const y =
-    (height - displayHeight) / 2;
+function displayImage(img) {
+  const bounds = getDisplayBounds(img);
 
   image(
     img,
-    x,
-    y,
-    displayWidth,
-    displayHeight
+    bounds.x,
+    bounds.y,
+    bounds.w,
+    bounds.h
   );
 }
 
 function handleSourceFile(file) {
+  radialCenterX = 0.5;
+  radialCenterY = 0.5;
   if (file.type !== "image") {
     console.log(
       "Source must be an image."
@@ -232,20 +264,13 @@ function renderRadialField() {
   }
 
   const settings = {
-    width:
-      sourceImg.width,
-
-    height:
-      sourceImg.height,
-
-    strength:
-      radialStrengthSlider.value(),
-
-    radius:
-      radialRadiusSlider.value(),
-
-    falloff:
-      radialFalloffSlider.value()
+    width: sourceImg.width,
+    height: sourceImg.height,
+    centerX: sourceImg.width * radialCenterX,
+    centerY: sourceImg.height * radialCenterY,
+    strength: radialStrengthSlider.value(),
+    radius: radialRadiusSlider.value(),
+    falloff: radialFalloffSlider.value()
   };
 
   renderDisplacementField(
@@ -271,6 +296,8 @@ function randomizeFlowField() {
   }
 }
 
+
+
 function saveResult() {
   if (!displacedImg) {
     return;
@@ -289,6 +316,38 @@ function saveResult() {
     `displacement-${mode}-${timestamp}`,
     "png"
   );
+}
+
+function mousePressed() {
+  if (mode !== "radialField" || !sourceImg) {
+    return;
+  }
+
+  const bounds = getDisplayBounds(sourceImg);
+
+  const insideImage =
+    mouseX >= bounds.x &&
+    mouseX <= bounds.x + bounds.w &&
+    mouseY >= bounds.y &&
+    mouseY <= bounds.y + bounds.h;
+
+  if (!insideImage) {
+    return;
+  }
+
+  radialCenterX = constrain(
+    (mouseX - bounds.x) / bounds.w,
+    0,
+    1
+  );
+
+  radialCenterY = constrain(
+    (mouseY - bounds.y) / bounds.h,
+    0,
+    1
+  );
+
+  tryRender();
 }
 
 function keyPressed() {
