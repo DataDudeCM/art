@@ -74,6 +74,7 @@
     </main>
     <script>
       // --- Sketch Scope ---
+      // This is a self-invoking function to keep all our variables out of the global scope.
       const sketch = (p) => {
         let walkers = [];
         const backgroundColor = p.color(248, 248, 240);
@@ -86,25 +87,15 @@
         let spawnChanceLabel;
 
         /**
-         * The Walker class now tracks its origin, branch angle, and gradient alpha.
+         * The Walker class represents a single line-drawing agent.
          */
         class Walker {
-          constructor(x, y, direction, width, spawnChance, branchOrigin, branchAngle) {
+          constructor(x, y, direction, width, spawnChance) {
             this.pos = p.createVector(x, y);
             this.dir = direction;
             this.width = width;
             this.spawnChance = spawnChance;
             this.isDone = false;
-            
-            // --- NEW PROPERTIES FOR GRADIENT LOGIC ---
-            // Where this walker branched from its parent.
-            this.branchOrigin = branchOrigin; 
-            // The angle it took relative to its parent (-90 or 90).
-            this.branchAngle = branchAngle; 
-            // The current alpha for the fading glow.
-            this.gradientAlpha = 20; 
-             // How quickly the gradient fades.
-            this.alphaDecay = 0.995;
           }
 
           update() {
@@ -116,69 +107,36 @@
               return;
             }
             let c = p.get(probe.x, probe.y);
-            if (c[0] < 220) {
+            if (c[0] !== p.red(backgroundColor)) {
               this.isDone = true;
               return;
             }
             
             this.pos.add(this.dir);
-
             p.strokeWeight(this.width);
             p.stroke(lineColor);
             p.point(this.pos.x, this.pos.y);
-
-            // Draw the transparent gradient line with the new logic.
-            this.drawGradientLine();
-
-            // Decay the alpha for the next frame.
-            this.gradientAlpha *= this.alphaDecay;
 
             if (p.random(1) < this.spawnChance && this.width > 0.5) {
               this.spawn();
             }
           }
 
-          /**
-           * Draws a fading, one-sided, variable-length transparent line.
-           */
-          drawGradientLine() {
-            // Only draw if the glow is still visible.
-            if (this.gradientAlpha < 1) return;
-
-            // --- 1. Calculate length based on distance from origin ---
-            const gradientLineLength = this.pos.dist(this.branchOrigin);
-
-            // --- 2. Determine direction (one-sided, perpendicular to current path) ---
-            // Use the stored branchAngle to consistently draw on one side.
-            let perpDir = this.dir.copy().rotate(this.branchAngle);
-
-            // --- 3. Calculate start and end points ---
-            let p1 = this.pos.copy();
-            let p2 = p5.Vector.add(this.pos, p5.Vector.mult(perpDir, gradientLineLength));
-
-            // --- 4. Draw with decaying alpha ---
-            p.strokeWeight(1);
-            p.stroke(p.red(lineColor), p.green(lineColor), p.blue(lineColor), this.gradientAlpha);
-            p.line(p1.x, p1.y, p2.x, p2.y);
-          }
-
           spawn() {
-            const angle = p.random([p.HALF_PI, -p.HALF_PI]);
-            let newDir = this.dir.copy().rotate(angle);
+            let newDir = this.dir.copy();
+            let angle = p.random([p.HALF_PI, -p.HALF_PI]);
+            newDir.rotate(angle);
 
             let newWidth = this.width * 0.75;
             let newSpawnChance = this.spawnChance * spawnChanceDecay;
 
-            // Create the new Walker, passing its spawn position as the 'branchOrigin'
-            // and the angle it's taking as the 'branchAngle'.
-            walkers.push(new Walker(this.pos.x, this.pos.y, newDir, newWidth, newSpawnChance, this.pos.copy(), angle));
-            
-            // --- Crucially, reset the PARENT's origin to its current spot.
-            // This makes its own glow length calculation restart from this new branch point.
-            this.branchOrigin = this.pos.copy();
+            walkers.push(new Walker(this.pos.x, this.pos.y, newDir, newWidth, newSpawnChance));
           }
         }
 
+        /**
+         * setup() is called once when the sketch starts.
+         */
         p.setup = () => {
           const canvasContainer = document.getElementById('canvas-container');
           const canvasWidth = Math.min(window.innerWidth * 0.9, 800);
@@ -187,42 +145,66 @@
           cnv.parent(canvasContainer);
           p.randomSeed(p.millis());
           
+          // --- Create Controls ---
           const controlsContainer = document.getElementById('controls-container');
           controlsContainer.classList.add('controls');
-          const sliderContainer = p.createDiv().parent(controlsContainer).class('slider-container');
-          p.createSpan('Spawn Chance: ').parent(sliderContainer);
-          spawnChanceSlider = p.createSlider(0, 0.05, 0.01, 0.001).parent(sliderContainer);
-          spawnChanceLabel = p.createSpan('').parent(sliderContainer);
+          
+          const sliderContainer = p.createDiv();
+          sliderContainer.parent(controlsContainer);
+          sliderContainer.class('slider-container');
+          
+          let label = p.createSpan('Spawn Chance: ');
+          label.parent(sliderContainer);
+
+          // Create the slider: min, max, initial value, step
+          spawnChanceSlider = p.createSlider(0, 0.05, 0.01, 0.001);
+          spawnChanceSlider.parent(sliderContainer);
+          
+          spawnChanceLabel = p.createSpan('');
+          spawnChanceLabel.parent(sliderContainer);
           updateSliderLabel();
+
+          // Update label text whenever slider is moved
           spawnChanceSlider.input(updateSliderLabel);
-          p.createP('Adjust the slider, then click the canvas to start a new generation.')
-            .parent(controlsContainer).style('margin', '0').style('font-size', '14px');
+          
+          // Add instruction text
+          let instruction = p.createP('Adjust the slider, then click the canvas to start a new generation.');
+          instruction.parent(controlsContainer);
+          instruction.style('margin', '0');
+          instruction.style('font-size', '14px');
           
           startDrawing();
         };
 
         function updateSliderLabel() {
+            // Format the value as a percentage with one decimal place.
             let percent = p.nfc(spawnChanceSlider.value() * 100, 1) + '%';
             spawnChanceLabel.html(percent);
         }
         
+        /**
+         * Initializes or resets the drawing.
+         */
         function startDrawing() {
             p.background(backgroundColor);
             walkers = [];
             
             let startX = p.random(p.width * 0.2, p.width * 0.8);
             let startY = p.random(p.height * 0.2, p.height * 0.8);
-            let startPos = p.createVector(startX, startY);
             
             let startDir = p.createVector(p.random([-1, 1]), p.random([-1, 1]));
             startDir.normalize(); 
             
+            // Get the current spawn chance from the slider
             const baseSpawnChance = spawnChanceSlider.value();
             
-            // The first walker has its origin at its start, and no specific branch angle.
-            walkers.push(new Walker(startX, startY, startDir, 4, baseSpawnChance, startPos.copy(), p.HALF_PI));
+            // Create the first walker with the initial width and the base spawn chance from the slider.
+            walkers.push(new Walker(startX, startY, startDir, 4, baseSpawnChance));
         }
 
+        /**
+         * draw() is called repeatedly in a loop, creating the animation.
+         */
         p.draw = () => {
           for (let walker of walkers) {
             walker.update();
@@ -235,6 +217,9 @@
           }
         };
         
+        /**
+         * p.mousePressed() is a p5.js event that triggers on a mouse click.
+         */
         p.mousePressed = () => {
             if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
                 p.randomSeed(p.millis());
@@ -244,6 +229,7 @@
         }
       };
       
+      // Instantiate the p5 sketch.
       new p5(sketch);
     </script>
   </body>
