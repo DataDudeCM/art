@@ -2,8 +2,7 @@ from turtle import bgcolor
 from perlin_noise import PerlinNoise
 import pygame
 from pygame.locals import *
-from coreClasses import pyGEnv, myPalette
-from particle1 import Particle
+from coreClasses import pyGEnv, myPalette, Particle
 from corefuncs import *
 import time
 from datetime import date, datetime
@@ -20,6 +19,8 @@ def draw():
         if usenoise:
             p.applyNoise(p.noise) 
         p.move()
+
+
 
     surf = pygame.Surface((WIDTH,HEIGHT),SRCALPHA)
     for a in particles:  #for every particle
@@ -39,8 +40,7 @@ def draw():
                         #    dis)
                     #Draw lines relative to distance
                     transp = remap(0,dislimit,255,0,dis)
-                    #pygame.draw.line(surf, a.color[0:3] + (transp,), [a.pos.x,a.pos.y], [b.pos.x,b.pos.y],1)
-                    pygame.draw.line(surf, (0,0,0) + (transp,), [a.pos.x,a.pos.y], [b.pos.x,b.pos.y],1) #black lines
+                    pygame.draw.line(surf, a.color[0:3] + (transp,), [a.pos.x,a.pos.y], [b.pos.x,b.pos.y],1)
 
     pyG1.screen.blit(surf,[0,0])
     surf = pygame.Surface((WIDTH,HEIGHT),SRCALPHA)
@@ -59,7 +59,7 @@ drawing = True #True if drawing in a loop
 clearscreen = False #True if the screen should clear in each loop
 nump = 100
 particles = []
-palname = 'TheBeach'
+palname = 'TheBlues'
 bkgcolor = 'Black'
 particlecol = myPalette(palname)
 noise = PerlinNoise(1,1)

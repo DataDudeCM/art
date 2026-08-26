@@ -2,12 +2,13 @@ from turtle import bgcolor
 from perlin_noise import PerlinNoise
 import pygame
 from pygame.locals import *
-from coreClasses import pyGEnv, myPalette, Particle
+from coreClasses import pyGEnv, myPalette
 from corefuncs import *
 import time
 from datetime import date, datetime
 from random import randint
 import math
+from particle1 import Particle
 
 ##########################
 # define functions here
@@ -15,7 +16,7 @@ import math
 def draw():
     global counter, dislimit
     counter += 1
-    if counter % 100 == 0 and dislimit > 40:
+    if counter % 100 == 0 and dislimit > 20:
         dislimit = dislimit - 20
     #Primary draw routine
     #Use pyG1.surface to enable transparency and alpha color parm
@@ -57,19 +58,19 @@ def draw():
 
 #Global variables
 #640 x 1136 for reels
-WIDTH = 640
-HEIGHT =1136
+WIDTH = 800
+HEIGHT =800
 running = True
 drawing = True #True if drawing in a loop
 clearscreen = False #True if the screen should clear in each loop
-nump = 200
+nump = 160
 particles = []
-palname = 'TheBeach'
+palname = 'TheBlues'
 bkgcolor = 'Black'
 particlecol = myPalette(palname)
 noise = PerlinNoise(1,1)
 usenoise = False
-dislimit = 200
+dislimit = 180
 circles=True
 cirtype = 1
 radius = 2
@@ -86,7 +87,6 @@ pixels = []
 for y in range(HEIGHT):
     for x in range(WIDTH):
         pixels.append(img.get_at((x,y)))
-print(len(pixels))
 
 for p in range(nump):
     particles.append(Particle(WIDTH,HEIGHT,particlecol.pal[randint(0,particlecol.lenpal-1)],palname,radius,2))

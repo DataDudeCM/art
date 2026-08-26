@@ -33,6 +33,22 @@ def remap(i_min: float, i_max: float, o_min: float, o_max: float, v: float) -> f
     """
     return lerp(o_min, o_max, inv_lerp(i_min, i_max, v))
 
+def drawline(screen, polycolor, point1, point2, maxdepth, linewidth):
+    #splits a line into maxdepth segments and adds roughness
+    maxdepth = maxdepth - 1
+    if maxdepth > 0:
+        #find midpoint
+        midx=(point2[0]-point1[0])/2+point1[0] + numpy.randint.normal(0,1)
+        midy=(point2[1]-point1[1])/2+point1[1] + numpy.randint.normal(0,1)
+        #move the midpoint offset -x pixels perpendicular  
+
+        #drawline for segment 1
+        drawline(screen, polycolor, point1,(midx,midy),maxdepth, linewidth)
+        #drawline for segment 2
+        drawline(screen, polycolor, (midx,midy),point2,maxdepth, linewidth)
+    else:
+        pygame.draw.line(screen, polycolor, point1, point2, linewidth)
+    return
 def chaikin_cut(a, b, ratio):
     x = 0.0
     y = 0.0
@@ -80,7 +96,7 @@ def chaikin(surf, s, ratio, iterations, color, linew = 2, drawpoly = False, clos
         w = linew
         pygame.draw.lines(surf,col, False, shapearr,w)
     elif drawpoly:
-        col = color[0:3] + (40,)
+        col = color[0:3] + (20,)
         w = 0
         pygame.draw.polygon(surf, col, shapearr,w)
     return chaikin(surf, shapearr, ratio, iterations - 1, color, linew)
@@ -101,7 +117,6 @@ def drawline(screen, polycolor, point1, point2, maxdepth, linewidth):
     else:
         pygame.draw.line(screen, polycolor, point1, point2, linewidth)
     return
-
 
 def artrect(s, c, v1, w, h): #consider adding optional default values
 

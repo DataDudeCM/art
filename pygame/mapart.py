@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-from pyGEnv import pyGEnv
+from coreClasses import *
 from corefuncs import *
 import time
 from random import randint

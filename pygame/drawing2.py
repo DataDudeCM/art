@@ -1,6 +1,6 @@
 from pygameinit import * #initialize pygame, colors, etc.
 from random import randint
-from mydrawlib import drawline
+from corefuncs import drawline
 import time
 
 #Set variables which determine how to draw

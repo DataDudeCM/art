@@ -8,7 +8,7 @@ from coreClasses import *
 import math
 
 class Particle():
-    def __init__(self, width, height, color, palname, r=2, s=2):
+    def __init__(self, width, height, color, palname, r=2, s=1):
         self.width = width
         self.height = height
         self.radius = r #size of circle
@@ -16,21 +16,27 @@ class Particle():
         self.palette = myPalette(palname)
         self.noise = PerlinNoise(octaves=8, seed=2)
         self.pos = pygame.Vector2(int(randint(0,self.width)), int(randint(0,self.height)))
-        self.speed = 1+random()*s
+        #self.pos = pygame.Vector2(self.width*.5, int(randint(0,self.height)))
+        #self.pos = pygame.Vector2(int(randint(0,self.width)), self.height*.5)
+        self.speed = .01+random()*s
         self.vel = pygame.Vector2(0,1).rotate(randint(0,360))*self.speed
         self.o = 0
 
     def resetNoise(self):
         self.o += 1 
-        self.noise = PerlinNoise(octaves = self.o % 10, seed=2)
+        print(self.o)
+        self.noise = PerlinNoise(octaves = self.o % 10+1, seed=2)
 
     def applyNoise(self,noise):
         mousepos = pygame.mouse.get_pos()     
         noiseFactor = self.width
         n = noise([self.pos.x/noiseFactor,self.pos.y/noiseFactor,mousepos[0]/noiseFactor])
-        angle = remap(-1,1,0,2*math.pi,n)
-        #self.color = self.palette.pal[math.floor(math.degrees(angle)/90)]
-        self.vel = pygame.Vector2(math.cos(angle),math.sin(angle))*self.speed
+        #angle = remap(-1,1,0,2*math.pi,n) # Forces velocity vector to follow the perlin noise
+        angle = remap(-1,1,-5,5,n) # Uses the noise to nudge 
+        #self.color = self.palette.pal[math.floor(math.degrees(angle)/90)] #changes color based on angle
+        #self.vel = pygame.Vector2(math.cos(angle),math.sin(angle))*self.speed
+        self.vel = pygame.Vector2.rotate(self.vel, angle)
+
 
     def move(self):
         self.pos += self.vel

@@ -1,0 +1,184 @@
+{
+  "tileset": "carbon_vs_silicon_v1",
+  "tile_px": 512,
+  "edge_convention": "3 sections per side; letters B/C/S; strings read clockwise (top L>R, right T>B, bottom R>L, left B>T); all v1 strings are palindromes; match rule: myEdge == neighborEdge[::-1]",
+  "seed": 20260610,
+  "tiles": [
+    {
+      "filename": "blank.png",
+      "edges": [
+        "BBB",
+        "BBB",
+        "BBB",
+        "BBB"
+      ],
+      "weight": 160,
+      "set": "shared"
+    },
+    {
+      "filename": "carbon_straight.png",
+      "edges": [
+        "BBB",
+        "BCB",
+        "BBB",
+        "BCB"
+      ],
+      "weight": 100,
+      "set": "carbon"
+    },
+    {
+      "filename": "carbon_corner.png",
+      "edges": [
+        "BBB",
+        "BBB",
+        "BCB",
+        "BCB"
+      ],
+      "weight": 80,
+      "set": "carbon"
+    },
+    {
+      "filename": "carbon_tee.png",
+      "edges": [
+        "BBB",
+        "BCB",
+        "BCB",
+        "BCB"
+      ],
+      "weight": 45,
+      "set": "carbon"
+    },
+    {
+      "filename": "carbon_end.png",
+      "edges": [
+        "BBB",
+        "BBB",
+        "BBB",
+        "BCB"
+      ],
+      "weight": 35,
+      "set": "carbon"
+    },
+    {
+      "filename": "carbon_double.png",
+      "edges": [
+        "BBB",
+        "CBC",
+        "BBB",
+        "CBC"
+      ],
+      "weight": 18,
+      "set": "carbon"
+    },
+    {
+      "filename": "carbon_merge.png",
+      "edges": [
+        "BBB",
+        "BCB",
+        "BBB",
+        "CBC"
+      ],
+      "weight": 25,
+      "set": "carbon"
+    },
+    {
+      "filename": "silicon_straight.png",
+      "edges": [
+        "BBB",
+        "BSB",
+        "BBB",
+        "BSB"
+      ],
+      "weight": 100,
+      "set": "silicon"
+    },
+    {
+      "filename": "silicon_corner.png",
+      "edges": [
+        "BBB",
+        "BBB",
+        "BSB",
+        "BSB"
+      ],
+      "weight": 80,
+      "set": "silicon"
+    },
+    {
+      "filename": "silicon_tee.png",
+      "edges": [
+        "BBB",
+        "BSB",
+        "BSB",
+        "BSB"
+      ],
+      "weight": 45,
+      "set": "silicon"
+    },
+    {
+      "filename": "silicon_cross.png",
+      "edges": [
+        "BSB",
+        "BSB",
+        "BSB",
+        "BSB"
+      ],
+      "weight": 20,
+      "set": "silicon"
+    },
+    {
+      "filename": "silicon_end.png",
+      "edges": [
+        "BBB",
+        "BBB",
+        "BBB",
+        "BSB"
+      ],
+      "weight": 35,
+      "set": "silicon"
+    },
+    {
+      "filename": "silicon_double.png",
+      "edges": [
+        "BBB",
+        "SBS",
+        "BBB",
+        "SBS"
+      ],
+      "weight": 18,
+      "set": "silicon"
+    },
+    {
+      "filename": "silicon_merge.png",
+      "edges": [
+        "BBB",
+        "BSB",
+        "BBB",
+        "SBS"
+      ],
+      "weight": 25,
+      "set": "silicon"
+    },
+    {
+      "filename": "iface_straight.png",
+      "edges": [
+        "BBB",
+        "BSB",
+        "BBB",
+        "BCB"
+      ],
+      "weight": 15,
+      "set": "interface"
+    },
+    {
+      "filename": "iface_corner.png",
+      "edges": [
+        "BBB",
+        "BBB",
+        "BSB",
+        "BCB"
+      ],
+      "weight": 15,
+      "set": "interface"
+    }
+  ]
+}

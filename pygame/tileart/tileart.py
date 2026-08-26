@@ -32,8 +32,8 @@ def checkValid(arr, valid):
 
 
 #Global variables
-WIDTH = 400
-HEIGHT = 400
+WIDTH = 600
+HEIGHT = 600
 running = True
 drawing = True #True if drawing in a loop
 clearscreen = False #True if the screen should clear in each loop
@@ -41,7 +41,7 @@ clearscreen = False #True if the screen should clear in each loop
 tiles = []
 tileImages = []
 grid = []
-DIM = 10
+DIM = 20
 
 #Load the images as surfaces
 for i in range(13):
