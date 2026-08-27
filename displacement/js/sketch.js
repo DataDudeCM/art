@@ -149,7 +149,10 @@ function getRenderOptions(
         resolutionScale,
 
       opacity:
-        brushOpacitySlider.value()
+        brushOpacitySlider.value(),
+
+      magnitudeResponse:
+        brushMagnitudeSlider.value()
     }
   };
 }

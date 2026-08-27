@@ -99,9 +99,14 @@ function renderBrushField(
     round(settings.spacing)
   );
 
-  const strokeLength = max(
+  const baseLength = max(
     1,
     settings.length
+  );
+
+  const magnitudeResponse = max(
+    0,
+    settings.magnitudeResponse || 0
   );
 
   const thickness = max(
@@ -116,9 +121,6 @@ function renderBrushField(
   );
 
   result.strokeWeight(thickness);
-
-  const halfLength =
-    strokeLength / 2;
 
   for (
     let y = floor(spacing / 2);
@@ -138,6 +140,22 @@ function renderBrushField(
         y,
         index
       );
+
+      const magnitude = sqrt(
+        offset.dx * offset.dx +
+        offset.dy * offset.dy
+      );
+
+      const dynamicLength = constrain(
+        baseLength +
+          magnitude *
+          magnitudeResponse,
+        1,
+        baseLength * 4
+      );
+
+      const halfLength =
+        dynamicLength / 2;
 
       const sx = constrain(
         floor(x + offset.dx),

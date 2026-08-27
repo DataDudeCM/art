@@ -31,6 +31,7 @@ let brushSpacingSlider;
 let brushLengthSlider;
 let brushThicknessSlider;
 let brushOpacitySlider;
+let brushMagnitudeSlider;
 
 function createUI() {
   applyUIPalette();
@@ -369,6 +370,25 @@ brushLengthSlider =
     1,
     brushSection,
     value => value,
+    () => {
+      if (
+        renderMode === "brush"
+      ) {
+        tryRender();
+      }
+    }
+  );
+
+brushMagnitudeSlider =
+  createSliderControl(
+    "Mag Response",
+    0,
+    3,
+    0.75,
+    0.05,
+    brushSection,
+    value =>
+      Number(value).toFixed(2),
     () => {
       if (
         renderMode === "brush"
