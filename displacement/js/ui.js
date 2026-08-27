@@ -32,6 +32,8 @@ let brushLengthSlider;
 let brushThicknessSlider;
 let brushOpacitySlider;
 let brushMagnitudeSlider;
+let brushTypeSelect;
+let brushTipInput;
 
 function createUI() {
   applyUIPalette();
@@ -343,6 +345,34 @@ const brushSection =
     brushGroup
   );
 
+const brushTypeSection = createDiv();
+brushTypeSection.addClass("control-section");
+brushTypeSection.parent(brushSection);
+
+const brushTypeLabel = createDiv("BRUSH TYPE");
+brushTypeLabel.addClass("section-title");
+brushTypeLabel.parent(brushTypeSection);
+
+brushTypeSelect = createSelect();
+brushTypeSelect.option("Line", "line");
+brushTypeSelect.option("Stamp", "stamp");
+brushTypeSelect.selected(brushType);
+brushTypeSelect.addClass("mode-select");
+brushTypeSelect.parent(brushTypeSection);
+
+brushTypeSelect.changed(() => {
+  brushType = brushTypeSelect.value();
+  tryRender();
+});
+
+const brushTipLabel = createDiv("BRUSH TIP");
+brushTipLabel.addClass("section-title");
+brushTipLabel.parent(brushTypeSection);
+
+brushTipInput = createFileInput(handleBrushTipFile);
+brushTipInput.addClass("file-input");
+brushTipInput.parent(brushTypeSection);
+
 brushSpacingSlider =
   createSliderControl(
     "Spacing",
@@ -505,6 +535,8 @@ function createSection(
 
   return section;
 }
+
+
 
 function createSliderControl(
   label,

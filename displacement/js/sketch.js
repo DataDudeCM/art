@@ -13,6 +13,8 @@ let showBefore = false;
 let mode = "imageMap";
 let flowSeed = 12345;
 let renderMode = "pixel";
+let brushType = "line";
+let brushTipImg = null;
 
 let radialCenterX = 0.5;
 let radialCenterY = 0.5;
@@ -136,6 +138,10 @@ function getRenderOptions(
     mode: "brush",
 
     brush: {
+      type: brushType,
+
+      tipImage: brushTipImg,
+
       spacing:
         brushSpacingSlider.value() *
         resolutionScale,
@@ -155,6 +161,24 @@ function getRenderOptions(
         brushMagnitudeSlider.value()
     }
   };
+}
+
+function handleBrushTipFile(file) {
+  if (file.type !== "image") {
+    console.log("Brush tip must be an image.");
+    return;
+  }
+
+  loadImage(file.data, img => {
+    brushTipImg = img;
+
+    if (
+      renderMode === "brush" &&
+      brushType === "stamp"
+    ) {
+      tryRender();
+    }
+  });
 }
 
 function drawRadialCenterMarker() {

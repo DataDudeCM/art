@@ -99,6 +99,12 @@ function renderBrushField(
     round(settings.spacing)
   );
 
+  const brushType =
+    settings.type || "line";
+
+  const tipImage =
+    settings.tipImage || null;
+
   const baseLength = max(
     1,
     settings.length
@@ -198,19 +204,52 @@ function renderBrushField(
         sin(angle) *
         halfLength;
 
-      result.stroke(
-        r,
-        g,
-        b,
-        opacity
-      );
+      if (
+        brushType === "stamp" &&
+        tipImage
+      ) {
+        const stampHeight = max(
+          1,
+          thickness * 2
+        );
 
-      result.line(
-        x - vx,
-        y - vy,
-        x + vx,
-        y + vy
-      );
+        result.push();
+        result.translate(x, y);
+        result.rotate(angle);
+        result.imageMode(CENTER);
+        result.tint(r, g, b, opacity);
+
+        result.image(
+          tipImage,
+          0,
+          0,
+          dynamicLength,
+          stampHeight
+        );
+
+        result.noTint();
+        result.pop();
+      } else {
+        const vx =
+          cos(angle) * halfLength;
+
+        const vy =
+          sin(angle) * halfLength;
+
+        result.stroke(
+          r,
+          g,
+          b,
+          opacity
+        );
+
+        result.line(
+          x - vx,
+          y - vy,
+          x + vx,
+          y + vy
+        );
+      }
     }
   }
 
