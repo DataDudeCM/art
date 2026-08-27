@@ -12,6 +12,7 @@ let showBefore = false;
 
 let mode = "imageMap";
 let flowSeed = 12345;
+let renderMode = "pixel";
 
 let radialCenterX = 0.5;
 let radialCenterY = 0.5;
@@ -115,6 +116,44 @@ function createPreviewSource() {
     )
   );
 }
+
+function getRenderOptions(
+  workingSource
+) {
+  if (
+    renderMode !== "brush"
+  ) {
+    return {
+      mode: "pixel"
+    };
+  }
+
+  const resolutionScale =
+    workingSource.width /
+    previewSourceImg.width;
+
+  return {
+    mode: "brush",
+
+    brush: {
+      spacing:
+        brushSpacingSlider.value() *
+        resolutionScale,
+
+      length:
+        brushLengthSlider.value() *
+        resolutionScale,
+
+      thickness:
+        brushThicknessSlider.value() *
+        resolutionScale,
+
+      opacity:
+        brushOpacitySlider.value()
+    }
+  };
+}
+
 function drawRadialCenterMarker() {
   const bounds = getDisplayBounds(previewSourceImg);
 
@@ -292,13 +331,18 @@ function renderImageMap(
 
   return renderDisplacementField(
     workingSource,
+
     (x, y, index) =>
       getImageMapOffset(
         x,
         y,
         index,
         settings
-      )
+      ),
+
+    getRenderOptions(
+      workingSource
+    )
   );
 }
 
@@ -327,13 +371,18 @@ function renderFlowField(
 
   return renderDisplacementField(
     workingSource,
+
     (x, y, index) =>
       getFlowFieldOffset(
         x,
         y,
         index,
         settings
-      )
+      ),
+
+    getRenderOptions(
+      workingSource
+    )
   );
 }
 
@@ -373,13 +422,18 @@ function renderRadialField(
 
   return renderDisplacementField(
     workingSource,
+
     (x, y, index) =>
       getRadialFieldOffset(
         x,
         y,
         index,
         settings
-      )
+      ),
+
+    getRenderOptions(
+      workingSource
+    )
   );
 }
 

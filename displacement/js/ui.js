@@ -23,6 +23,15 @@ let flowFieldGroup;
 let sourceInfo;
 let beforeAfterButton;
 
+let renderModeSelect;
+
+let brushGroup;
+
+let brushSpacingSlider;
+let brushLengthSlider;
+let brushThicknessSlider;
+let brushOpacitySlider;
+
 function createUI() {
   applyUIPalette();
 
@@ -98,6 +107,47 @@ function createUI() {
     mode = modeSelect.value();
 
     updateControlVisibility();
+    tryRender();
+  });
+
+  // -----------------------
+  // Render Mode
+  // -----------------------
+
+  const renderSection =
+    createSection("RENDER");
+
+  renderModeSelect =
+    createSelect();
+
+  renderModeSelect.option(
+    "Pixel",
+    "pixel"
+  );
+
+  renderModeSelect.option(
+    "Brush",
+    "brush"
+  );
+
+  renderModeSelect.selected(
+    renderMode
+  );
+
+  renderModeSelect.addClass(
+    "mode-select"
+  );
+
+  renderModeSelect.parent(
+    renderSection
+  );
+
+  renderModeSelect.changed(() => {
+    renderMode =
+      renderModeSelect.value();
+
+    updateControlVisibility();
+
     tryRender();
   });
 
@@ -279,6 +329,92 @@ function createUI() {
       }
     );
 
+// -----------------------
+// Brush Renderer
+// -----------------------
+
+brushGroup = createDiv();
+brushGroup.parent(controlPanel);
+
+const brushSection =
+  createSection(
+    "BRUSH",
+    brushGroup
+  );
+
+brushSpacingSlider =
+  createSliderControl(
+    "Spacing",
+    2,
+    20,
+    6,
+    1,
+    brushSection,
+    value => value,
+    () => {
+      if (
+        renderMode === "brush"
+      ) {
+        tryRender();
+      }
+    }
+  );
+
+brushLengthSlider =
+  createSliderControl(
+    "Length",
+    2,
+    40,
+    12,
+    1,
+    brushSection,
+    value => value,
+    () => {
+      if (
+        renderMode === "brush"
+      ) {
+        tryRender();
+      }
+    }
+  );
+
+brushThicknessSlider =
+  createSliderControl(
+    "Thickness",
+    0.5,
+    12,
+    3,
+    0.5,
+    brushSection,
+    value =>
+      Number(value).toFixed(1),
+    () => {
+      if (
+        renderMode === "brush"
+      ) {
+        tryRender();
+      }
+    }
+  );
+
+brushOpacitySlider =
+  createSliderControl(
+    "Opacity",
+    20,
+    255,
+    220,
+    5,
+    brushSection,
+    value => value,
+    () => {
+      if (
+        renderMode === "brush"
+      ) {
+        tryRender();
+      }
+    }
+  );
+
   // -----------------------
   // View
   // -----------------------
@@ -425,6 +561,13 @@ function updateControlVisibility() {
 
   if (mode === "radialField") {
     radialFieldGroup.show();
+  }
+  if (brushGroup) {
+    if (renderMode === "brush") {
+      brushGroup.show();
+    } else {
+      brushGroup.hide();
+    }
   }
 }
 
