@@ -312,12 +312,15 @@ function handleSourceFile(file) {
     createPreviewSource();
     createGPUPreview();
 
+    flowTime = 0;
+
     displacedImg = null;
     scaledMap = null;
 
     updateSourceInfo();
 
     tryRender();
+
   });
 }
 
