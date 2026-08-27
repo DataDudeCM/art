@@ -21,7 +21,23 @@ let radialCenterY = 0.5;
 
 let showRadialCenterMarker = true;
 
+let gpuPreview = null;
+let flowShader = null;
+
+let useShaderPreview = true;
+
+let flowAnimating = true;
+let flowTime = 0;
+let flowSpeed = 1.0;
+
 const PANEL_WIDTH = 320;
+
+function preload() {
+  flowShader = loadShader(
+    "shaders/passthrough.vert",
+    "shaders/flowField.frag"
+  );
+}
 
 function setup() {
   const canvas = createCanvas(
@@ -46,6 +62,16 @@ function draw() {
     getDarkColor(palette)
   );
 
+  if (
+    useShaderPreview &&
+    mode === "flowField" &&
+    renderMode === "pixel" &&
+    flowAnimating
+  ) {
+    flowTime +=
+      deltaTime * 0.001 * flowSpeed;
+  }
+
   if (!sourceImg) {
     fill(
       getColorByRole(
@@ -69,12 +95,22 @@ function draw() {
     return;
   }
 
-  const img =
-    showBefore || !displacedImg
-      ? previewSourceImg
-      : displacedImg;
+  if (
+    useShaderPreview &&
+    mode === "flowField" &&
+    renderMode === "pixel" &&
+    !showBefore
+  ) {
+    renderShaderPreview();
+    displayImage(gpuPreview);
+  } else {
+    const img =
+      showBefore || !displacedImg
+        ? previewSourceImg
+        : displacedImg;
 
-  displayImage(img);
+    displayImage(img);
+  }
   if (
     mode === "radialField" &&
     sourceImg &&
@@ -82,6 +118,26 @@ function draw() {
   ) {
     drawRadialCenterMarker();
   }
+}
+
+function createGPUPreview() {
+  if (gpuPreview) {
+    gpuPreview.remove();
+    gpuPreview = null;
+  }
+
+  if (!previewSourceImg) {
+    return;
+  }
+
+  gpuPreview = createGraphics(
+    previewSourceImg.width,
+    previewSourceImg.height,
+    WEBGL
+  );
+
+  gpuPreview.pixelDensity(1);
+  gpuPreview.noStroke();
 }
 
 function createPreviewSource() {
@@ -254,6 +310,7 @@ function handleSourceFile(file) {
   loadImage(file.data, img => {
     sourceImg = img;
     createPreviewSource();
+    createGPUPreview();
 
     displacedImg = null;
     scaledMap = null;
@@ -262,6 +319,63 @@ function handleSourceFile(file) {
 
     tryRender();
   });
+}
+
+function renderShaderPreview() {
+  if (
+    !gpuPreview ||
+    !flowShader ||
+    !previewSourceImg
+  ) {
+    return;
+  }
+
+  gpuPreview.shader(flowShader);
+
+  flowShader.setUniform(
+    "uTexture",
+    previewSourceImg
+  );
+
+  flowShader.setUniform(
+    "uResolution",
+    [
+      previewSourceImg.width,
+      previewSourceImg.height
+    ]
+  );
+
+  flowShader.setUniform(
+    "uTime",
+    flowTime
+  );
+
+  flowShader.setUniform(
+    "uStrength",
+    flowStrengthSlider.value()
+  );
+
+  flowShader.setUniform(
+    "uNoiseScale",
+    noiseScaleSlider.value()
+  );
+
+  flowShader.setUniform(
+    "uAngleMult",
+    angleSlider.value()
+  );
+
+  flowShader.setUniform(
+    "uSeed",
+    flowSeed
+  );
+
+  gpuPreview.rect(
+    -gpuPreview.width / 2,
+    -gpuPreview.height / 2,
+    gpuPreview.width,
+    gpuPreview.height
+  );
 }
 
 function handleMapFile(file) {
@@ -544,6 +658,9 @@ function keyPressed() {
     updateBeforeAfterButton();
 
     return false;
+  }
+  if (key === "p" || key === "P") {
+    flowAnimating = !flowAnimating;
   }
 }
 
