@@ -77,7 +77,10 @@ const SETTINGS = {
 
     // Line length range.
     // 2% to 14% of min(width, height).
-    lineLength: [0.02, 0.5]
+    lineLength: [0.02, 0.5],
+
+    // Maximum pixel offset for repeated strokes.
+    repetitionOffset: 5 
   },
 
   debug: {

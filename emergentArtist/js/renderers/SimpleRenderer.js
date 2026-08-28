@@ -29,9 +29,23 @@ class SimpleRenderer {
 
     for (let copy = 0; copy < copies; copy++) {
 
+      const strokeColor = color(mark.colorHex);
+
+      // Each repeated stroke varies from faint up to
+      // the agent's maximum opacity.
+      const strokeOpacity =
+        copy === 0
+          ? mark.opacity
+          : random(mark.opacity * 0.35, mark.opacity);
+
+      strokeColor.setAlpha(strokeOpacity * 255);
+
+      g.stroke(strokeColor);
       // Tiny offset between repeated strokes
-      const ox = random(-4, 4) * mark.repetition;
-      const oy = random(-4, 4) * mark.repetition;
+      const maxOffset = SETTINGS.marks.repetitionOffset;
+
+      const ox = random(-maxOffset, maxOffset) * mark.repetition;
+      const oy = random(-maxOffset, maxOffset) * mark.repetition;
 
       const segments = max(
         8,
@@ -124,8 +138,23 @@ class SimpleRenderer {
 
     for (let copy = 0; copy < copies; copy++) {
 
-      const ox = random(-4, 4) * mark.repetition;
-      const oy = random(-4, 4) * mark.repetition;
+      const maxOffset = SETTINGS.marks.repetitionOffset;
+
+      const ox = random(-maxOffset, maxOffset) * mark.repetition;
+      const oy = random(-maxOffset, maxOffset) * mark.repetition;
+
+      const strokeColor = color(mark.colorHex);
+
+      // Each repeated stroke varies from faint up to
+      // the agent's maximum opacity.
+      const strokeOpacity =
+        copy === 0
+          ? mark.opacity
+          : random(mark.opacity * 0.35, mark.opacity);
+
+      strokeColor.setAlpha(strokeOpacity * 255);
+
+      g.stroke(strokeColor);
 
       g.beginShape();
 
