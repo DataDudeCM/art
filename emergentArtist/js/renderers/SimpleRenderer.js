@@ -30,8 +30,8 @@ class SimpleRenderer {
     for (let copy = 0; copy < copies; copy++) {
 
       // Tiny offset between repeated strokes
-      const ox = random(-0.6, 0.6) * mark.repetition;
-      const oy = random(-0.6, 0.6) * mark.repetition;
+      const ox = random(-4, 4) * mark.repetition;
+      const oy = random(-4, 4) * mark.repetition;
 
       const segments = max(
         8,
@@ -124,8 +124,8 @@ class SimpleRenderer {
 
     for (let copy = 0; copy < copies; copy++) {
 
-      const ox = random(-0.6, 0.6) * mark.repetition;
-      const oy = random(-0.6, 0.6) * mark.repetition;
+      const ox = random(-4, 4) * mark.repetition;
+      const oy = random(-4, 4) * mark.repetition;
 
       g.beginShape();
 
