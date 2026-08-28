@@ -10,7 +10,10 @@ const SETTINGS = {
     speed: [0.35, 1.8],
     wander: [0.01, 0.20],
     drawFrequency: [0.002, 0.025],
-    curiosity: [0.0, 1.0]
+    curiosity: [0.0, 1.0],
+    completeness: [0.35, 1.0],
+    repetition: [0.0, 1.0],
+    distortion: [0.0, 1.0]
   },
   marks: {
     circleDiameter: [18, 180],

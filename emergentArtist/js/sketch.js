@@ -94,12 +94,12 @@ function drawHud() {
   push();
   noStroke();
   fill(0, 150);
-  rect(12, 12, 265, 82, 6);
+  rect(12, 12, 280, 62, 6);
   fill(255);
   textFont("monospace");
   textSize(12);
   text(`Emergent Artist v0.1
 seed: ${currentSeed}
-A agents   P pause   R regenerate   S save`, 22, 31);
+A agents  P pause  R regenerate  S save`, 22, 31);
   pop();
 }

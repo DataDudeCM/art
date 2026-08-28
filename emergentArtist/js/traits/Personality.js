@@ -9,5 +9,16 @@ class Personality {
     this.wander = overrides.wander ?? random(p.wander[0], p.wander[1]);
     this.drawFrequency = overrides.drawFrequency ?? random(p.drawFrequency[0], p.drawFrequency[1]);
     this.curiosity = overrides.curiosity ?? random(p.curiosity[0], p.curiosity[1]);
+    this.completeness =
+      overrides.completeness ??
+      random(p.completeness[0], p.completeness[1]);
+
+    this.repetition =
+      overrides.repetition ??
+      random(p.repetition[0], p.repetition[1]);
+
+    this.distortion =
+      overrides.distortion ??
+      random(p.distortion[0], p.distortion[1]);
   }
 }

@@ -14,7 +14,10 @@ class CircleAgent extends BaseAgent {
       weight: this.personality.weight,
       roughness: this.personality.roughness,
       colorHex: this.colorHex,
-      age: this.age
+      age: this.age,
+      completeness: this.personality.completeness,
+      repetition: this.personality.repetition,
+      distortion: this.personality.distortion
     };
   }
 }
