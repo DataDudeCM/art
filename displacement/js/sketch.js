@@ -121,19 +121,26 @@ function draw() {
 }
 
 function createGPUPreview() {
-  if (gpuPreview) {
-    gpuPreview.remove();
-    gpuPreview = null;
-  }
-
   if (!previewSourceImg) {
     return;
   }
 
-  gpuPreview = createGraphics(
+  if (!gpuPreview) {
+    gpuPreview = createGraphics(
+      previewSourceImg.width,
+      previewSourceImg.height,
+      WEBGL
+    );
+
+    gpuPreview.pixelDensity(1);
+    gpuPreview.noStroke();
+
+    return;
+  }
+
+  gpuPreview.resizeCanvas(
     previewSourceImg.width,
-    previewSourceImg.height,
-    WEBGL
+    previewSourceImg.height
   );
 
   gpuPreview.pixelDensity(1);
@@ -663,7 +670,12 @@ function keyPressed() {
     return false;
   }
   if (key === "p" || key === "P") {
-    flowAnimating = !flowAnimating;
+    flowAnimating =
+      !flowAnimating;
+
+    updateFlowAnimateButton();
+
+    return false;
   }
 }
 

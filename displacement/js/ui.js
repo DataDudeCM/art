@@ -10,6 +10,10 @@ let flowStrengthSlider;
 let noiseScaleSlider;
 let angleSlider;
 
+let shaderPreviewButton;
+let flowAnimateButton;
+let flowSpeedSlider;
+
 let radialStrengthSlider;
 let radialRadiusSlider;
 let radialFalloffSlider;
@@ -149,7 +153,14 @@ function createUI() {
     renderMode =
       renderModeSelect.value();
 
+    // Always show the processed result when
+    // changing renderer.
+    showBefore = false;
+
+    updateBeforeAfterButton();
     updateControlVisibility();
+
+    displacedImg = null;
 
     tryRender();
   });
@@ -274,6 +285,70 @@ function createUI() {
   randomizeButton.mousePressed(() => {
     randomizeFlowField();
   });
+
+  shaderPreviewButton =
+  createButton(
+    useShaderPreview
+      ? "GPU PREVIEW: ON"
+      : "GPU PREVIEW: OFF"
+  );
+
+shaderPreviewButton.addClass(
+  "secondary-button"
+);
+
+shaderPreviewButton.parent(
+  flowFieldGroup
+);
+
+shaderPreviewButton.mousePressed(() => {
+  useShaderPreview =
+    !useShaderPreview;
+
+  updateShaderPreviewButton();
+
+  if (!useShaderPreview) {
+    tryRender();
+  }
+});
+
+flowAnimateButton =
+  createButton(
+    flowAnimating
+      ? "PAUSE ANIMATION"
+      : "PLAY ANIMATION"
+  );
+
+flowAnimateButton.addClass(
+  "secondary-button"
+);
+
+flowAnimateButton.parent(
+  flowFieldGroup
+);
+
+flowAnimateButton.mousePressed(() => {
+  flowAnimating =
+    !flowAnimating;
+
+  updateFlowAnimateButton();
+});
+
+flowSpeedSlider =
+  createSliderControl(
+    "Animation Speed",
+    0.05,
+    3,
+    1,
+    0.05,
+    flowFieldGroup,
+    value =>
+      Number(value).toFixed(2),
+    () => {
+      flowSpeed =
+        flowSpeedSlider.value();
+    }
+  );
 
   // -----------------------
   // Radial Field
@@ -519,6 +594,10 @@ brushOpacitySlider =
 
   updateControlVisibility();
   updateBeforeAfterButton();
+  updateControlVisibility();
+  updateBeforeAfterButton();
+  updateShaderPreviewButton();
+  updateFlowAnimateButton();
 }
 
 function createSection(
@@ -650,6 +729,30 @@ function updateBeforeAfterButton() {
     showBefore
       ? "SHOW AFTER"
       : "SHOW BEFORE"
+  );
+}
+
+function updateShaderPreviewButton() {
+  if (!shaderPreviewButton) {
+    return;
+  }
+
+  shaderPreviewButton.html(
+    useShaderPreview
+      ? "GPU PREVIEW: ON"
+      : "GPU PREVIEW: OFF"
+  );
+}
+
+function updateFlowAnimateButton() {
+  if (!flowAnimateButton) {
+    return;
+  }
+
+  flowAnimateButton.html(
+    flowAnimating
+      ? "PAUSE ANIMATION"
+      : "PLAY ANIMATION"
   );
 }
 
