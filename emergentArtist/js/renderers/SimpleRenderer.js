@@ -14,13 +14,13 @@ class SimpleRenderer {
     c.setAlpha(mark.opacity * 255);
 
     const radius = mark.diameter * 0.5;
-    const roughnessPixels = lerp(0, radius * 0.12, mark.roughness);
+    const roughnessPixels = lerp(0, radius * 0.1, mark.roughness);
 
     // completeness determines how much of the circle is drawn
-    const endAngle = TWO_PI * mark.completeness;
+    const endAngle = mark.segmentAngle;
 
     // repetition determines how many overlapping strokes are drawn
-    const copies = 1 + floor(mark.repetition * 3);
+    const copies = 1 + floor(mark.repetition * 4);
 
     g.push();
     g.noFill();
@@ -30,10 +30,13 @@ class SimpleRenderer {
     for (let copy = 0; copy < copies; copy++) {
 
       // Tiny offset between repeated strokes
-      const ox = random(-2, 2) * mark.repetition;
-      const oy = random(-2, 2) * mark.repetition;
+      const ox = random(-0.6, 0.6) * mark.repetition;
+      const oy = random(-0.6, 0.6) * mark.repetition;
 
-      const segments = max(8, floor(64 * mark.completeness));
+      const segments = max(
+        8,
+        floor(64 * (endAngle / TWO_PI))
+      );
 
       g.beginShape();
 
@@ -121,8 +124,8 @@ class SimpleRenderer {
 
     for (let copy = 0; copy < copies; copy++) {
 
-      const ox = random(-2, 2) * mark.repetition;
-      const oy = random(-2, 2) * mark.repetition;
+      const ox = random(-0.6, 0.6) * mark.repetition;
+      const oy = random(-0.6, 0.6) * mark.repetition;
 
       g.beginShape();
 

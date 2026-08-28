@@ -15,10 +15,10 @@ class Personality {
 
     this.repetition =
       overrides.repetition ??
-      random(p.repetition[0], p.repetition[1]);
+      pow(random(), 3);
 
     this.distortion =
       overrides.distortion ??
-      random(p.distortion[0], p.distortion[1]);
+      pow(random(), 3) * 0.3;
   }
 }

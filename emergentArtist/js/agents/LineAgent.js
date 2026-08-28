@@ -4,8 +4,14 @@ class LineAgent extends BaseAgent {
   }
 
   createMarkRequest() {
-    const [minLength, maxLength] = SETTINGS.marks.lineLength;
-    const len = lerp(minLength, maxLength, this.personality.scale);
+    const [minPct, maxPct] = SETTINGS.marks.lineLength;
+    const canvasSize = min(width, height);
+
+    const len = lerp(
+      minPct * canvasSize,
+      maxPct * canvasSize,
+      this.personality.scale
+    );
     const direction = this.velocity.copy().normalize();
     const half = direction.copy().mult(len * 0.5);
     return {
