@@ -20,7 +20,7 @@ class SimpleRenderer {
     const endAngle = mark.segmentAngle;
 
     // repetition determines how many overlapping strokes are drawn
-    const copies = 1 + floor(mark.repetition * 4);
+    const copies = 1 + floor(mark.repetition * 5); 
 
     g.push();
     g.noFill();

@@ -56,7 +56,7 @@ const SETTINGS = {
     // Strength of repeated/retraced strokes.
     // 0 = no repetition
     // 1 = maximum repetition allowed by the renderer
-    repetition: [0.0, 40.0],
+    repetition: [0.0, 1.0],
 
     // Large-scale deformation of the geometry.
     // 0 = regular geometry
