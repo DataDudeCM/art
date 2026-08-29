@@ -42,7 +42,7 @@ const SETTINGS = {
 
     // Probability of leaving a mark on any frame.
     // Example: 0.01 = about a 1% chance per frame.
-    drawFrequency: [0.0005, 0.005],
+    drawFrequency: [0.0001, 0.00a5],
 
     // Future trait for sensing/reacting to interesting areas.
     // Currently not used.
@@ -77,10 +77,33 @@ const SETTINGS = {
 
     // Line length range.
     // 2% to 14% of min(width, height).
-    lineLength: [0.02, 0.5],
+    lineLength: [0.02, 0.25],
 
     // Maximum pixel offset for repeated strokes.
     repetitionOffset: 5 
+  },
+
+  lineSeries: {
+    // Turn line-series behavior on/off.
+    enabled: true,
+
+    // When a normal line draw happens, chance that it becomes
+    // the start of a series rather than just a single mark.
+    startChance: 0.22,
+
+    // Number of lines in a series.
+    count: [3, 5],
+
+    // Spacing between lines as a percentage of the smaller
+    // canvas dimension.
+    // 0.01 = 1%, 0.03 = 3%
+    spacing: [0.008, 0.02],
+
+    // Number of frames between each line in the series.
+    intervalFrames: [2, 3],
+
+    // Small jitter so the series doesn't feel mechanically perfect.
+    jitter: 1.5
   },
 
   debug: {
