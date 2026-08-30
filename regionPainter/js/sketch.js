@@ -13,8 +13,13 @@ function setup() {
 
   generateBoundary();
 
+  for (let i = 0; i < 8; i++) {
+    testRegion();
+  }
+
   noLoop();
-}
+
+  }
 
 function draw() {
   background(SETTINGS.canvas.paperColor);
@@ -24,6 +29,26 @@ function draw() {
   if (SETTINGS.boundary.visible) {
     image(boundaryLayer, 0, 0);
   }
+}
+
+function testRegion() {
+  const x = random(width);
+  const y = random(height);
+
+  const region = floodFillRegion(boundaryLayer, x, y);
+
+  if (!region) {
+    console.log("No valid region found");
+    return;
+  }
+
+  console.log(
+    `Region found: ${region.pixelCount} pixels`,
+    region.bounds
+  );
+
+  const regionColor = getAccentColor(palette) || randomColor(palette);
+  paintRegion(region, paintLayer, regionColor);
 }
 
 function windowResized() {

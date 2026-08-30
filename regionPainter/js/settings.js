@@ -23,12 +23,12 @@ const SETTINGS = {
   },
 
   paint: {
-    marksPerRegion: 300,
+    marksPerRegion: 100,
     brushMode: "procedural", // later: "image"
     brushSizeMin: 12,
-    brushSizeMax: 40,
-    alphaMin: 4,
-    alphaMax: 14
+    brushSizeMax: 200,
+    alphaMin: 2,
+    alphaMax: 10
   },
 
   debug: {
