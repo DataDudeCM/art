@@ -334,6 +334,29 @@ function getCurrentVisibleResult() {
     : null;
 }
 
+function resetToOriginalSource() {
+  if (!originalSourceImg) {
+    return;
+  }
+
+  sourceImg =
+    originalSourceImg.get();
+
+  createPreviewSource();
+  createGPUPreview();
+
+  flowTime = 0;
+  displacedImg = null;
+  scaledMap = null;
+
+  showBefore = false;
+
+  updateSourceInfo();
+  updateBeforeAfterButton();
+
+  tryRender();
+}
+
 function stampResultAsSource() {
   const stampedPreview =
     getCurrentVisibleResult();
@@ -342,11 +365,8 @@ function stampResultAsSource() {
     return;
   }
 
-  // Make this stamped result the new source.
   sourceImg = stampedPreview.get();
 
-  // For now, the stamped result becomes
-  // the current working base exactly as seen.
   createPreviewSource();
   createGPUPreview();
 
@@ -354,8 +374,15 @@ function stampResultAsSource() {
   displacedImg = null;
   scaledMap = null;
 
+  showBefore = false;
+
   updateSourceInfo();
-  tryRender();
+  updateBeforeAfterButton();
+
+  // Do NOT call tryRender() here.
+  // We want the stamped image to become
+  // the new base, not immediately get
+  // the current effect applied again.
 }
 
 function handleSourceFile(file) {

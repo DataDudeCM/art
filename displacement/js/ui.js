@@ -667,6 +667,43 @@ brushOpacitySlider =
     updateBeforeAfterButton();
   });
 
+  const sourceActionsSection =
+    createSection("SOURCE ACTIONS");
+
+  const stampButton =
+    createButton(
+      "STAMP RESULT AS SOURCE"
+    );
+
+  stampButton.addClass(
+    "primary-button"
+  );
+
+  stampButton.parent(
+    sourceActionsSection
+  );
+
+  stampButton.mousePressed(() => {
+    stampResultAsSource();
+  });
+
+  const resetSourceButton =
+    createButton(
+      "RESET TO ORIGINAL"
+    );
+
+  resetSourceButton.addClass(
+    "secondary-button"
+  );
+
+  resetSourceButton.parent(
+    sourceActionsSection
+  );
+
+  resetSourceButton.mousePressed(() => {
+    resetToOriginalSource();
+  });
+
   const outputSection =
     createSection("OUTPUT");
 
