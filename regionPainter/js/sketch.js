@@ -11,6 +11,8 @@ function setup() {
   boundaryLayer = createGraphics(width, height);
   paintLayer = createGraphics(width, height);
 
+  generateBoundary();
+
   noLoop();
 }
 

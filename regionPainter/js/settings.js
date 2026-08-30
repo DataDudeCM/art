@@ -4,10 +4,15 @@ const SETTINGS = {
   },
 
   boundary: {
-    pointCount: 14,
-    subdivisions: 4,
+    pointCount: 25,
+    subdivisions: 8,
     strokeWeight: 3,
-    margin: 60,
+
+    scale: 2,
+
+    cornerSoftness: 0.40,
+    softeningPasses: 1,
+
     visible: true
   },
 
