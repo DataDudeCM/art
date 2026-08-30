@@ -27,8 +27,8 @@ const SETTINGS = {
     brushMode: "procedural", // later: "image"
     brushSizeMin: 12,
     brushSizeMax: 200,
-    alphaMin: 2,
-    alphaMax: 10
+    alphaMin: 1,
+    alphaMax: 5
   },
 
   debug: {
