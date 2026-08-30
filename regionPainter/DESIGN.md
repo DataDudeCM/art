@@ -924,3 +924,11 @@ probabilistic painting
 The human can define the doodle or boundary language while the system decides which spaces receive attention, how often they are revisited, and how the selected medium accumulates inside them.
 
 The engine should preserve that division of labor rather than attempting to generate every artistic decision itself.
+
+## Additional Ideas
+- Create the entire piece within a grid of rectangles such that I can define the grid as being anywhere from 1x1 to 10x10 with outer margin (border) from 0 to 10% canvas width and grid cell margins of 0 to 100 pixels. Then, we would draw the chaikin art in each grid cell. the default is just 1 with no border, similar to the current version. 
+ - note that each grid cell would get its own set of points. if uplaod a starting image is chosen, the grid stays fixed at 1x1
+- when using the grid, add the option to vary one of the parameters over the number of cells. this could create a nice evolutionary series. it should also print the parameter value under each grid cell (toggle these on/off)
+- Could this become a "primitive" for any of my other sketches? emergentArtist, abstractArtist, etc
+- 
+

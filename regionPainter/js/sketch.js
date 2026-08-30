@@ -147,19 +147,39 @@ function buildPresetData() {
 }
 
 function savePresetToFile() {
+  const presetName =
+    prompt("Preset name:", "Untitled Preset");
+
+  if (!presetName) {
+    return;
+  }
+
   const preset = buildPresetData();
-  const json = JSON.stringify(preset, null, 2);
+  preset.presetName = presetName;
+
+  const json =
+    JSON.stringify(preset, null, 2);
+
+  const safeName =
+    presetName
+      .trim()
+      .replace(/[^a-z0-9]+/gi, "-")
+      .replace(/^-|-$/g, "");
 
   const blob = new Blob([json], {
     type: "application/json"
   });
 
-  const url = URL.createObjectURL(blob);
+  const url =
+    URL.createObjectURL(blob);
 
-  const a = document.createElement("a");
+  const a =
+    document.createElement("a");
+
   a.href = url;
+
   a.download =
-    `regionPainter-preset-${preset.timestamp}.json`;
+    `regionPainter-${safeName}-${preset.timestamp}.json`;
 
   document.body.appendChild(a);
   a.click();
