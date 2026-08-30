@@ -28,6 +28,7 @@ function preload() {
 }
 
 function setup() {
+  pixelDensity(1);
   createCanvas(windowWidth, windowHeight);
 
   boundaryLayer = createGraphics(width, height);
@@ -130,6 +131,12 @@ function saveArtwork() {
   );
 }
 
+function getPaletteKey(paletteObject) {
+  return Object.keys(PALETTES).find(
+    key => PALETTES[key] === paletteObject
+  ) || null;
+}
+
 function buildPresetData() {
   return {
     timestamp: getTimestamp(),
@@ -163,8 +170,15 @@ function savePresetToFile() {
 
 function keyPressed() {
   if (key === "s" || key === "S") {
+    const wasAuto = SETTINGS.canvas.autoRegenerate;
+
+    SETTINGS.canvas.autoRegenerate = false;
+
     saveArtwork();
     savePresetToFile();
+
+    SETTINGS.canvas.autoRegenerate = wasAuto;
+    lastGenerationTime = millis();
   }
 
   if (key === "p" || key === "P") {
