@@ -1,3 +1,4 @@
+let originalSourceImg = null;
 let sourceImg = null;
 let previewSourceImg = null;
 
@@ -308,6 +309,55 @@ function displayImage(img) {
   );
 }
 
+function getCurrentVisibleResult() {
+  if (!sourceImg) {
+    return null;
+  }
+
+  if (
+    useShaderPreview &&
+    mode === "flowField" &&
+    renderMode === "pixel" &&
+    !showBefore &&
+    gpuPreview
+  ) {
+    renderShaderPreview();
+    return gpuPreview.get();
+  }
+
+  if (!showBefore && displacedImg) {
+    return displacedImg.get();
+  }
+
+  return previewSourceImg
+    ? previewSourceImg.get()
+    : null;
+}
+
+function stampResultAsSource() {
+  const stampedPreview =
+    getCurrentVisibleResult();
+
+  if (!stampedPreview) {
+    return;
+  }
+
+  // Make this stamped result the new source.
+  sourceImg = stampedPreview.get();
+
+  // For now, the stamped result becomes
+  // the current working base exactly as seen.
+  createPreviewSource();
+  createGPUPreview();
+
+  flowTime = 0;
+  displacedImg = null;
+  scaledMap = null;
+
+  updateSourceInfo();
+  tryRender();
+}
+
 function handleSourceFile(file) {
   radialCenterX = 0.5;
   radialCenterY = 0.5;
@@ -320,7 +370,9 @@ function handleSourceFile(file) {
   }
 
   loadImage(file.data, img => {
-    sourceImg = img;
+    originalSourceImg = img.get();
+    sourceImg = img.get();
+
     createPreviewSource();
     createGPUPreview();
 
@@ -330,9 +382,7 @@ function handleSourceFile(file) {
     scaledMap = null;
 
     updateSourceInfo();
-
     tryRender();
-
   });
 }
 
