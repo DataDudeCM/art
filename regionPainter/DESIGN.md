@@ -2,16 +2,16 @@
 
 ## Project Intent
 
-`regionPainter` is a reusable p5.js experiment and eventual painting engine that discovers enclosed regions from a boundary source and paints those regions using one or more rendering styles.
+`regionPainter` is a reusable p5.js painting engine that discovers enclosed regions from a boundary source and paints those regions using one or more rendering styles.
 
-The core idea is intentionally independent of watercolor. Watercolor is the first painter because translucent layering, edge pooling, pigment buildup, and repeated passes are especially well suited to the system, but the region logic should support other media later.
+The core idea is intentionally independent of watercolor. Watercolor is the first painter because translucent layering, edge pooling, pigment buildup, repeated passes, and controlled bleed fit the system especially well, but region detection should remain independent of any one medium.
 
-The project should also support both:
+The project should support both:
 
 1. **generated boundary sources** - initially a self-intersecting Chaikin curve built from random control points; and
 2. **human-created boundary sources** - eventually an uploaded black-ink doodle, sketch, or other high-contrast image.
 
-The important abstraction is:
+The core abstraction is:
 
 ```text
 Boundary Source
@@ -23,9 +23,13 @@ Region Detection
 Region Selection
     ->
 Region Painter
+    ->
+Visual Boundary / Ink Rendering
+    ->
+Composite / Export
 ```
 
-The system does not need to know the regions in advance. A region is discovered only when a seed point is selected and flood fill explores the connected area until it reaches a boundary.
+The system does not need to know the regions in advance. A region is discovered when a seed point is selected and flood fill explores the connected area until it reaches a computational boundary.
 
 ---
 
@@ -36,11 +40,13 @@ The system does not need to know the regions in advance. A region is discovered 
 3. **Painters consume a detected region and decide how to render it.**
 4. **Repeated selection of the same region is allowed and desirable.**
 5. **Low-opacity layering should create natural pigment/value buildup.**
-6. **Randomness should be reproducible through a seed.**
-7. **The first version should remain small enough to evaluate the artistic idea quickly.**
-8. **Uploaded hand-drawn boundaries are a first-class future source, not a bolt-on feature.**
-9. **Actual brush images must be supported as painting stamps.**
-10. **Painter implementations should not assume watercolor-only behavior.**
+6. **Randomness should eventually be reproducible through a seed.**
+7. **Uploaded hand-drawn boundaries are a first-class future source.**
+8. **Actual brush images must be supported as painting stamps.**
+9. **Painter implementations must not assume watercolor-only behavior.**
+10. **The computational boundary and the visible artistic boundary are separate concerns.**
+11. **`SETTINGS` remains the canonical state; UI controls and presets read/write that state rather than creating a second configuration system.**
+12. **The engine should eventually be able to render into an arbitrary rectangular viewport or graphics buffer, not only the full canvas.** This supports grid studies and reuse inside larger systems such as `emergentArtist` and `abstractArtist`.
 
 ---
 
@@ -53,196 +59,87 @@ regionPainter
 |   |-- GeneratedCurveBoundarySource
 |   |   `-- random points -> Chaikin smoothing -> rasterized boundary
 |   |
-|   `-- ImageBoundarySource                 [future]
+|   `-- ImageBoundarySource                     [future]
 |       `-- uploaded image -> threshold -> cleanup -> boundary mask
 |
 |-- Boundary Mask
-|   `-- binary/raster representation of blocking pixels
+|   `-- authoritative raster blocking pixels used by flood fill
 |
 |-- Region Detector
 |   `-- flood fill from a seed point
 |
 |-- Region Selector
 |   |-- uniform random seeds
-|   |-- clustered / biased seeds           [future]
-|   `-- intentional revisit strategies     [future]
+|   |-- clustered / focal-point seeds           [future]
+|   `-- intentional revisit strategies          [future]
 |
 |-- Painters
 |   |-- WatercolorRegionPainter
 |   |   |-- procedural soft marks
-|   |   |-- image brush stamps
+|   |   |-- image brush stamps                  [remaining]
 |   |   |-- opacity buildup
-|   |   `-- edge pooling / bleed            [later]
+|   |   `-- edge bleed / pooling
 |   |
-|   |-- InkRegionPainter                    [future]
-|   |-- DryBrushRegionPainter               [future]
-|   |-- StippleRegionPainter                [future]
-|   `-- TextureRegionPainter                [future]
+|   |-- InkRegionPainter                        [future]
+|   |-- DryBrushRegionPainter                   [future]
+|   |-- StippleRegionPainter                    [future]
+|   `-- TextureRegionPainter                    [future]
+|
+|-- Visible Boundary Renderer
+|   |-- simple vector/raster line               [current]
+|   `-- brush-stamped ink path                  [remaining]
+|
+|-- UI / Presets                                [planned]
+|   |-- sliders / toggles mapped to SETTINGS
+|   |-- palette selection
+|   |-- fill brush selection
+|   |-- ink brush selection
+|   |-- named presets
+|   `-- generation / save controls
 |
 `-- Composite / Export
-    |-- optional visible boundary
-    `-- saved artwork
+    |-- paper/background
+    |-- paint layer
+    |-- visible ink boundary
+    `-- PNG + matching preset/settings JSON
 ```
 
 ---
 
-# V0.1 Goal
+# Current Working State
 
-Prove the complete loop:
+The current implementation has already proven the core artistic idea and is producing compelling results.
 
-```text
-generate self-intersecting boundary
-        ->
-choose random seed point
-        ->
-flood fill to discover region
-        ->
-paint region with translucent marks
-        ->
-repeat
-```
+Working pieces include:
 
-V0.1 is successful when:
+- full-canvas p5.js generation;
+- random control-point generation;
+- Chaikin smoothing and self-intersecting closed boundaries;
+- raster `boundaryLayer` used as the authoritative flood-fill barrier;
+- 4-neighbor flood-fill region detection;
+- repeated region selection by design;
+- translucent procedural painting with region-size-responsive mark and brush scaling;
+- exact region masking before compositing;
+- a separate finite edge-bleed pass based on detected region-edge pixels;
+- shared palette selection through `../common/js/palette.js`;
+- shared brush manifest/image loading from `../common/brushes/`;
+- timed auto-regeneration;
+- PNG saving;
+- settings/preset JSON saving, including palette identity.
 
-- the generated boundary produces interesting enclosed areas;
-- flood fill reliably finds individual regions;
-- some regions are painted while others remain untouched;
-- repeated hits deepen a region naturally;
-- translucent marks feel more painted than vector-filled;
-- the code remains simple enough to tune quickly.
+Important implementation rule discovered during development:
 
----
+> **Do not replace the simple `fill.attempts` generation model unless there is a compelling artistic reason.** Repeated hits on the same region are part of the visual hierarchy and should remain allowed.
 
-# V0.1 Scope
+Another important implementation rule:
 
-## Included
-
-- p5.js canvas
-- paper/background color
-- generated random control points
-- Chaikin curve smoothing
-- self-intersecting boundary
-- hidden boundary graphics buffer
-- optional visible boundary
-- pixel flood fill
-- region pixel list / mask
-- random seed selection
-- repeated region selection
-- simple watercolor-style translucent painter
-- procedural brush marks
-- **image-based brush stamps loaded from `../common/brushes/`**
-- regenerate
-- save image
-- debug visualization
-
-## Not Included Yet
-
-- uploaded boundary images
-- automatic gap closing
-- line dilation / erosion controls
-- sophisticated UI
-- true fluid simulation
-- real-time animation
-- region graph / vector face extraction
-- advanced region caching
-- sophisticated brush dynamics
-- multiple simultaneous painter styles
-- full edge-bleed simulation
-
----
-
-# Proposed Project Structure
-
-```text
-regionPainter/
-|
-|-- README.md
-|-- DESIGN.md
-|-- index.html
-|
-`-- js/
-    |-- sketch.js
-    |-- settings.js
-    |-- boundary.js
-    |-- floodfill.js
-    |-- painter.js
-    `-- utils.js
-```
-
-This is intentionally small. If painter types expand, `painter.js` can later become:
-
-```text
-js/
-`-- painters/
-    |-- RegionPainter.js
-    |-- WatercolorRegionPainter.js
-    |-- InkRegionPainter.js
-    `-- ...
-```
-
----
-
-
-# Shared Palette System
-
-`regionPainter` should use the repository's existing shared palette system:
-
-```text
-../common/js/palette.js
-```
-
-Do not create a duplicate local palette library unless the shared system proves inadequate.
-
-The current shared palette system provides:
-
-- named palettes;
-- semantic color roles;
-- tags;
-- random palette selection;
-- palette selection by tag;
-- helpers such as `getPalette()`, `randomColor()`, `getDarkColor()`, `getLightColor()`, and `getAccentColor()`.
-
-Recommended use in `index.html`:
-
-```html
-<script src="../common/js/palette.js"></script>
-```
-
-Then `regionPainter` can use the shared helpers directly:
-
-```js
-let palette = getPalette("earthMagenta");
-
-let paperColor = getLightColor(palette);
-let inkColor = getDarkColor(palette);
-let paintColor = randomColor(palette);
-```
-
-For generative runs, palette choice may also use:
-
-```js
-let palette = randomPalette();
-```
-
-or:
-
-```js
-let palette = randomPaletteByTag("muted");
-```
-
-## Palette Design Rule
-
-The palette system should remain separate from painter behavior.
-
-A painter receives a color or palette context and decides how that color is physically rendered. For example, the watercolor painter may lower opacity, vary saturation, or build pigment through repeated marks, but it should not invent unrelated arbitrary RGB colors.
-
-The live repository version of `common/js/palette.js` is the source of truth for available palettes, roles, tags, and helpers.
+> **Do not implement bleed by expanding every region pixel through a neighborhood radius.** That approach is prohibitively expensive. The current edge-pixel strategy is the correct direction.
 
 ---
 
 # Rendering Layers
 
-Recommended initial graphics buffers:
+Current primary graphics buffers:
 
 ```js
 let boundaryLayer;
@@ -253,59 +150,55 @@ Optional later:
 
 ```js
 let paperLayer;
+let inkLayer;
 let debugLayer;
 ```
 
-Composite order:
+Recommended final composite order:
 
 ```text
 background / paper
         ->
 paintLayer
         ->
-boundaryLayer (only when visible)
+inkLayer / visible boundary (optional)
         ->
 debug overlay (development only)
 ```
 
-The hidden `boundaryLayer` remains authoritative for flood fill even when the boundary is not rendered in the final artwork.
+The hidden computational boundary remains authoritative for flood fill even when the final visible boundary is hidden or rendered using a completely different brush technique.
 
 ---
 
-# Boundary Source - V0.1
+# Boundary Source - Generated Curve
 
-## Generated Curve
-
-Generate approximately 10-20 random control points across the usable canvas area.
-
-The point sequence should remain substantially random because large jumps between points encourage the final smoothed path to cross itself. Perlin-noise placement is intentionally not the default because excessive spatial correlation may make the path too orderly and reduce self-intersection.
+The generated source uses random control points because large jumps between points encourage self-intersection and irregular enclosed spaces.
 
 Pipeline:
 
 ```text
 random control points
         ->
+optional control-point softening
+        ->
 close path
         ->
-Chaikin subdivision 3-5 times
+Chaikin subdivision
         ->
-draw to boundaryLayer
+rasterize to boundaryLayer
 ```
 
-The boundary should be rasterized with enough width to prevent flood-fill leaks.
+The current engine exposes artistic controls such as:
 
-Example starting values:
+- point count;
+- subdivision count;
+- boundary stroke weight;
+- curve scale relative to canvas;
+- corner softness;
+- softening passes;
+- visible boundary toggle.
 
-```js
-boundary: {
-  pointCount: 14,
-  subdivisions: 4,
-  strokeWeight: 3,
-  margin: 60
-}
-```
-
-The exact values are artistic controls and should remain tunable.
+The rasterized line must remain continuous enough to prevent flood-fill leakage.
 
 ---
 
@@ -336,15 +229,13 @@ optional small-gap closing
 boundary mask
 ```
 
-The downstream region detection and painting logic should be identical regardless of whether the boundary came from generated geometry or an uploaded image.
+The downstream region detection and painter pipeline should remain identical regardless of the boundary source.
 
-This is a major reason boundary sources must remain separate from region detection.
+When an uploaded boundary image is used, the proposed grid mode remains fixed at `1 x 1` unless a later design explicitly supports image tiling.
 
 ---
 
 # Region Detection
-
-## Flood Fill Purpose
 
 Flood fill answers:
 
@@ -352,9 +243,7 @@ Flood fill answers:
 
 It does **not** paint the region.
 
-The flood fill begins at a selected pixel and expands through neighboring non-boundary pixels until no valid pixels remain.
-
-For V0.1 use **4-neighbor connectivity**:
+For the current implementation use **4-neighbor connectivity**:
 
 ```text
 up
@@ -363,9 +252,7 @@ left
 right
 ```
 
-This is easier to reason about than 8-neighbor connectivity and reduces accidental diagonal leakage.
-
-## Suggested Output
+A detected region contains approximately:
 
 ```js
 {
@@ -380,49 +267,23 @@ This is easier to reason about than 8-neighbor connectivity and reduces accident
 }
 ```
 
-The region pixel list is then passed to a painter.
-
-## Region Validation
-
 Reject regions when:
 
-- the seed is on a boundary;
-- the region is below a minimum area;
-- the region is implausibly large and likely represents the exterior of the drawing.
+- the seed lies on the boundary;
+- the region is smaller than `minRegionPixels`;
+- the region is larger than `maxRegionFraction` of the canvas and is likely the exterior.
 
-Example:
-
-```js
-fill: {
-  attempts: 30,
-  minRegionPixels: 500,
-  maxRegionFraction: 0.70
-}
-```
-
-`maxRegionFraction` is preferable to a fixed pixel count because it scales with canvas size.
+Do not maintain an "already painted" set by default.
 
 ---
 
 # Region Selection
 
-## V0.1
+## Current Strategy
 
-Select seeds uniformly at random.
+Select seed points uniformly at random, detect the region, and paint valid results.
 
-```text
-pick seed
-   ->
-detect region
-   ->
-if valid, paint it
-   ->
-repeat
-```
-
-Do **not** track "already painted" regions initially.
-
-Repeated hits are desirable because transparent painting passes accumulate naturally:
+Repeated selection is intentional:
 
 ```text
 one hit     -> pale
@@ -430,11 +291,11 @@ two hits    -> richer
 many hits   -> dominant
 ```
 
-This accidental hierarchy is part of the aesthetic.
+That accidental hierarchy is part of the aesthetic and should not be optimized away.
 
 ## Future Selection Strategies
 
-Later selectors may include:
+Potential future selectors include:
 
 - Gaussian cluster around a focal point;
 - user-selected focal point and radius;
@@ -444,7 +305,7 @@ Later selectors may include:
 - deliberately revisit-painted mode;
 - composition-aware region weighting.
 
-Selection strategy should not change flood-fill logic.
+The first selector worth exploring after the current painter/UI work is **focal-point clustering**, because it could create stronger compositional emphasis without replacing the underlying region logic.
 
 ---
 
@@ -452,13 +313,13 @@ Selection strategy should not change flood-fill logic.
 
 A region painter receives a detected region and paints marks based on that region.
 
-Conceptual interface:
+Current conceptual interface:
 
 ```js
-paintRegion(region, graphics, options)
+paintRegion(region, graphics, color)
 ```
 
-Later:
+Longer-term:
 
 ```js
 class RegionPainter {
@@ -466,226 +327,142 @@ class RegionPainter {
 }
 ```
 
-Painters are free to interpret the region differently.
+Painters may interpret the same region differently:
 
-Examples:
-
-- scatter brush marks inside it;
+- scatter brush marks;
 - hatch through it;
 - stipple it;
-- smear pigment across it;
+- smear pigment;
 - sample an image;
-- use texture fragments.
+- use texture fragments;
+- combine controlled interior marks with deliberate edge behavior.
 
 ---
 
-# Watercolor Painter - V0.1
+# Watercolor Painter
 
-The first painter should use many translucent marks rather than a flat fill.
+The current painter uses many translucent marks rather than a flat fill. Region size affects both mark count and brush scale.
 
-Basic process:
+Current conceptual pipeline:
 
 ```text
 detected region
         ->
-sample random pixels from region
+choose region-relative mark count and brush scale
         ->
-choose brush size / alpha
+paint freely to temporary layer
         ->
-stamp brush
+clip temporary layer to exact region mask
         ->
-repeat
+composite onto paint layer
+        ->
+add separate controlled edge bleed
 ```
 
-Repeated stamps overlap and create natural variation in density.
+This separation is important:
 
-Example starting settings:
-
-```js
-paint: {
-  marksPerRegion: 300,
-  brushSizeMin: 12,
-  brushSizeMax: 40,
-  alphaMin: 4,
-  alphaMax: 14
-}
-```
-
-These are starting points only.
+- **interior paint** is strictly masked;
+- **bleed** is intentionally allowed outside the mask.
 
 ---
 
 # Brush System
 
-`regionPainter` must support **both procedural brushes and actual brush images**.
+`regionPainter` must support **both procedural brushes and actual shared brush images**.
 
-The existing shared brush artwork is located at:
-
-```text
-../common/brushes/
-```
-
-assuming `regionPainter` is a sibling of `common` within the art repository.
-
-## Brush Types
-
-### 1. Procedural Brush
-
-Useful for a zero-dependency first test.
-
-Possible implementation:
-
-- several overlapping low-alpha circles;
-- irregular p5 shape;
-- noise-disturbed blob.
-
-### 2. Image Brush
-
-Preferred for richer physical texture.
-
-A transparent PNG brush image can be tinted and stamped into the region.
-
-Conceptually:
-
-```js
-imageMode(CENTER);
-tint(r, g, b, alpha);
-
-image(
-  brushImage,
-  x,
-  y,
-  brushWidth,
-  brushHeight
-);
-
-noTint();
-```
-
-Individual stamps may vary:
-
-- scale;
-- rotation;
-- opacity;
-- x/y jitter;
-- aspect ratio;
-- selected brush image.
-
-## Brush Manifest / Loading
-
-The live art repository already provides a shared brush manifest:
+Shared brush source of truth:
 
 ```text
 ../common/brushes/brushes.json
+../common/brushes/*.png
 ```
 
-`regionPainter` should treat this manifest as the source of truth for available shared brush images rather than duplicating filenames locally.
+Do not maintain a duplicate brush filename list inside `regionPainter`.
 
-Current manifest structure:
+## Current Brush Status
 
-```json
-{
-  "brushes": [
-    "Acrylic Basic.png",
-    "Creamy.png",
-    "Guache.png",
-    "Random.png",
-    "Splatter.png",
-    "Splatter 2.png",
-    "Watercolor 1.png",
-    "Watercolor 2.png",
-    "Watercolor 3.png",
-    "Watercolor 4.png",
-    "Watercolor 5.png",
-    "Watercolor 6.png"
-  ]
-}
-```
+The manifest and PNGs are loaded by the sketch, but the active `stampBrush()` implementation is still procedural. The existing `SETTINGS.paint.brushMode = "image"` setting therefore does **not yet mean that image brushes are actually being stamped**.
 
-Recommended loading flow:
+This is remaining work and should not be lost.
+
+## Remaining Fill Brush Work
+
+Implement a real image-stamp path that can use one selected brush or a controlled brush family.
+
+Required behavior:
+
+- choose brush from the shared manifest;
+- tint with the current region color;
+- vary opacity;
+- vary scale;
+- vary rotation;
+- optionally vary aspect ratio and position jitter;
+- render onto the temporary layer;
+- continue using the existing exact region mask for containment;
+- preserve the current separate bleed pass so brush texture can intentionally escape the region only through bleed behavior.
+
+The UI should eventually expose:
 
 ```text
-load ../common/brushes/brushes.json
-        ->
-read brushes[]
-        ->
-prepend ../common/brushes/
-        ->
-load each referenced PNG
-        ->
-store loaded p5.Image objects in the brush library
+Fill Brush: [Procedural | Acrylic Basic | Creamy | Gouache | Splatter | Watercolor 1 ...]
 ```
 
-Conceptually:
-
-```js
-let brushManifest;
-let brushes = [];
-
-function preload() {
-  brushManifest = loadJSON("../common/brushes/brushes.json");
-}
-
-function loadBrushImages() {
-  brushes = brushManifest.brushes.map(filename =>
-    loadImage(`../common/brushes/${filename}`)
-  );
-}
-```
-
-The exact p5 loading pattern can be adjusted during implementation, but the important design rule is:
-
-> **Do not maintain a separate `regionPainter` brush list when `common/brushes/brushes.json` already defines the shared library.**
-
-The live GitHub repository should remain the reference point for the current brush library and any shared-code conventions.
-
-## Mask Safety
-
-A brush image may extend beyond the detected region.
-
-V0.1 can use one of two approaches:
-
-### Conservative approach
-
-Only stamp when the brush center lies within the region.
-
-This is simple but allows brush edges to cross boundaries.
-
-### Better approach
-
-Render the brush stamp to a temporary layer and mask it by the region before compositing.
-
-This gives strict containment and provides the foundation for deliberate bleed behavior later.
-
-The architecture should favor the second approach once the basic painter works.
+A future option may allow `Random within selected family`, but explicit brush selection should come first so presets remain understandable.
 
 ---
 
-# Edge Pooling and Bleed - Later
+# Visible Boundary / Ink Brush - Remaining Work
 
-Watercolor often accumulates pigment near boundaries. `regionPainter` should eventually distinguish:
+The computational raster boundary must **not** be replaced with an artistic PNG brush path. Gaps or transparency in an artistic brush could cause flood-fill leaks.
+
+Instead maintain two representations:
+
+```text
+Chaikin geometry
+   |-- raster boundary -> flood fill / computation
+   `-- artistic ink path -> final visible rendering
+```
+
+The visible ink path should eventually be painted by stamping a selected brush along the stored Chaikin curve after the region fills are complete.
+
+Desired behavior:
+
+- thin marks through smooth sections;
+- thicker / heavier marks around sharper directional changes;
+- optional jitter and opacity variation;
+- selected **Ink Brush** independent from the **Fill Brush**;
+- brush sampling by approximate arc length rather than stamping at every Chaikin point.
+
+The current subdivision count can generate thousands of Chaikin points, so directly stamping once per point would be unnecessarily expensive. The visible boundary renderer should resample the curve at a practical spacing.
+
+Curvature can be estimated from the turn angle between nearby samples and mapped to line/brush thickness.
+
+UI target:
+
+```text
+Ink Brush:  [Simple Line | Acrylic Basic | Creamy | ...]
+Ink Weight: [slider]
+Curvature Response: [slider]
+Ink Opacity: [slider]
+```
+
+The simple current p5 line remains a useful fallback/debug mode.
+
+---
+
+# Edge Pooling and Bleed
+
+The current implementation already has a useful controlled bleed mechanism based on region-edge pixels and a finite number of marks.
+
+Future refinements may distinguish:
 
 ```text
 interior pigment
 boundary pigment
-overflow / bleed
+outside bleed
 ```
 
-A useful future pipeline:
-
-```text
-region mask
-    ->
-distance-to-boundary estimate
-    ->
-increase pigment probability near edge
-    ->
-optionally expand mask slightly
-    ->
-paint low-alpha bleed outside region
-```
-
-This permits controls such as:
+Possible controls:
 
 ```js
 watercolor: {
@@ -695,240 +472,399 @@ watercolor: {
 }
 ```
 
-When neighboring regions are painted, their small bleed zones can overlap and naturally create darker seams.
-
-No fluid simulation is required for the initial effect.
+A true fluid simulation is not required unless a later experiment demonstrates a clear artistic benefit.
 
 ---
 
-# Seeded Randomness
+# Palette System
 
-Every generated result should eventually be reproducible.
+`regionPainter` uses the repository's shared palette system:
 
-```js
-randomSeed(seed);
-noiseSeed(seed);
+```text
+../common/js/palette.js
 ```
 
-The seed should control:
+The shared palette system is the source of truth for:
 
-- control-point generation;
-- seed-point selection;
-- color choices;
-- brush-image choices;
-- stamp rotation;
-- scale;
+- named palettes;
+- semantic color roles;
+- tags;
+- random palette selection;
+- palette selection by tag;
+- helpers such as `getPalette()`, `randomColor()`, `getDarkColor()`, `getLightColor()`, and `getAccentColor()`.
+
+The palette system remains independent of painter behavior. A painter may alter opacity or pigment buildup but should not invent unrelated RGB colors outside the selected palette context.
+
+The UI should support both explicit palette selection and random palette selection.
+
+---
+
+# Presets and Reproducibility
+
+## Current Save Behavior
+
+Artwork saving should create a PNG and a matching JSON sidecar containing the current settings and palette identity.
+
+A preset should carry its identity inside the file rather than relying only on the filename.
+
+Recommended preset shape:
+
+```json
+{
+  "presetName": "Storm Glass",
+  "timestamp": "20260830-160210",
+  "paletteKey": "industrialSun",
+  "paletteName": "Industrial Sun",
+  "settings": {}
+}
+```
+
+`paletteKey` is the machine-restorable identifier. `paletteName` is the human-readable label.
+
+## Named Presets - Planned UI Behavior
+
+Do not spend more time building a temporary keyboard/file-picker preset workflow. The full preset experience belongs in the UI.
+
+Planned controls:
+
+```text
+Preset: [dropdown]
+[Save Preset] [Load/Import Preset]
+```
+
+Loading a preset should conceptually do:
+
+```js
+applyPreset(preset);
+syncUIFromSettings();
+generateArtwork();
+```
+
+The UI must not become a second source of configuration truth.
+
+## Seeded Randomness - Deferred Carefully
+
+Exact seeded reproduction remains desirable, but it should be reintroduced only after the current generation semantics remain stable.
+
+Important complication: the shared palette helpers currently use `Math.random()`, while p5's `randomSeed()` controls p5's RNG. Therefore `randomSeed()` alone will not reproduce palette choice or every color choice.
+
+When seed support returns, either:
+
+1. introduce a unified seeded RNG used by palette + painter + geometry; or
+2. save explicit resolved choices such as palette key and brush selections in the preset, while using a seed for the p5-driven geometry/painting sequence.
+
+Do not change the current `fill.attempts` model merely to implement seed support.
+
+---
+
+# Planned UI
+
+The current keyboard-first controls are sufficient while developing the engine, but the mature sketch should have a compact control panel.
+
+## UI Design Rule
+
+`SETTINGS` is canonical state.
+
+```text
+SETTINGS
+   <-> UI controls
+   <-> preset save/load
+```
+
+Sliders and selectors should read from and write to `SETTINGS`. Loading a preset updates `SETTINGS`, then the UI synchronizes from it.
+
+## Recommended UI Sections
+
+### Generation / Composition
+
+- Generate / Next Artwork button;
+- auto-regenerate toggle;
+- regeneration interval;
+- point count;
+- curve scale;
+- subdivisions;
+- corner softness;
+- softening passes;
+- fill attempts;
+- minimum region size;
+- maximum region fraction.
+
+### Paint
+
+- marks per region;
+- region-size mark response;
+- brush-size response;
+- min/max brush size;
+- min/max alpha;
+- bleed mark count;
+- bleed distance;
+- bleed alpha range.
+
+### Brushes
+
+- **Fill Brush** selector;
+- **Ink Brush** selector;
+- procedural/image mode where useful;
+- eventual brush-family/randomization options.
+
+### Ink / Boundary
+
+- visible boundary toggle;
+- simple-line vs brush-rendered ink;
+- ink weight;
 - opacity;
-- jitter.
+- curvature-to-thickness response.
 
-Saved images should include the seed in the filename.
+### Color
+
+- named palette selector;
+- random palette option;
+- current palette name display.
+
+### Presets
+
+- named preset selector;
+- Save Preset;
+- Load/Import Preset;
+- preset name;
+- current preset indicator.
+
+### Output
+
+- Save Artwork;
+- save matching JSON settings/preset sidecar;
+- eventually display current seed once deterministic seed support is ready.
+
+## Interaction Recommendation
+
+Palette and Preset selectors should be prominent near the top because they are likely to be the fastest way to explore meaningful visual families. Detailed sliders can appear below in collapsible or grouped sections.
+
+A practical exploration workflow should be:
+
+```text
+choose/randomize palette
+        ->
+generate
+        ->
+adjust a few settings
+        ->
+choose fill/ink brushes
+        ->
+save interesting result + JSON
+        ->
+optionally save as a named preset
+```
 
 ---
 
-# Suggested Settings Object
+# Grid / Evolution Study Mode - Future
+
+A proposed future mode can create an entire piece as a grid of independent `regionPainter` cells.
+
+Possible grid range:
+
+```text
+1 x 1 through 10 x 10
+```
+
+Controls:
+
+- outer margin: `0%` to `10%` of canvas width;
+- cell spacing: `0` to `100` pixels;
+- independent generated control points per cell;
+- default `1 x 1`, no border, matching current behavior.
+
+Each cell should run the same region-painting pipeline but with its own boundary geometry and cell-local dimensions.
+
+If an uploaded starting image/boundary is selected, grid mode remains `1 x 1` initially.
+
+## Parameter Evolution Across Cells
+
+A particularly strong extension is to vary one selected parameter across the cells to create an evolutionary/contact-sheet style series.
+
+Examples:
+
+```text
+left -> right: pointCount 8 ... 50
+top -> bottom: bleedPixels 0 ... 20
+all cells: same palette + brush
+```
+
+Optional labels under cells can show the varied parameter and value, with labels toggled on/off.
+
+### Architectural implication
+
+This does **not** need to be implemented immediately, but it does affect the long-term engine design. The painter currently relies heavily on global `width` and `height`. Grid mode will be much cleaner if the core engine eventually accepts a rendering context such as:
 
 ```js
-const SETTINGS = {
-  canvas: {
-    paperColor: "#f3ecdf"
-  },
-
-  boundary: {
-    pointCount: 14,
-    subdivisions: 4,
-    strokeWeight: 3,
-    margin: 60,
-    visible: true
-  },
-
-  fill: {
-    attempts: 30,
-    minRegionPixels: 500,
-    maxRegionFraction: 0.70
-  },
-
-  paint: {
-    marksPerRegion: 300,
-    brushMode: "image",       // "image" or "procedural"
-    brushSizeMin: 12,
-    brushSizeMax: 40,
-    alphaMin: 4,
-    alphaMax: 14
-  },
-
-  debug: {
-    showSeeds: false,
-    showDetectedRegion: false
-  }
-};
+renderRegionPainting({
+  graphics,
+  x,
+  y,
+  width,
+  height,
+  settings,
+  palette,
+  rng
+});
 ```
+
+or renders into an offscreen `p5.Graphics` buffer per cell and composites the result into the main canvas.
+
+This same change also enables reuse as a primitive in other projects.
 
 ---
 
-# Initial Controls
+# Reusable Primitive / Integration With Other Art Systems
+
+`regionPainter` has strong potential to become a reusable primitive inside projects such as `emergentArtist` and `abstractArtist`.
+
+The desirable long-term abstraction is not "call the current full-screen sketch." It is:
 
 ```text
-R = regenerate
-S = save image
-B = toggle visible boundary
-D = toggle debug visualization
+RegionPainterEngine
+    inputs:
+      boundary source
+      viewport / graphics target
+      settings
+      palette
+      brush choices
+      selection strategy
+      RNG / seed context
+
+    output:
+      rendered graphics + optional metadata
 ```
 
-Keep controls minimal until the core system proves itself.
+Possible uses:
+
+- an `emergentArtist` agent could place a region-painted patch in a chosen area;
+- `abstractArtist` could use regionPainter as one compositional element among lines, arcs, shapes, and texture;
+- grid/evolution studies could invoke the same engine many times with controlled parameter variation;
+- a human-drawn boundary could become a reusable texture/composition source.
+
+This is architecturally important, but **no refactor is required immediately**. For now, avoid adding new full-canvas assumptions where possible and keep boundary, region detection, and painting separated.
 
 ---
 
-# Development Milestones
+# Development Milestones / Remaining Work
 
-## Milestone 1 - Boundary
+## Completed / Proven
 
-Goal:
+- generated Chaikin boundary;
+- reliable flood fill;
+- repeated region selection;
+- procedural translucent painter;
+- exact region mask clipping;
+- efficient edge-based bleed;
+- shared palettes;
+- auto-regeneration;
+- PNG + JSON save path;
+- strong artistic output.
 
-- generate random control points;
-- smooth using Chaikin subdivision;
-- rasterize a self-intersecting boundary.
+## Next: Brush Completion
 
-Definition of done:
+1. Implement actual shared PNG brush stamping for **Fill Brush**.
+2. Preserve mask clipping and current bleed behavior.
+3. Add a separate **Ink Brush** renderer for the visible Chaikin path.
+4. Resample the Chaikin path by arc length for efficient stamping.
+5. Add curvature-based ink thickness.
 
-> The line creates multiple visually interesting enclosed spaces.
+## Then: UI / Presets
 
----
+1. Build compact UI around canonical `SETTINGS`.
+2. Add palette selector.
+3. Add Fill Brush selector.
+4. Add Ink Brush selector.
+5. Add named preset save/load/import.
+6. Add grouped sliders/toggles for current settings.
+7. Keep Generate / Auto-Regenerate / Save controls obvious.
 
-## Milestone 2 - Flood Fill
+## Then: Artistic Expansion
 
-Goal:
+- focal-point / clustered region selection;
+- uploaded boundary images;
+- additional painter types;
+- richer edge pooling;
+- seed/reproducibility system using a unified RNG or explicitly saved resolved choices.
 
-- choose a seed;
-- detect its connected region;
-- debug-render that region as a flat color.
+## Later: Structural Expansion
 
-Definition of done:
-
-> A seed point reliably identifies exactly one bounded region.
-
----
-
-## Milestone 3 - Multiple Region Selection
-
-Goal:
-
-- run many seed attempts;
-- accept valid regions;
-- allow duplicate/repeated regions.
-
-Definition of done:
-
-> A random subset of regions is selected, with some naturally receiving repeated hits.
-
----
-
-## Milestone 4 - Procedural Paint
-
-Goal:
-
-- replace flat fills with translucent procedural brush marks.
-
-Definition of done:
-
-> Regions feel layered rather than digitally filled.
+- arbitrary viewport / offscreen rendering context;
+- grid mode;
+- one-parameter evolution/contact-sheet studies;
+- reusable `RegionPainterEngine` primitive for other art systems.
 
 ---
 
-## Milestone 5 - Image Brushes
+# Review of Additional Ideas
 
-Goal:
+## 1. Grid of independent regionPainter cells
 
-- load one or more transparent brush images from `../common/brushes/`;
-- stamp them with variable scale, angle, alpha, and color.
+**Verdict: strong idea, but not immediate.**
 
-Definition of done:
+It is likely to create genuinely different artwork rather than merely more controls. A grid turns the engine into a visual vocabulary and creates relationships between independent generative events.
 
-> Painted regions visibly inherit physical texture from the brush artwork.
+Do not implement it before the fill/ink brush work and UI are stable. Otherwise it multiplies complexity while those core behaviors are still moving.
 
----
+## 2. Vary one parameter across the grid
 
-## Milestone 6 - Better Region Masking
+**Verdict: especially strong; preserve it.**
 
-Goal:
+This is more interesting than a generic grid because it creates an intentional visual experiment/evolution. It could become both an artwork mode and a powerful way to discover good parameter ranges.
 
-- clip complete brush stamps to the region mask.
+It belongs after grid support, not now.
 
-Definition of done:
+## 3. Print the parameter value beneath each grid cell
 
-> Painter behavior can remain strictly inside a region unless bleed is intentionally enabled.
+**Verdict: useful and inexpensive once grid mode exists.**
 
----
+Make it optional. It is excellent for experiment/contact-sheet mode but may be undesirable in finished artwork.
 
-## Milestone 7 - Watercolor Edge Behavior
+## 4. Use regionPainter as a primitive in other sketches
 
-Goal:
+**Verdict: strategically important.**
 
-- experiment with pigment pooling near boundaries;
-- optionally allow small controlled overflow.
-
-Definition of done:
-
-> Region edges show adjustable accumulation and neighboring fills can create darker overlapping seams.
+This is the only additional idea that should influence architecture now. It does **not** require an immediate refactor, but future code should avoid deepening reliance on full-canvas global state. The eventual move toward an explicit rendering context / `p5.Graphics` target should support both grid mode and integration into `emergentArtist` / `abstractArtist`.
 
 ---
 
-## Milestone 8 - Uploaded Boundary Images
+# Near-Term Priority
 
-Goal:
+The engine is already creating strong artwork. The priority now should be to deepen the **quality and controllability of the existing output**, not expand the feature surface too quickly.
 
-- load a black-line doodle or sketch;
-- convert it into a usable boundary mask;
-- reuse the existing region detection and painter pipeline.
-
-Definition of done:
-
-> A hand-drawn doodle can replace the generated Chaikin boundary without changing the downstream painting system.
-
----
-
-# First Build Order
-
-Implement in this order:
+Recommended sequence:
 
 ```text
-1. Canvas and graphics buffers
-2. Chaikin boundary
-3. Boundary debug display
-4. Flood fill
-5. Flat debug region
-6. Multiple random seeds
-7. Procedural translucent brush
-8. Image brush loading/stamping
-9. Tune until visually interesting
-10. Only then investigate pooling / bleed
+1. Preserve current working generation behavior
+2. Complete real Fill Brush stamping
+3. Complete artistic Ink Brush boundary rendering
+4. Build the SETTINGS-driven UI
+5. Add named preset loading/management inside that UI
+6. Add focal-point selection experiments
+7. Add uploaded boundary source
+8. Refactor toward arbitrary viewport / reusable primitive
+9. Add grid + parameter-evolution mode
 ```
-
-Do not build sophisticated watercolor behavior before region detection is dependable.
 
 ---
 
 # Long-Term Direction
 
-`regionPainter` may eventually become useful as a standalone artwork generator and as a reusable primitive inside larger systems such as abstract or emergent artists.
+`regionPainter` can stand on its own as an artwork generator and also become a reusable primitive inside larger systems.
 
-Its strongest long-term capability is likely the combination of:
+Its strongest long-term capability remains the combination of:
 
 ```text
-human-made line structure
+human-made or generated line structure
         +
 algorithmic region discovery
         +
-probabilistic painting
+probabilistic attention
+        +
+physical-feeling painting
 ```
 
-The human can define the doodle or boundary language while the system decides which spaces receive attention, how often they are revisited, and how the selected medium accumulates inside them.
+The human or higher-level system can define the boundary language and compositional context while `regionPainter` decides which spaces receive attention, how often they are revisited, and how the selected medium accumulates inside them.
 
-The engine should preserve that division of labor rather than attempting to generate every artistic decision itself.
-
-## Additional Ideas
-- Create the entire piece within a grid of rectangles such that I can define the grid as being anywhere from 1x1 to 10x10 with outer margin (border) from 0 to 10% canvas width and grid cell margins of 0 to 100 pixels. Then, we would draw the chaikin art in each grid cell. the default is just 1 with no border, similar to the current version. 
- - note that each grid cell would get its own set of points. if uplaod a starting image is chosen, the grid stays fixed at 1x1
-- when using the grid, add the option to vary one of the parameters over the number of cells. this could create a nice evolutionary series. it should also print the parameter value under each grid cell (toggle these on/off)
-- Could this become a "primitive" for any of my other sketches? emergentArtist, abstractArtist, etc
-- 
-
+The engine should preserve that division of labor rather than attempting to make every artistic decision itself.
