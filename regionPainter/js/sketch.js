@@ -2,6 +2,29 @@ let palette;
 let boundaryLayer;
 let paintLayer;
 
+let brushManifest;
+let brushImages = [];
+
+function preload() {
+  loadJSON(
+    "../common/brushes/brushes.json",
+
+    data => {
+      brushManifest = data;
+
+      for (const filename of brushManifest.brushes) {
+        brushImages.push(
+          loadImage(`../common/brushes/${filename}`)
+        );
+      }
+    },
+
+    error => {
+      console.error("Could not load brush manifest:", error);
+    }
+  );
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -14,11 +37,12 @@ function setup() {
 
   generateBoundary();
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 40; i++) {
     testRegion();
   }
 
   noLoop();
+  console.log("Brushes loaded:", brushImages.length);
 
   }
 

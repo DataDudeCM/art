@@ -4,16 +4,16 @@ const SETTINGS = {
   },
 
   boundary: {
-    pointCount: 25,
+    pointCount: 100,
     subdivisions: 8,
     strokeWeight: 1,
 
-    scale: 4,
+    scale: 1.2,
 
     cornerSoftness: 0.40,
     softeningPasses: 1,
 
-    visible: false
+    visible: true
   },
 
   fill: {
@@ -36,13 +36,13 @@ const SETTINGS = {
     minBrushScale: 0.65,
     maxBrushScale: 8,
 
-    brushMode: "procedural",
+    brushMode: "image",
 
     brushSizeMin: 12,
     brushSizeMax: 400,
 
     alphaMin: 0.25,
-    alphaMax: 2.5,
+    alphaMax: 2,
 
     bleedMarks: 100,
     bleedPixels: 5,

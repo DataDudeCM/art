@@ -75,7 +75,7 @@ function drawBoundary(g, points) {
 
   g.push();
   g.noFill();
-  g.stroke(0);
+  g.stroke(getLightColor(palette));
   g.strokeWeight(SETTINGS.boundary.strokeWeight);
   g.strokeJoin(ROUND);
   g.strokeCap(ROUND);
