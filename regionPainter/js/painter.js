@@ -46,6 +46,14 @@ function paintRegion(region, g, baseColor) {
     g
   );
 
+  paintRegionBleed(
+    region,
+    g,
+    baseColor,
+    brushMin,
+    brushMax
+  );
+
   tempLayer.remove();
 }
 
@@ -120,6 +128,77 @@ function compositeRegionPaint(tempLayer, region, targetLayer) {
   );
 }
 
+function paintRegionBleed(region, g, baseColor, brushMin, brushMax) {
+  const edgePixels = findRegionEdgePixels(region);
+
+  if (edgePixels.length === 0) {
+    return;
+  }
+
+  for (let i = 0; i < SETTINGS.paint.bleedMarks; i++) {
+    const p = random(edgePixels);
+
+    const angle = random(TWO_PI);
+    const distance = random(SETTINGS.paint.bleedPixels);
+
+    const x = p.x + cos(angle) * distance;
+    const y = p.y + sin(angle) * distance;
+
+    const size = random(
+      brushMin * 0.25,
+      brushMax * 0.5
+    );
+
+    const alpha = random(
+      SETTINGS.paint.bleedAlphaMin,
+      SETTINGS.paint.bleedAlphaMax
+    );
+
+    stampBrush(
+      g,
+      x,
+      y,
+      size,
+      baseColor,
+      alpha
+    );
+  }
+}
+
+function findRegionEdgePixels(region) {
+  const regionSet = new Set();
+
+  for (const p of region.pixels) {
+    regionSet.add(p.y * width + p.x);
+  }
+
+  const edges = [];
+
+  for (const p of region.pixels) {
+    const x = p.x;
+    const y = p.y;
+
+    const left  = y * width + (x - 1);
+    const right = y * width + (x + 1);
+    const up    = (y - 1) * width + x;
+    const down  = (y + 1) * width + x;
+
+    if (
+      x <= 0 ||
+      x >= width - 1 ||
+      y <= 0 ||
+      y >= height - 1 ||
+      !regionSet.has(left) ||
+      !regionSet.has(right) ||
+      !regionSet.has(up) ||
+      !regionSet.has(down)
+    ) {
+      edges.push(p);
+    }
+  }
+
+  return edges;
+}
 
 // --------------------------------------------------
 // Procedural brush

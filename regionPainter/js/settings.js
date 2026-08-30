@@ -26,25 +26,29 @@ const SETTINGS = {
     marksPerRegion: 100,
 
     // Region-size response
-    referenceRegionPixels: 25000,
-    markAreaExponent: 0.50,
+    referenceRegionPixels: 25000, 
+    markAreaExponent: 0.50, 
     brushAreaExponent: 0.15,
 
     minMarkScale: 0.5,
-    maxMarkScale: 4.0,
+    maxMarkScale: 1.0,
 
     minBrushScale: 0.65,
-    maxBrushScale: 1.5,
+    maxBrushScale: 8,
 
     brushMode: "procedural",
 
     brushSizeMin: 12,
-    brushSizeMax: 200,
+    brushSizeMax: 400,
 
-    alphaMin: 1,
-    alphaMax: 5,
+    alphaMin: 0.25,
+    alphaMax: 2.5,
 
-    bleedPixels: 40,          // 0 = exact mask
+    bleedMarks: 20,
+    bleedPixels: 5,
+    bleedAlphaMin: 1,
+    bleedAlphaMax: 4, 
+       // 0 = exact mask
     maskFeatherSteps: 0      // optional later softness
   },
 
