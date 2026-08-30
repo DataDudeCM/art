@@ -70,6 +70,10 @@ function draw() {
   ) {
     flowTime +=
       deltaTime * 0.001 * flowSpeed;
+
+    if (flowTime > 1000) {
+      flowTime -= 1000;
+    }
   }
 
   if (!sourceImg) {
@@ -607,13 +611,6 @@ function saveResult() {
     return;
   }
 
-  const fullResolutionResult =
-    renderCurrentMode(sourceImg);
-
-  if (!fullResolutionResult) {
-    return;
-  }
-
   const timestamp =
     year() +
     nf(month(), 2) +
@@ -622,6 +619,35 @@ function saveResult() {
     nf(hour(), 2) +
     nf(minute(), 2) +
     nf(second(), 2);
+
+  // Save exactly what the GPU shader
+  // is currently displaying.
+  if (
+    useShaderPreview &&
+    mode === "flowField" &&
+    renderMode === "pixel"
+  ) {
+    renderShaderPreview();
+
+    const shaderResult =
+      gpuPreview.get();
+
+    shaderResult.save(
+      `displacement-flowField-${timestamp}`,
+      "png"
+    );
+
+    return;
+  }
+
+  // Existing CPU/full-resolution path
+  // for Image Map, Radial and Brush.
+  const fullResolutionResult =
+    renderCurrentMode(sourceImg);
+
+  if (!fullResolutionResult) {
+    return;
+  }
 
   fullResolutionResult.save(
     `displacement-${mode}-${timestamp}`,

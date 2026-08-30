@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
 
 uniform sampler2D uTexture;
 uniform vec2 uResolution;
@@ -89,40 +89,62 @@ void main() {
   vec2 uv = vTexCoord;
   uv.y = 1.0 - uv.y;
 
-  vec2 coord = uv * uResolution;
+  vec2 coord =
+    uv * uResolution;
 
   vec2 seedOffset = vec2(
     uSeed * 0.00137,
     uSeed * 0.00211
   );
 
+  // Fixed flow field.
+  // Time no longer changes the noise itself.
   float n = noise3D(
     vec3(
       coord * uNoiseScale +
       seedOffset,
-      uTime * 0.2
+      17.0
     )
   );
 
   float angle =
-    n * 6.28318530718 * uAngleMult;
+    n *
+    6.28318530718 *
+    uAngleMult;
+
+  vec2 direction =
+    vec2(
+      cos(angle),
+      sin(angle)
+    );
+
+  // Continuous forward travel.
+  float travel =
+    uTime *
+    uStrength;
 
   vec2 displacementPixels =
-    vec2(cos(angle), sin(angle)) * uStrength;
+    direction * travel;
 
-  vec2 displacementUV = vec2(
-    displacementPixels.x / uResolution.x,
-    displacementPixels.y / uResolution.y
-  );
+  vec2 displacementUV =
+    vec2(
+      displacementPixels.x /
+        uResolution.x,
 
-  vec2 sampleUV = clamp(
-    uv + displacementUV,
-    0.0,
-    1.0
-  );
+      displacementPixels.y /
+        uResolution.y
+    );
 
-  gl_FragColor = texture2D(
-    uTexture,
-    sampleUV
-  );
+  // Wrap instead of clamp so motion
+  // can continue indefinitely.
+  vec2 sampleUV =
+    fract(
+      uv + displacementUV
+    );
+
+  gl_FragColor =
+    texture2D(
+      uTexture,
+      sampleUV
+    );
 }
