@@ -117,10 +117,8 @@ const SETTINGS = {
     //   - flood-fills the connected region
     //   - paints it if it passes validation
     //
-    // Because attempts are independent, the same region may be
-    // selected multiple times. This creates additional pigment
-    // buildup and darker repeated regions.
-    attempts: 40,
+    targetPaintedRegions: 12,   // how many valid regions we want
+    maxAttempts: 400,           // safety cap so we don’t loop forever
 
     // Reject flood-filled regions smaller than this many pixels.
     //
