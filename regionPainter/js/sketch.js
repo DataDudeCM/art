@@ -109,3 +109,65 @@ function windowResized() {
   generateArtwork();
   lastGenerationTime = millis();
 }
+
+function getTimestamp() {
+  return (
+    nf(year(), 4) +
+    nf(month(), 2) +
+    nf(day(), 2) + "-" +
+    nf(hour(), 2) +
+    nf(minute(), 2) +
+    nf(second(), 2)
+  );
+}
+
+function saveArtwork() {
+  const timestamp = getTimestamp();
+
+  saveCanvas(
+    `regionPainter-${timestamp}`,
+    "png"
+  );
+}
+
+function buildPresetData() {
+  return {
+    timestamp: getTimestamp(),
+    paletteKey: getPaletteKey(palette),
+    paletteName: palette?.name || null,
+    settings: JSON.parse(JSON.stringify(SETTINGS))
+  };
+}
+
+function savePresetToFile() {
+  const preset = buildPresetData();
+  const json = JSON.stringify(preset, null, 2);
+
+  const blob = new Blob([json], {
+    type: "application/json"
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download =
+    `regionPainter-preset-${preset.timestamp}.json`;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+}
+
+function keyPressed() {
+  if (key === "s" || key === "S") {
+    saveArtwork();
+    savePresetToFile();
+  }
+
+  if (key === "p" || key === "P") {
+    savePresetToFile();
+  }
+}
