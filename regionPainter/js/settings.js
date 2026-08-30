@@ -118,7 +118,7 @@ const SETTINGS = {
     //   - paints it if it passes validation
     //
     targetPaintedRegions: 12,   // how many valid regions we want
-    maxAttempts: 400,           // safety cap so we don’t loop forever
+    maxAttempts: 40,           // safety cap so we don’t loop forever
 
     // Reject flood-filled regions smaller than this many pixels.
     //

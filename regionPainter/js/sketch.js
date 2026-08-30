@@ -61,8 +61,8 @@ function draw() {
 }
 
 function generateArtwork() {
-  randomSeed(SETTINGS.seed);
-  noiseSeed(SETTINGS.seed);
+  //randomSeed(SETTINGS.seed);
+  //noiseSeed(SETTINGS.seed);
 
   boundaryLayer.clear();
   paintLayer.clear();
@@ -73,25 +73,9 @@ function generateArtwork() {
 
   generateBoundary();
 
-  let paintedCount = 0;
-  let attempts = 0;
-
-  while (
-    paintedCount < SETTINGS.fill.targetPaintedRegions &&
-    attempts < SETTINGS.fill.maxAttempts
-  ) {
-    if (testRegion()) {
-      paintedCount++;
-    }
-
-    attempts++;
+  for (let i = 0; i < SETTINGS.fill.attempts; i++) {
+    testRegion();
   }
-
-  console.log(
-    "Seed:", SETTINGS.seed,
-    "Painted regions:", paintedCount,
-    "Attempts:", attempts
-  );
 }
 
 function newSeed() {
@@ -123,7 +107,7 @@ function testRegion() {
     floodFillRegion(boundaryLayer, x, y);
 
   if (!region) {
-    return false;
+    return;
   }
 
   const regionColor =
@@ -134,8 +118,6 @@ function testRegion() {
     paintLayer,
     regionColor
   );
-
-  return true;
 }
 
 function windowResized() {
