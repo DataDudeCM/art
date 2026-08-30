@@ -148,7 +148,7 @@ const SETTINGS = {
     // markAreaExponent
     // minMarkScale
     // maxMarkScale
-    marksPerRegion: 100,
+    marksPerRegion: 1,
 
 
     // ------------------------------------------------------------
@@ -168,29 +168,29 @@ const SETTINGS = {
     //   - small regions receive fewer strokes
     //
     // 0.5 gives approximately square-root scaling.
-    markAreaExponent: 0.50,
+    markAreaExponent: 0,
 
     // Controls how strongly region area changes brush size.
     //
     // This is intentionally much lower than markAreaExponent so
     // large regions tend to receive MORE marks rather than merely
     // enormous marks.
-    brushAreaExponent: 0.15,
+    brushAreaExponent: 0,
 
     // Minimum multiplier that region size may apply to mark count.
     //
     // 0.5 means a small region can receive as little as roughly
     // half of marksPerRegion.
-    minMarkScale: 0.5,
+    minMarkScale: 1,
 
     // Maximum multiplier that region size may apply to mark count.
     //
     // 2.0 means even very large regions are capped at roughly
     // twice the baseline number of marks.
-    maxMarkScale: 2.0,
+    maxMarkScale: 1,
 
     // Minimum multiplier applied to brush size for small regions.
-    minBrushScale: 0.65,
+    minBrushScale: 1,
 
     // Maximum multiplier applied to brush size for very large regions.
     //
@@ -201,7 +201,7 @@ const SETTINGS = {
     // Clipping prevents the main region paint from spilling outside
     // its detected region, but huge brushes can still change the
     // texture and density considerably.
-    maxBrushScale: 8,
+    maxBrushScale: 1,
 
 
     // ------------------------------------------------------------
@@ -219,12 +219,12 @@ const SETTINGS = {
     // Baseline minimum brush diameter/size.
     //
     // The final size is also affected by region-size scaling.
-    brushSizeMin: 12,
+    brushSizeMin: 2000,
 
     // Baseline maximum brush diameter/size.
     //
     // The final size is also affected by maxBrushScale.
-    brushSizeMax: 400,
+    brushSizeMax: 2000,
 
 
     // ------------------------------------------------------------
@@ -241,7 +241,7 @@ const SETTINGS = {
     //
     // Lower this for lighter, airier painting.
     // Raise it for stronger pigment and darker accumulation.
-    alphaMax: 2,
+    alphaMax: 10,
 
 
     // ------------------------------------------------------------
@@ -256,14 +256,14 @@ const SETTINGS = {
     //
     // Lower values:
     //   - create sparse, occasional bleed
-    bleedMarks: 100,
+    bleedMarks: 1,
 
     // Maximum distance that bleed marks may wander away from
     // the detected region edge.
     //
     // Larger values allow paint to travel farther into neighboring
     // regions or surrounding paper.
-    bleedPixels: 5,
+    bleedPixels: 1,
 
     // Minimum opacity for bleed marks.
     bleedAlphaMin: 0.5,
