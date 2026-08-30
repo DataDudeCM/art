@@ -144,9 +144,15 @@ function paintRegionBleed(region, g, baseColor, brushMin, brushMax) {
     const x = p.x + cos(angle) * distance;
     const y = p.y + sin(angle) * distance;
 
+    const bleedT =
+      distance / max(1, SETTINGS.paint.bleedPixels);
+
+    // Smaller marks the farther they wander outward
+    const edgeScale = lerp(0.5, 0.05, bleedT); // controls size of the bleed marks 
+
     const size = random(
-      brushMin * 0.25,
-      brushMax * 0.5
+      brushMin * edgeScale,
+      brushMax * edgeScale
     );
 
     const alpha = random(

@@ -6,14 +6,14 @@ const SETTINGS = {
   boundary: {
     pointCount: 25,
     subdivisions: 8,
-    strokeWeight: 3,
+    strokeWeight: 1,
 
-    scale: 2,
+    scale: 4,
 
     cornerSoftness: 0.40,
     softeningPasses: 1,
 
-    visible: true
+    visible: false
   },
 
   fill: {
@@ -44,10 +44,10 @@ const SETTINGS = {
     alphaMin: 0.25,
     alphaMax: 2.5,
 
-    bleedMarks: 20,
+    bleedMarks: 100,
     bleedPixels: 5,
-    bleedAlphaMin: 1,
-    bleedAlphaMax: 4, 
+    bleedAlphaMin: 0.5,
+    bleedAlphaMax: 2, 
        // 0 = exact mask
     maskFeatherSteps: 0      // optional later softness
   },

@@ -5,7 +5,8 @@ let paintLayer;
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  palette = getPalette("earthMagenta") || randomPalette();
+  //palette = getPalette("earthMagenta") || randomPalette();
+  palette = randomPalette();
   SETTINGS.canvas.paperColor = getLightColor(palette);
 
   boundaryLayer = createGraphics(width, height);
@@ -13,7 +14,7 @@ function setup() {
 
   generateBoundary();
 
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 20; i++) {
     testRegion();
   }
 
@@ -47,7 +48,8 @@ function testRegion() {
     region.bounds
   );
 
-  const regionColor = getAccentColor(palette) || randomColor(palette);
+  //const regionColor = getAccentColor(palette) || randomColor(palette);
+  const regionColor = randomColor(palette);
   paintRegion(region, paintLayer, regionColor);
 }
 
