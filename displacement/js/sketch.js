@@ -116,7 +116,8 @@ function draw() {
     displayImage(img);
   }
   if (
-    mode === "radialField" &&
+    (mode === "radialField" ||
+      mode === "spiralField") &&
     sourceImg &&
     showRadialCenterMarker
   ) {
@@ -419,8 +420,7 @@ function renderCurrentMode(
   }
 
   const renderScale =
-    workingSource.width /
-    sourceImg.width;
+    workingSource.width / sourceImg.width;
 
   if (mode === "imageMap") {
     return renderImageMap(
@@ -438,6 +438,13 @@ function renderCurrentMode(
 
   if (mode === "radialField") {
     return renderRadialField(
+      workingSource,
+      renderScale
+    );
+  }
+
+  if (mode === "spiralField") {
+    return renderSpiralField(
       workingSource,
       renderScale
     );
@@ -592,6 +599,53 @@ function renderRadialField(
   );
 }
 
+function renderSpiralField(
+  workingSource,
+  renderScale
+) {
+  if (!workingSource) {
+    return null;
+  }
+
+  const settings = {
+    width: workingSource.width,
+    height: workingSource.height,
+
+    centerX:
+      workingSource.width *
+      radialCenterX,
+
+    centerY:
+      workingSource.height *
+      radialCenterY,
+
+    strength:
+      spiralStrengthSlider.value() *
+      renderScale,
+
+    radius:
+      spiralRadiusSlider.value(),
+
+    falloff:
+      spiralFalloffSlider.value(),
+
+    radialMix:
+      spiralRadialMixSlider.value()
+  };
+
+  return renderDisplacementField(
+    workingSource,
+    (x, y, index) =>
+      getSpiralFieldOffset(
+        x,
+        y,
+        index,
+        settings
+      ),
+    getRenderOptions(workingSource)
+  );
+}
+
 function randomizeFlowField() {
   flowSeed = floor(
     random(0, 1000000)
@@ -656,7 +710,11 @@ function saveResult() {
 }
 
 function mousePressed() {
-  if (mode !== "radialField" || !sourceImg) {
+  if (
+    (mode !== "radialField" &&
+      mode !== "spiralField") ||
+    !previewSourceImg
+  ) {
     return;
   }
 

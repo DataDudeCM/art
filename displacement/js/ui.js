@@ -20,6 +20,13 @@ let radialFalloffSlider;
 
 let radialFieldGroup;
 
+let spiralFieldGroup;
+
+let spiralStrengthSlider;
+let spiralRadiusSlider;
+let spiralFalloffSlider;
+let spiralRadialMixSlider;
+
 let controlPanel;
 let imageMapGroup;
 let flowFieldGroup;
@@ -104,6 +111,11 @@ function createUI() {
   modeSelect.option(
     "Radial Field",
     "radialField"
+  );
+
+  modeSelect.option(
+    "Spiral Field",
+    "spiralField"
   );
 
   modeSelect.selected(mode);
@@ -407,6 +419,93 @@ flowSpeedSlider =
       }
     );
 
+
+  // -----------------------
+  // Spiral Field
+  // -----------------------
+
+  spiralFieldGroup = createDiv();
+  spiralFieldGroup.parent(controlPanel);
+
+  const spiralSection =
+    createSection(
+      "SPIRAL FIELD",
+      spiralFieldGroup
+    );
+
+  spiralStrengthSlider =
+    createSliderControl(
+      "Strength",
+      -300,
+      300,
+      80,
+      1,
+      spiralSection,
+      value => value,
+      () => {
+        if (mode === "spiralField") {
+          tryRender();
+        }
+      }
+    );
+
+  spiralRadiusSlider =
+    createSliderControl(
+      "Radius",
+      0.1,
+      1.5,
+      0.75,
+      0.01,
+      spiralSection,
+      value =>
+        Number(value).toFixed(2),
+      () => {
+        if (mode === "spiralField") {
+          tryRender();
+        }
+      }
+    );
+
+  spiralFalloffSlider =
+    createSliderControl(
+      "Falloff",
+      0.25,
+      5,
+      1.5,
+      0.05,
+      spiralSection,
+      value =>
+        Number(value).toFixed(2),
+      () => {
+        if (mode === "spiralField") {
+          tryRender();
+        }
+      }
+    );
+
+  spiralRadialMixSlider =
+    createSliderControl(
+      "Radial Mix",
+      -3,
+      3,
+      0,
+      0.05,
+      spiralSection,
+      value =>
+        Number(value).toFixed(2),
+      () => {
+        if (mode === "spiralField") {
+          tryRender();
+        }
+      }
+    );
+
+  const spiralHint = createDiv(
+    "Click the image to place the center"
+  );
+  spiralHint.addClass("keyboard-hint");
+  spiralHint.parent(spiralSection);
+
 // -----------------------
 // Brush Renderer
 // -----------------------
@@ -673,7 +772,8 @@ function updateControlVisibility() {
   if (
     !imageMapGroup ||
     !flowFieldGroup ||
-    !radialFieldGroup
+    !radialFieldGroup ||
+    !spiralFieldGroup
   ) {
     return;
   }
@@ -681,6 +781,7 @@ function updateControlVisibility() {
   imageMapGroup.hide();
   flowFieldGroup.hide();
   radialFieldGroup.hide();
+  spiralFieldGroup.hide();
 
   if (mode === "imageMap") {
     imageMapGroup.show();
@@ -693,6 +794,11 @@ function updateControlVisibility() {
   if (mode === "radialField") {
     radialFieldGroup.show();
   }
+
+  if (mode === "spiralField") {
+    spiralFieldGroup.show();
+  }
+
   if (brushGroup) {
     if (renderMode === "brush") {
       brushGroup.show();
