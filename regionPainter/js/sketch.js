@@ -5,6 +5,8 @@ let paintLayer;
 let brushManifest;
 let brushImages = [];
 
+let lastGenerationTime = 0;
+
 function preload() {
   loadJSON(
     "../common/brushes/brushes.json",
@@ -28,23 +30,15 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  //palette = getPalette("earthMagenta") || randomPalette();
-  palette = randomPalette();
-  SETTINGS.canvas.paperColor = getLightColor(palette);
-
   boundaryLayer = createGraphics(width, height);
   paintLayer = createGraphics(width, height);
 
-  generateBoundary();
+  generateArtwork();
 
-  for (let i = 0; i < 40; i++) {
-    testRegion();
-  }
+  lastGenerationTime = millis();
 
-  noLoop();
   console.log("Brushes loaded:", brushImages.length);
-
-  }
+}
 
 function draw() {
   background(SETTINGS.canvas.paperColor);
@@ -54,32 +48,64 @@ function draw() {
   if (SETTINGS.boundary.visible) {
     image(boundaryLayer, 0, 0);
   }
+
+  const interval =
+    SETTINGS.canvas.regenerateSeconds * 1000;
+
+  if (
+    SETTINGS.canvas.autoRegenerate &&
+    millis() - lastGenerationTime >= interval
+  ) {
+    generateArtwork();
+    lastGenerationTime = millis();
+  }
+}
+
+function generateArtwork() {
+  boundaryLayer.clear();
+  paintLayer.clear();
+
+  palette = randomPalette();
+  SETTINGS.canvas.paperColor =
+    getLightColor(palette);
+
+  generateBoundary();
+
+  for (let i = 0; i < SETTINGS.fill.attempts; i++) {
+    testRegion();
+  }
 }
 
 function testRegion() {
   const x = random(width);
   const y = random(height);
 
-  const region = floodFillRegion(boundaryLayer, x, y);
+  const region =
+    floodFillRegion(boundaryLayer, x, y);
 
   if (!region) {
-    console.log("No valid region found");
     return;
   }
 
-  console.log(
-    `Region found: ${region.pixelCount} pixels`,
-    region.bounds
-  );
+  const regionColor =
+    randomColor(palette);
 
-  //const regionColor = getAccentColor(palette) || randomColor(palette);
-  const regionColor = randomColor(palette);
-  paintRegion(region, paintLayer, regionColor);
+  paintRegion(
+    region,
+    paintLayer,
+    regionColor
+  );
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  boundaryLayer = createGraphics(width, height);
-  paintLayer = createGraphics(width, height);
-  redraw();
+
+  boundaryLayer =
+    createGraphics(width, height);
+
+  paintLayer =
+    createGraphics(width, height);
+
+  generateArtwork();
+  lastGenerationTime = millis();
 }

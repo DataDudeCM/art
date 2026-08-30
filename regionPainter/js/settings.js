@@ -1,23 +1,26 @@
 const SETTINGS = {
   canvas: {
-    paperColor: null
+    paperColor: null,
+
+    autoRegenerate: true,
+    regenerateSeconds: 2
   },
 
   boundary: {
-    pointCount: 100,
-    subdivisions: 8,
-    strokeWeight: 1,
+    pointCount: 30, // more points = more lines and potential intersections
+    subdivisions: 8, // number of segments between points
+    strokeWeight: 1, // width of line
 
-    scale: 1.2,
+    scale: 1.2, // where points are plotted relative to the canvas size
 
-    cornerSoftness: 0.40,
+    cornerSoftness: 0.20, // .1 is jaggy, higher number = softer
     softeningPasses: 1,
 
-    visible: true
+    visible: true // is the line visible or not
   },
 
   fill: {
-    attempts: 20,
+    attempts: 40,
     minRegionPixels: 500,
     maxRegionFraction: 0.7
   },
@@ -31,18 +34,18 @@ const SETTINGS = {
     brushAreaExponent: 0.15,
 
     minMarkScale: 0.5,
-    maxMarkScale: 1.0,
+    maxMarkScale: 2.0, // default 1
 
-    minBrushScale: 0.65,
-    maxBrushScale: 8,
+    minBrushScale: 0.65, 
+    maxBrushScale: 8, // default 8
 
     brushMode: "image",
 
-    brushSizeMin: 12,
-    brushSizeMax: 400,
+    brushSizeMin: 12, // default 12
+    brushSizeMax: 400, // default 400
 
-    alphaMin: 0.25,
-    alphaMax: 2,
+    alphaMin: 0.25, // default 0.25
+    alphaMax: 2, // default 2
 
     bleedMarks: 100,
     bleedPixels: 5,
