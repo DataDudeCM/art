@@ -24,11 +24,28 @@ const SETTINGS = {
 
   paint: {
     marksPerRegion: 100,
-    brushMode: "procedural", // later: "image"
+
+    // Region-size response
+    referenceRegionPixels: 25000,
+    markAreaExponent: 0.50,
+    brushAreaExponent: 0.15,
+
+    minMarkScale: 0.5,
+    maxMarkScale: 4.0,
+
+    minBrushScale: 0.65,
+    maxBrushScale: 1.5,
+
+    brushMode: "procedural",
+
     brushSizeMin: 12,
     brushSizeMax: 200,
+
     alphaMin: 1,
-    alphaMax: 5
+    alphaMax: 5,
+
+    bleedPixels: 40,          // 0 = exact mask
+    maskFeatherSteps: 0      // optional later softness
   },
 
   debug: {

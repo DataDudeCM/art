@@ -1,24 +1,20 @@
 function paintRegion(region, g, baseColor) {
-  const regionFactor = getRegionSizeFactor(region);
+  const markScale = getRegionMarkScale(region);
+  const brushScale = getRegionBrushScale(region);
 
-  const brushFactor = regionFactor;
-
-  // Damp the mark-count response
-  const markFactor = lerp(
-    1.0,
-    regionFactor,
-    0.45
+  const marks = floor(
+    SETTINGS.paint.marksPerRegion * markScale
   );
 
   const brushMin =
-    SETTINGS.paint.brushSizeMin * brushFactor;
+    SETTINGS.paint.brushSizeMin * brushScale;
 
   const brushMax =
-    SETTINGS.paint.brushSizeMax * brushFactor;
+    SETTINGS.paint.brushSizeMax * brushScale;
 
-  const marks = floor(
-    SETTINGS.paint.marksPerRegion * markFactor
-  );
+  // Paint freely onto a temporary layer.
+  const tempLayer = createGraphics(width, height);
+  tempLayer.clear();
 
   for (let i = 0; i < marks; i++) {
     const p = random(region.pixels);
@@ -34,7 +30,7 @@ function paintRegion(region, g, baseColor) {
     );
 
     stampBrush(
-      g,
+      tempLayer,
       p.x,
       p.y,
       size,
@@ -42,29 +38,92 @@ function paintRegion(region, g, baseColor) {
       alpha
     );
   }
+
+  // Clip all of that paint to the detected flood-fill region.
+  compositeRegionPaint(
+    tempLayer,
+    region,
+    g
+  );
+
+  tempLayer.remove();
 }
 
-function getRegionSizeFactor(region) {
-  // region size as fraction of the canvas
-  const regionFraction =
-    region.pixelCount / (width * height);
 
-  // Tune these based on what your regions typically look like
-  const smallRegion = 0.002;   // 0.2% of canvas
-  const largeRegion = 0.10;    // 10% of canvas
+// --------------------------------------------------
+// Region scaling
+// --------------------------------------------------
+
+function getRegionMarkScale(region) {
+  const ratio =
+    region.pixelCount /
+    SETTINGS.paint.referenceRegionPixels;
 
   return constrain(
-    map(
-      regionFraction,
-      smallRegion,
-      largeRegion,
-      0.5,
-      1.75
-    ),
-    0.5,
-    1.75
+    pow(ratio, SETTINGS.paint.markAreaExponent),
+    SETTINGS.paint.minMarkScale,
+    SETTINGS.paint.maxMarkScale
   );
 }
+
+
+function getRegionBrushScale(region) {
+  const ratio =
+    region.pixelCount /
+    SETTINGS.paint.referenceRegionPixels;
+
+  return constrain(
+    pow(ratio, SETTINGS.paint.brushAreaExponent),
+    SETTINGS.paint.minBrushScale,
+    SETTINGS.paint.maxBrushScale
+  );
+}
+
+
+// --------------------------------------------------
+// Region mask / clipping
+// --------------------------------------------------
+
+function compositeRegionPaint(tempLayer, region, targetLayer) {
+  const paintImage = tempLayer.get();
+
+  const maskImage = createImage(width, height);
+
+  maskImage.loadPixels();
+
+  // Start fully transparent.
+  for (let i = 0; i < maskImage.pixels.length; i += 4) {
+    maskImage.pixels[i] = 0;
+    maskImage.pixels[i + 1] = 0;
+    maskImage.pixels[i + 2] = 0;
+    maskImage.pixels[i + 3] = 0;
+  }
+
+  // Make flood-filled region opaque in the mask.
+  for (const p of region.pixels) {
+    const index = 4 * (p.y * width + p.x);
+
+    maskImage.pixels[index] = 255;
+    maskImage.pixels[index + 1] = 255;
+    maskImage.pixels[index + 2] = 255;
+    maskImage.pixels[index + 3] = 255;
+  }
+
+  maskImage.updatePixels();
+
+  paintImage.mask(maskImage);
+
+  targetLayer.image(
+    paintImage,
+    0,
+    0
+  );
+}
+
+
+// --------------------------------------------------
+// Procedural brush
+// --------------------------------------------------
 
 function stampBrush(g, x, y, size, c, alpha) {
   g.push();
@@ -73,12 +132,27 @@ function stampBrush(g, x, y, size, c, alpha) {
   const col = color(c);
 
   for (let i = 0; i < 6; i++) {
-    const ox = random(-size * 0.18, size * 0.18);
-    const oy = random(-size * 0.18, size * 0.18);
-    const r = size * random(0.7, 1.2);
+    const ox =
+      random(-size * 0.18, size * 0.18);
 
-    g.fill(red(col), green(col), blue(col), alpha);
-    g.circle(x + ox, y + oy, r);
+    const oy =
+      random(-size * 0.18, size * 0.18);
+
+    const r =
+      size * random(0.7, 1.2);
+
+    g.fill(
+      red(col),
+      green(col),
+      blue(col),
+      alpha
+    );
+
+    g.circle(
+      x + ox,
+      y + oy,
+      r
+    );
   }
 
   g.pop();
