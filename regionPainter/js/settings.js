@@ -8,15 +8,15 @@ const SETTINGS = {
 
   boundary: {
     pointCount: 30, // more points = more lines and potential intersections
-    subdivisions: 8, // number of segments between points
+    subdivisions: 8, // 8 number of segments between points
     strokeWeight: 1, // width of line
 
-    scale: 1.2, // where points are plotted relative to the canvas size
+    scale: 1.2, // 1.2 - where points are plotted relative to the canvas size
 
-    cornerSoftness: 0.20, // .1 is jaggy, higher number = softer
-    softeningPasses: 1,
+    cornerSoftness: 0.20, // .2 - .1 is jaggy, higher number = softer
+    softeningPasses: 1, // 1 default
 
-    visible: true // is the line visible or not
+    visible: true // is the line visible or notss
   },
 
   fill: {
