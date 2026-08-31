@@ -197,13 +197,19 @@ function keyPressed() {
     SETTINGS.canvas.autoRegenerate = false;
 
     saveArtwork();
-    savePresetToFile();
 
     SETTINGS.canvas.autoRegenerate = wasAuto;
     lastGenerationTime = millis();
   }
 
   if (key === "p" || key === "P") {
-    savePresetToFile();
+      const presetName =
+        prompt("Preset name:");
+
+      if (presetName) {
+        savePreset(
+          presetName.trim()
+        );
+      }
   }
 }
