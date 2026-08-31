@@ -12,6 +12,9 @@ function paintRegion(region, g, baseColor) {
   const brushMax =
     SETTINGS.paint.brushSizeMax * brushScale;
 
+  const regionBrush =
+    chooseRegionBrush();
+
   // Paint freely onto a temporary layer.
   const tempLayer = createGraphics(width, height);
   tempLayer.clear();
@@ -35,7 +38,8 @@ function paintRegion(region, g, baseColor) {
       p.y,
       size,
       baseColor,
-      alpha
+      alpha,
+      regionBrush
     );
   }
 
@@ -51,7 +55,8 @@ function paintRegion(region, g, baseColor) {
     g,
     baseColor,
     brushMin,
-    brushMax
+    brushMax,
+    regionBrush
   );
 
   tempLayer.remove();
@@ -128,12 +133,24 @@ function compositeRegionPaint(tempLayer, region, targetLayer) {
   );
 }
 
-function paintRegionBleed(region, g, baseColor, brushMin, brushMax) {
+function paintRegionBleed(
+  region,
+  g,
+  baseColor,
+  brushMin,
+  brushMax,
+  regionBrush
+) {
   const edgePixels = findRegionEdgePixels(region);
 
   if (edgePixels.length === 0) {
     return;
   }
+
+  const bleedBrush =
+    SETTINGS.paint.useSameBrushForBleed
+      ? regionBrush
+      : chooseRegionBrush();
 
   for (let i = 0; i < SETTINGS.paint.bleedMarks; i++) {
     const p = random(edgePixels);
@@ -148,7 +165,7 @@ function paintRegionBleed(region, g, baseColor, brushMin, brushMax) {
       distance / max(1, SETTINGS.paint.bleedPixels);
 
     // Smaller marks the farther they wander outward
-    const edgeScale = lerp(0.5, 0.05, bleedT); // controls size of the bleed marks 
+    const edgeScale = lerp(0.5, 0.05, bleedT);
 
     const size = random(
       brushMin * edgeScale,
@@ -166,7 +183,8 @@ function paintRegionBleed(region, g, baseColor, brushMin, brushMax) {
       y,
       size,
       baseColor,
-      alpha
+      alpha,
+      bleedBrush
     );
   }
 }
@@ -206,11 +224,116 @@ function findRegionEdgePixels(region) {
   return edges;
 }
 
+function chooseRegionBrush() {
+  if (brushImages.length === 0) {
+    return null;
+  }
+
+  const forcedName =
+    SETTINGS.paint.forcedFillBrush;
+
+  if (forcedName) {
+    const forcedIndex =
+      brushNames.indexOf(forcedName);
+
+    if (forcedIndex !== -1) {
+      return {
+        name: brushNames[forcedIndex],
+        image: brushImages[forcedIndex]
+      };
+    }
+
+    console.warn(
+      `Brush not found: ${forcedName}`
+    );
+  }
+
+  const index =
+    floor(random(brushImages.length));
+
+  return {
+    name: brushNames[index],
+    image: brushImages[index]
+  };
+}
+
 // --------------------------------------------------
 // Procedural brush
 // --------------------------------------------------
 
-function stampBrush(g, x, y, size, c, alpha) {
+function stampBrush(g, x, y, size, c, alpha, brushInfo = null) {
+  if (
+    SETTINGS.paint.brushMode === "image" &&
+    brushImages.length > 0
+  ) {
+    if (SETTINGS.paint.brushStrategy === "randomPerStamp") {
+      brushInfo = chooseRegionBrush();
+    }
+
+    stampImageBrush(
+      g,
+      x,
+      y,
+      size,
+      c,
+      alpha,
+      brushInfo
+    );
+  } else {
+    stampProceduralBrush(
+      g,
+      x,
+      y,
+      size,
+      c,
+      alpha
+    );
+  }
+}
+
+
+function stampImageBrush(g, x, y, size, c, alpha, brushInfo) {
+  const brush = brushInfo?.image;
+
+  if (!brush) {
+    stampProceduralBrush(g, x, y, size, c, alpha);
+    return;
+  }
+
+  const col = color(c);
+
+  const rotation = random(TWO_PI);
+  const aspect = random(0.75, 1.35);
+
+  const w = size * aspect;
+  const h = size / aspect;
+
+  g.push();
+  g.translate(x, y);
+  g.rotate(rotation);
+  g.imageMode(CENTER);
+
+  g.tint(
+    red(col),
+    green(col),
+    blue(col),
+    alpha
+  );
+
+  g.image(
+    brush,
+    0,
+    0,
+    w,
+    h
+  );
+
+  g.noTint();
+  g.pop();
+}
+
+
+function stampProceduralBrush(g, x, y, size, c, alpha) {
   g.push();
   g.noStroke();
 

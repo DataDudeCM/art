@@ -34,23 +34,26 @@ const SETTINGS = {
     brushAreaExponent: 0.15,
 
     minMarkScale: 0.5,
-    maxMarkScale: 2.0, // default 1
+    maxMarkScale: 1.25, // default 1
 
-    minBrushScale: 0.65, 
-    maxBrushScale: 8, // default 8
+    minBrushScale: 0.65, // default 0.65
+    maxBrushScale: 2.5, // default 8
 
     brushMode: "image",
+    brushStrategy: "singlePerRegion", // "singlePerRegion" or "randomPerStamp"
+    forcedFillBrush: null, // set to null for random-per-region
+    useSameBrushForBleed: true,
 
     brushSizeMin: 12, // default 12
-    brushSizeMax: 400, // default 400
+    brushSizeMax: 250, // default 400
 
-    alphaMin: 0.25, // default 0.25
-    alphaMax: 2, // default 2
+    alphaMin: 3, // default 0.25
+    alphaMax: 14, // default 2
 
     bleedMarks: 100,
     bleedPixels: 5,
-    bleedAlphaMin: 0.5,
-    bleedAlphaMax: 2, 
+    bleedAlphaMin: 1,
+    bleedAlphaMax: 6, 
        // 0 = exact mask
     maskFeatherSteps: 0      // optional later softness
   },

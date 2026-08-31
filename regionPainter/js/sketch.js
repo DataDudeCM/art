@@ -4,6 +4,7 @@ let paintLayer;
 
 let brushManifest;
 let brushImages = [];
+let brushNames = [];
 
 let lastGenerationTime = 0;
 
@@ -15,6 +16,7 @@ function preload() {
       brushManifest = data;
 
       for (const filename of brushManifest.brushes) {
+        brushNames.push(filename);
         brushImages.push(
           loadImage(`../common/brushes/${filename}`)
         );

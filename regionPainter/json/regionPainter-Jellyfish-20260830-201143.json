@@ -1,0 +1,51 @@
+{
+  "timestamp": "20260830-201143",
+  "paletteKey": "midnightSteel",
+  "paletteName": "Midnight Steel",
+  "settings": {
+    "canvas": {
+      "paperColor": "#e0e1dd",
+      "autoRegenerate": false,
+      "regenerateSeconds": 2
+    },
+    "boundary": {
+      "pointCount": 30,
+      "subdivisions": 8,
+      "strokeWeight": 1,
+      "scale": 1.2,
+      "cornerSoftness": 0.2,
+      "softeningPasses": 1,
+      "visible": true
+    },
+    "fill": {
+      "attempts": 40,
+      "minRegionPixels": 500,
+      "maxRegionFraction": 0.7
+    },
+    "paint": {
+      "marksPerRegion": 100,
+      "referenceRegionPixels": 25000,
+      "markAreaExponent": 0.5,
+      "brushAreaExponent": 0.15,
+      "minMarkScale": 0.5,
+      "maxMarkScale": 2,
+      "minBrushScale": 0.65,
+      "maxBrushScale": 8,
+      "brushMode": "image",
+      "brushSizeMin": 12,
+      "brushSizeMax": 400,
+      "alphaMin": 0.25,
+      "alphaMax": 2,
+      "bleedMarks": 100,
+      "bleedPixels": 5,
+      "bleedAlphaMin": 0.5,
+      "bleedAlphaMax": 2,
+      "maskFeatherSteps": 0
+    },
+    "debug": {
+      "showSeeds": false,
+      "showDetectedRegion": false
+    }
+  },
+  "presetName": "Jellyfish"
+}
