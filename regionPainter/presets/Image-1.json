@@ -1,0 +1,55 @@
+{
+  "presetVersion": 1,
+  "presetName": "Image-1",
+  "updatedAt": "2026-08-31T02:57:39.142Z",
+  "paletteKey": "charcoalCoral",
+  "paletteName": "Charcoal Coral",
+  "settings": {
+    "canvas": {
+      "paperColor": "#f8f4e3",
+      "autoRegenerate": true,
+      "regenerateSeconds": 2
+    },
+    "boundary": {
+      "pointCount": 30,
+      "subdivisions": 8,
+      "strokeWeight": 1,
+      "scale": 1.2,
+      "cornerSoftness": 0.2,
+      "softeningPasses": 1,
+      "visible": true
+    },
+    "fill": {
+      "attempts": 40,
+      "minRegionPixels": 500,
+      "maxRegionFraction": 0.7
+    },
+    "paint": {
+      "marksPerRegion": 100,
+      "referenceRegionPixels": 25000,
+      "markAreaExponent": 0.5,
+      "brushAreaExponent": 0.15,
+      "minMarkScale": 0.5,
+      "maxMarkScale": 1.25,
+      "minBrushScale": 0.65,
+      "maxBrushScale": 2.5,
+      "brushMode": "image",
+      "brushStrategy": "singlePerRegion",
+      "forcedFillBrush": null,
+      "useSameBrushForBleed": true,
+      "brushSizeMin": 12,
+      "brushSizeMax": 250,
+      "alphaMin": 3,
+      "alphaMax": 14,
+      "bleedMarks": 100,
+      "bleedPixels": 5,
+      "bleedAlphaMin": 1,
+      "bleedAlphaMax": 6,
+      "maskFeatherSteps": 0
+    },
+    "debug": {
+      "showSeeds": false,
+      "showDetectedRegion": false
+    }
+  }
+}
