@@ -1,34 +1,38 @@
-const PRESET_STORAGE_KEY = "regionPainter.presets";
+function getChangedSettings(current, defaults) {
+  const changed = {};
 
-function getAllPresets() {
-  const raw = localStorage.getItem(PRESET_STORAGE_KEY);
+  for (const key of Object.keys(current)) {
+    const currentValue = current[key];
+    const defaultValue = defaults[key];
 
-  if (!raw) {
-    return {};
+    if (
+      currentValue &&
+      typeof currentValue === "object" &&
+      !Array.isArray(currentValue)
+    ) {
+      const nested =
+        getChangedSettings(
+          currentValue,
+          defaultValue || {}
+        );
+
+      if (Object.keys(nested).length > 0) {
+        changed[key] = nested;
+      }
+    } else if (currentValue !== defaultValue) {
+      changed[key] = currentValue;
+    }
   }
 
-  try {
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error("Could not parse presets:", err);
-    return {};
-  }
+  return changed;
 }
 
 
-function savePreset(name) {
-  if (!name) {
-    return;
-  }
+function buildPresetData(name) {
+  return {
+    presetVersion: 1,
 
-  const presets = getAllPresets();
-  const existing = presets[name];
-
-  presets[name] = {
     presetName: name,
-    createdAt:
-      existing?.createdAt ||
-      new Date().toISOString(),
 
     updatedAt:
       new Date().toISOString(),
@@ -40,34 +44,98 @@ function savePreset(name) {
       palette?.name || null,
 
     settings:
-      JSON.parse(
-        JSON.stringify(SETTINGS)
+      getChangedSettings(
+        SETTINGS,
+        DEFAULT_SETTINGS
       )
   };
-
-  localStorage.setItem(
-    PRESET_STORAGE_KEY,
-    JSON.stringify(presets)
-  );
-
-  console.log(`Preset saved: ${name}`);
 }
 
 
-function loadPreset(name) {
-  const presets = getAllPresets();
-  const preset = presets[name];
-
-  if (!preset) {
-    console.warn(`Preset not found: ${name}`);
-    return false;
+function savePresetToFile(name) {
+  if (!name) {
+    return;
   }
 
-  Object.assign(
+  const preset =
+    buildPresetData(name);
+
+  const json =
+    JSON.stringify(
+      preset,
+      null,
+      2
+    );
+
+  const safeName =
+    name
+      .trim()
+      .replace(/[^a-z0-9]+/gi, "-")
+      .replace(/^-|-$/g, "");
+
+  const blob =
+    new Blob(
+      [json],
+      {
+        type: "application/json"
+      }
+    );
+
+  const url =
+    URL.createObjectURL(blob);
+
+  const a =
+    document.createElement("a");
+
+  a.href = url;
+
+  a.download =
+    `${safeName}.json`;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+
+  console.log(
+    `Preset exported: ${name}`
+  );
+}
+
+
+function deepMerge(target, source) {
+  for (const key of Object.keys(source || {})) {
+    const value = source[key];
+
+    if (
+      value &&
+      typeof value === "object" &&
+      !Array.isArray(value)
+    ) {
+      if (!target[key]) {
+        target[key] = {};
+      }
+
+      deepMerge(
+        target[key],
+        value
+      );
+    } else {
+      target[key] = value;
+    }
+  }
+
+  return target;
+}
+
+
+function applyPreset(preset) {
+  resetSettingsToDefaults();
+
+  deepMerge(
     SETTINGS,
-    JSON.parse(
-      JSON.stringify(preset.settings)
-    )
+    preset.settings || {}
   );
 
   if (
@@ -79,35 +147,4 @@ function loadPreset(name) {
   }
 
   generateArtwork();
-
-  console.log(`Preset loaded: ${name}`);
-
-  return true;
-}
-
-
-function deletePreset(name) {
-  const presets = getAllPresets();
-
-  if (!presets[name]) {
-    return false;
-  }
-
-  delete presets[name];
-
-  localStorage.setItem(
-    PRESET_STORAGE_KEY,
-    JSON.stringify(presets)
-  );
-
-  console.log(`Preset deleted: ${name}`);
-
-  return true;
-}
-
-
-function listPresets() {
-  return Object.keys(
-    getAllPresets()
-  ).sort();
 }

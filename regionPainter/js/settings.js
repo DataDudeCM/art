@@ -63,3 +63,18 @@ const SETTINGS = {
     showDetectedRegion: false
   }
 };
+
+const DEFAULT_SETTINGS =
+  JSON.parse(JSON.stringify(SETTINGS));
+
+
+function resetSettingsToDefaults() {
+  const defaults =
+    JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+
+  for (const key of Object.keys(SETTINGS)) {
+    delete SETTINGS[key];
+  }
+
+  Object.assign(SETTINGS, defaults);
+}

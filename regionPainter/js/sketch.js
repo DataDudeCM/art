@@ -139,57 +139,6 @@ function getPaletteKey(paletteObject) {
   ) || null;
 }
 
-function buildPresetData() {
-  return {
-    timestamp: getTimestamp(),
-    paletteKey: getPaletteKey(palette),
-    paletteName: palette?.name || null,
-    settings: JSON.parse(JSON.stringify(SETTINGS))
-  };
-}
-
-function savePresetToFile() {
-  const presetName =
-    prompt("Preset name:", "Untitled Preset");
-
-  if (!presetName) {
-    return;
-  }
-
-  const preset = buildPresetData();
-  preset.presetName = presetName;
-
-  const json =
-    JSON.stringify(preset, null, 2);
-
-  const safeName =
-    presetName
-      .trim()
-      .replace(/[^a-z0-9]+/gi, "-")
-      .replace(/^-|-$/g, "");
-
-  const blob = new Blob([json], {
-    type: "application/json"
-  });
-
-  const url =
-    URL.createObjectURL(blob);
-
-  const a =
-    document.createElement("a");
-
-  a.href = url;
-
-  a.download =
-    `regionPainter-${safeName}-${preset.timestamp}.json`;
-
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-  URL.revokeObjectURL(url);
-}
-
 function keyPressed() {
   if (key === "s" || key === "S") {
     const wasAuto = SETTINGS.canvas.autoRegenerate;
@@ -203,13 +152,13 @@ function keyPressed() {
   }
 
   if (key === "p" || key === "P") {
-      const presetName =
-        prompt("Preset name:");
+    const presetName =
+      prompt("Preset name:");
 
-      if (presetName) {
-        savePreset(
-          presetName.trim()
-        );
-      }
+    if (presetName) {
+      savePresetToFile(
+        presetName.trim()
+      );
+    }
   }
 }
