@@ -8,6 +8,13 @@ let brushNames = [];
 
 let lastGenerationTime = 0;
 
+let currentPreset = null;
+
+const UI_STATE = {
+  paletteMode: "inherit", // "inherit" | "random" | "fixed"
+  fixedPaletteKey: null
+};
+
 function preload() {
   loadJSON(
     "../common/brushes/brushes.json",
@@ -64,11 +71,35 @@ function draw() {
   }
 }
 
+function resolvePalette() {
+  if (UI_STATE.paletteMode === "random") {
+    return randomPalette();
+  }
+
+  if (
+    UI_STATE.paletteMode === "fixed" &&
+    UI_STATE.fixedPaletteKey &&
+    PALETTES[UI_STATE.fixedPaletteKey]
+  ) {
+    return PALETTES[UI_STATE.fixedPaletteKey];
+  }
+
+  if (
+    currentPreset &&
+    currentPreset.paletteKey &&
+    PALETTES[currentPreset.paletteKey]
+  ) {
+    return PALETTES[currentPreset.paletteKey];
+  }
+
+  return randomPalette();
+}
+
 function generateArtwork() {
   boundaryLayer.clear();
   paintLayer.clear();
 
-  palette = randomPalette();
+  palette = resolvePalette();
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
 

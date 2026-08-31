@@ -131,20 +131,14 @@ function deepMerge(target, source) {
 
 
 function applyPreset(preset) {
+  currentPreset = preset;
+
   resetSettingsToDefaults();
 
   deepMerge(
     SETTINGS,
     preset.settings || {}
   );
-
-  if (
-    preset.paletteKey &&
-    PALETTES[preset.paletteKey]
-  ) {
-    palette =
-      PALETTES[preset.paletteKey];
-  }
 
   generateArtwork();
 }
