@@ -60,7 +60,7 @@ function setup() {
   paintLayer =
     createGraphics(width, height);
 
-  requestGenerate();
+  //requestGenerate();
   
   setupUI();
   
@@ -68,19 +68,14 @@ function setup() {
 }
 
 function draw() {
-  background(SETTINGS.canvas.paperColor);
-
-  image(paintLayer, 0, 0);
-
-  if (SETTINGS.boundary.visible) {
-    image(boundaryLayer, 0, 0);
+  if (!UI_STATE.autoRegenerate) {
+    return;
   }
 
   const interval =
     SETTINGS.canvas.regenerateSeconds * 1000;
 
   if (
-    UI_STATE.autoRegenerate &&
     !UI_STATE.isGenerating &&
     millis() - lastGenerationTime >= interval
   ) {
@@ -95,6 +90,11 @@ function getCanvasWidth() {
 }
 
 function resolveActivePalette() {
+  console.log(
+    "palette state:",
+    UI_STATE.paletteMode,
+    UI_STATE.fixedPaletteKey
+  );
   if (UI_STATE.paletteMode === "random") {
     return randomPalette();
   }
@@ -124,6 +124,12 @@ function generateArtwork() {
   paintLayer.clear();
 
   palette = resolveActivePalette();
+  console.log(
+    "resolved palette:",
+    palette?.name,
+    "paper:",
+    getLightColor(palette)
+  );
 
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
@@ -137,6 +143,27 @@ function generateArtwork() {
   ) {
     testRegion();
   }
+  background(SETTINGS.canvas.paperColor);
+
+  for (
+    let i = 0;
+    i < SETTINGS.fill.attempts;
+    i++
+  ) {
+    testRegion();
+  }
+
+  renderArtwork();
+}
+
+function renderArtwork() {
+  background(SETTINGS.canvas.paperColor);
+
+  image(paintLayer, 0, 0);
+
+  if (SETTINGS.boundary.visible) {
+    image(boundaryLayer, 0, 0);
+  }
 }
 
 function testRegion() {
@@ -145,7 +172,7 @@ function testRegion() {
 
   const region =
     floodFillRegion(
-      boundaryDetectionLayer,
+      boundaryLayer,
       x,
       y
     );

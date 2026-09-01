@@ -84,6 +84,7 @@ function drawDetectionBoundary(g, points) {
   g.strokeWeight(
     SETTINGS.boundary.strokeWeight
   );
+  g.strokeWeight(3);
 
   g.strokeJoin(ROUND);
   g.strokeCap(ROUND);
