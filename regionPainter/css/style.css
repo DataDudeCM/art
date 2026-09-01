@@ -217,3 +217,17 @@ button {
 .section-toggle {
   margin-bottom: 0;
 }
+.seed-row {
+  display: flex;
+  gap: 8px;
+}
+
+.seed-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.seed-row button {
+  width: auto;
+  margin-bottom: 0;
+}

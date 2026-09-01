@@ -11,6 +11,7 @@ let brushNames = [];
 let lastGenerationTime = 0;
 
 let currentPreset = null;
+let generatationSeed = 12345;
 
 const UI_STATE = {
   paletteMode: "inherit", // "inherit" | "random" | "fixed"
@@ -82,7 +83,21 @@ function draw() {
     !UI_STATE.isGenerating &&
     millis() - lastGenerationTime >= interval
   ) {
-    requestGenerate();
+      generationSeed =
+        Math.floor(Math.random() * 1000000000);
+
+      syncSeedDisplay();
+
+      requestGenerate();
+    }
+}
+
+function syncSeedDisplay() {
+  const input =
+    document.getElementById("generation-seed");
+
+  if (input) {
+    input.value = generationSeed;
   }
 }
 
@@ -118,8 +133,8 @@ function resolveActivePalette() {
 }
 
 function generateArtwork() {
-  randomSeed(SETTINGS.generation.seed);
-  noiseSeed(SETTINGS.generation.seed);
+  randomSeed(generationSeed);
+  noiseSeed(generationSeed);
   boundaryDetectionLayer.clear();
   boundaryLayer.clear();
   paintLayer.clear();
@@ -293,7 +308,7 @@ function saveArtwork() {
   const timestamp = getTimestamp();
 
   saveCanvas(
-    `regionPainter-${timestamp}`,
+    `regionPainter-seed${generationSeed}-${timestamp}`
     "png"
   );
 }

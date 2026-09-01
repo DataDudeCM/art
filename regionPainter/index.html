@@ -573,6 +573,30 @@
 
 
       <section class="control-group action-group">
+
+        <div class="control-item">
+          <label for="generation-seed">
+            Seed
+          </label>
+
+          <div class="seed-row">
+            <input
+              id="generation-seed"
+              type="number"
+              min="0"
+              max="999999999"
+              step="1"
+            />
+
+            <button
+              id="new-seed-button"
+              type="button"
+            >
+              New
+            </button>
+          </div>
+        </div>
+
         <button id="generate-button">
           Generate
         </button>
@@ -583,6 +607,7 @@
         >
           Ready
         </div>
+
         <div class="control-item">
           <label class="checkbox-row">
             <input
@@ -592,6 +617,7 @@
             Auto regenerate
           </label>
         </div>
+
       </section>
     </aside>
   </div>

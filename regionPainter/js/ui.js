@@ -6,6 +6,7 @@ function setupUI() {
   setupTextureControls();
   setupCollapsibleSections();
   setupFillControls();
+  setupSeedControls();
 
   document
     .getElementById("generate-button")
@@ -455,6 +456,40 @@ function setupFillBrushSelect() {
   select.addEventListener("change", event => {
     SETTINGS.paint.forcedFillBrush =
       event.target.value || null;
+  });
+}
+
+function setupSeedControls() {
+  const input =
+    document.getElementById("generation-seed");
+
+  const newButton =
+    document.getElementById("new-seed-button");
+
+  input.value = generationSeed;
+
+  input.addEventListener("change", () => {
+    const value =
+      Math.floor(Number(input.value));
+
+    generationSeed = constrain(
+      Number.isFinite(value) ? value : 0,
+      0,
+      999999999
+    );
+
+    input.value = generationSeed;
+  });
+
+  newButton.addEventListener("click", () => {
+    generationSeed =
+      Math.floor(
+        Math.random() * 1000000000
+      );
+
+    input.value = generationSeed;
+
+    requestGenerate();
   });
 }
 

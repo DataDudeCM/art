@@ -1,8 +1,5 @@
 const SETTINGS = {
-  generation: {
-    seed: 12345
-  },
-  
+
   canvas: {
     paperColor: null,
 
