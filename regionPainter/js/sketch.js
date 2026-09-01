@@ -197,6 +197,8 @@ function windowResized() {
     windowHeight
   );
 
+  renderArtwork();
+
   boundaryDetectionLayer =
     createGraphics(width, height);
 
@@ -207,6 +209,7 @@ function windowResized() {
     createGraphics(width, height);
 
   lastGenerationTime = millis();
+
 }
 
 function getTimestamp() {
