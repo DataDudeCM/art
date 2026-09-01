@@ -20,12 +20,11 @@ const SETTINGS = {
 
     // Visible boundary rendering
     brushMode: "image",      // "image" or "line"
-    forcedBrush: "Creamy",       // null = random boundary brush
+    forcedBrush: "Creamy.png",       // null = random boundary brush
 
     thinBrushSize: 2,       // base thickness at segment start/end
     midSizeMultiplier: 3,    // 2 = 2x thickness in the middle
     peakPosition: 0.6, // 0.5 = centered
-    paintUnderBoundaryPixels: 3,
 
     brushSpacing: 4,
     brushAlpha: 255,
