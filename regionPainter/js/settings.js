@@ -6,6 +6,14 @@ const SETTINGS = {
     regenerateSeconds: 2
   },
 
+  texture: {
+    enabled: true,
+    opacity: 100,
+    scale: 1.0,
+    blendMode: "multiply",
+    textureName: null
+  },
+
   boundary: {
     pointCount: 30, // more points = more lines and potential intersections
     subdivisions: 8, // 8 number of segments between points
@@ -41,7 +49,7 @@ const SETTINGS = {
   },
 
   paint: {
-    marksPerRegion: 100,
+    marksPerRegion: 200,
 
     // Region-size response
     referenceRegionPixels: 25000, 

@@ -18,6 +18,17 @@
           <label for="preset-select">Preset</label>
           <select id="preset-select"></select>
         </div>
+        <div class="preset-actions">
+          <button id="save-preset-button">Save Preset</button>
+          <button id="load-preset-button">Load Preset</button>
+
+          <input
+            id="preset-file-input"
+            type="file"
+            accept=".json,application/json"
+            hidden
+          />
+        </div>
 
         <div class="control-item">
           <label for="palette-select">Palette</label>
@@ -29,6 +40,53 @@
           >
             Using: —
           </div>
+        </div>
+      </section>
+
+      <section class="control-group texture-group">
+        <h2>Surface</h2>
+
+        <div class="control-item">
+          <label class="checkbox-row">
+            <input
+              type="checkbox"
+              id="texture-enabled"
+            />
+            Surface texture
+          </label>
+        </div>
+
+        <div class="control-item">
+          <label for="texture-opacity">
+            Texture Strength
+          </label>
+
+          <div class="range-row">
+            <input
+              id="texture-opacity"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+            />
+
+            <span
+              id="texture-opacity-value"
+              class="range-value"
+            ></span>
+          </div>
+        </div>
+
+        <div class="control-item">
+          <label for="texture-blend-mode">
+            Blend Mode
+          </label>
+
+          <select id="texture-blend-mode">
+            <option value="multiply">Multiply</option>
+            <option value="overlay">Overlay</option>
+            <option value="normal">Normal</option>
+          </select>
         </div>
       </section>
 
@@ -239,6 +297,7 @@
   <script src="js/painter.js"></script>
   <script src="js/presets.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/texture.js"></script>
   <script src="js/sketch.js"></script>
 </body>
 </html>

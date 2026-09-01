@@ -177,3 +177,47 @@ function applyPreset(preset) {
     preset.settings || {}
   );
 }
+
+function loadPresetFromFile(file) {
+  const reader = new FileReader();
+
+  reader.onload = event => {
+    try {
+      const preset =
+        JSON.parse(event.target.result);
+
+      if (!preset || !preset.settings) {
+        throw new Error("Invalid regionPainter preset.");
+      }
+
+      applyPreset(preset);
+
+      syncAllControls();
+
+      UI_STATE.paletteMode = "inherit";
+      UI_STATE.fixedPaletteKey = null;
+
+      const paletteSelect =
+        document.getElementById("palette-select");
+
+      if (paletteSelect) {
+        paletteSelect.value = "inherit";
+      }
+
+      requestGenerate();
+
+      console.log(
+        `Preset loaded: ${preset.presetName || file.name}`
+      );
+    } catch (error) {
+      console.error(
+        "Could not load preset:",
+        error
+      );
+
+      alert("That file is not a valid regionPainter preset.");
+    }
+  };
+
+  reader.readAsText(file);
+}

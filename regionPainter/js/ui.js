@@ -2,6 +2,7 @@ function setupUI() {
   setupPresetControl();
   setupPaletteControl();
   setupBoundaryControls();
+  setupPresetFileControls();
 
   document
     .getElementById("generate-button")
@@ -54,7 +55,7 @@ function setupPresetControl() {
     if (!name) {
       currentPreset = null;
       resetSettingsToDefaults();
-      syncBoundaryControls();
+      syncAllControls();
       return;
     }
 
@@ -62,8 +63,44 @@ function setupPresetControl() {
 
     if (preset) {
       applyPreset(preset);
-      syncBoundaryControls();
+      syncAllControls();
     }
+  });
+}
+
+function setupPresetFileControls() {
+  const saveButton =
+    document.getElementById("save-preset-button");
+
+  const loadButton =
+    document.getElementById("load-preset-button");
+
+  const fileInput =
+    document.getElementById("preset-file-input");
+
+  saveButton.addEventListener("click", () => {
+    const name = prompt("Preset name:");
+
+    if (name?.trim()) {
+      savePresetToFile(name.trim());
+    }
+  });
+
+  loadButton.addEventListener("click", () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener("change", event => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    loadPresetFromFile(file);
+
+    // Allow the same file to be loaded again later.
+    event.target.value = "";
   });
 }
 
@@ -298,6 +335,58 @@ function setupRangeControl(
   );
 
   sync();
+}
+
+function loadPresetFromFile(file) {
+  const reader = new FileReader();
+
+  reader.onload = event => {
+    try {
+      const preset =
+        JSON.parse(event.target.result);
+
+      if (!preset || !preset.settings) {
+        throw new Error("Invalid regionPainter preset.");
+      }
+
+      applyPreset(preset);
+
+      syncAllControls();
+
+      UI_STATE.paletteMode = "inherit";
+      UI_STATE.fixedPaletteKey = null;
+
+      const paletteSelect =
+        document.getElementById("palette-select");
+
+      if (paletteSelect) {
+        paletteSelect.value = "inherit";
+      }
+
+      requestGenerate();
+
+      console.log(
+        `Preset loaded: ${preset.presetName || file.name}`
+      );
+    } catch (error) {
+      console.error(
+        "Could not load preset:",
+        error
+      );
+
+      alert("That file is not a valid regionPainter preset.");
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+function syncAllControls() {
+  syncBoundaryControls();
+
+  // Future:
+  // syncPaintControls();
+  // syncTextureControls();
 }
 
 function syncBoundaryControls() {

@@ -1,0 +1,26 @@
+{
+  "presetVersion": 1,
+  "presetName": "PastelWash",
+  "updatedAt": "2026-09-01T18:11:52.185Z",
+  "paletteKey": "charcoalCoral",
+  "paletteName": "Charcoal Coral",
+  "settings": {
+    "canvas": {
+      "paperColor": "#f8f4e3"
+    },
+    "boundary": {
+      "pointCount": 26,
+      "subdivisions": 4,
+      "scale": 1.6,
+      "forcedBrush": "Splatter 2.png",
+      "thinBrushSize": 6,
+      "midSizeMultiplier": 4.1
+    },
+    "fill": {
+      "attempts": 40
+    },
+    "paint": {
+      "marksPerRegion": 100
+    }
+  }
+}

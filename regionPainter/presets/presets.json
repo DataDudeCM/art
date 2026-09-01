@@ -2,6 +2,7 @@
   "presets": [
     "Procedural-1.json",
     "Image-1.json",
+    "PastelWash.json",
     "Jellyfish.json",
     "OliveStains.json"
   ]

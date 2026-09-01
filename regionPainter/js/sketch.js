@@ -3,6 +3,7 @@ let palette;
 let boundaryDetectionLayer;
 let boundaryLayer;
 let paintLayer;
+let textureLayer;
 
 let brushManifest;
 let brushImages = [];
@@ -58,6 +59,9 @@ function setup() {
     createGraphics(width, height);
 
   paintLayer =
+    createGraphics(width, height);
+
+  textureLayer =
     createGraphics(width, height);
 
   //requestGenerate();
@@ -141,6 +145,8 @@ function generateArtwork() {
     testRegion();
   }
 
+  generateTextureLayer();
+
   renderArtwork();
 }
 
@@ -151,6 +157,20 @@ function renderArtwork() {
 
   if (SETTINGS.boundary.visible) {
     image(boundaryLayer, 0, 0);
+  }
+
+  if (SETTINGS.texture.enabled) {
+    push();
+
+    if (SETTINGS.texture.blendMode === "multiply") {
+      blendMode(MULTIPLY);
+    } else if (SETTINGS.texture.blendMode === "overlay") {
+      blendMode(OVERLAY);
+    }
+
+    image(textureLayer, 0, 0);
+
+    pop();
   }
 }
 
