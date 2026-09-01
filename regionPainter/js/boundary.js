@@ -346,11 +346,17 @@ function generateBoundary() {
       SETTINGS.boundary.softeningPasses
     );
 
+  boundaryControlPoints =
+    controlPoints.map(p => ({ x: p.x, y: p.y }));
+
   const smoothedPoints =
     chaikin(
       controlPoints,
       SETTINGS.boundary.subdivisions
     );
+
+  boundarySmoothedPoints =
+    smoothedPoints.map(p => ({ x: p.x, y: p.y }));
 
   drawDetectionBoundary(
     boundaryDetectionLayer,

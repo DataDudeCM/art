@@ -7,6 +7,7 @@ function setupUI() {
   setupCollapsibleSections();
   setupFillControls();
   setupSeedControls();
+  setupViewControls();
 
   document
     .getElementById("generate-button")
@@ -425,6 +426,47 @@ function setupFillControls() {
   updateBleedAlphaFromControls();
 }
 
+function setupViewControls() {
+  const showPaint =
+    document.getElementById("view-show-paint");
+
+  const showLines =
+    document.getElementById("view-show-structure-lines");
+
+  const showPoints =
+    document.getElementById("view-show-structure-points");
+
+  showPaint.checked =
+    SETTINGS.view.showPaint;
+
+  showLines.checked =
+    SETTINGS.view.showStructureLines;
+
+  showPoints.checked =
+    SETTINGS.view.showStructurePoints;
+
+  showPaint.addEventListener("change", event => {
+    SETTINGS.view.showPaint =
+      event.target.checked;
+
+    renderArtwork();
+  });
+
+  showLines.addEventListener("change", event => {
+    SETTINGS.view.showStructureLines =
+      event.target.checked;
+
+    renderArtwork();
+  });
+
+  showPoints.addEventListener("change", event => {
+    SETTINGS.view.showStructurePoints =
+      event.target.checked;
+
+    renderArtwork();
+  });
+}
+
 function setupFillBrushSelect() {
   const select =
     document.getElementById("fill-brush-select");
@@ -811,6 +853,7 @@ function syncAllControls() {
   syncBoundaryControls();
   syncFillControls();
   syncTextureControls();
+  syncViewControls();
 
   // Future:
   // syncPaintControls();
@@ -972,6 +1015,23 @@ function syncFillControls() {
     "fill-bleed-strength-value",
     SETTINGS.paint.bleedStrength
   );
+}
+
+function syncViewControls() {
+  document.getElementById(
+    "view-show-paint"
+  ).checked =
+    SETTINGS.view.showPaint;
+
+  document.getElementById(
+    "view-show-structure-lines"
+  ).checked =
+    SETTINGS.view.showStructureLines;
+
+  document.getElementById(
+    "view-show-structure-points"
+  ).checked =
+    SETTINGS.view.showStructurePoints;
 }
 
 function addPaletteOption(select, value, label) {

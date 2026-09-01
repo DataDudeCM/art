@@ -13,6 +13,12 @@ const SETTINGS = {
     scale: 1.0
   },
 
+  view: {
+    showPaint: true,
+    showStructureLines: false,
+    showStructurePoints: false
+  },
+
   boundary: {
     pointCount: 30, // more points = more lines and potential intersections
     subdivisions: 8, // 8 number of segments between points

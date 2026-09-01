@@ -4,6 +4,9 @@ let boundaryDetectionLayer;
 let boundaryLayer;
 let paintLayer;
 
+let boundaryControlPoints = [];
+let boundarySmoothedPoints = [];
+
 let brushManifest;
 let brushImages = [];
 let brushNames = [];
@@ -169,15 +172,60 @@ function generateArtwork() {
 function renderArtwork() {
   background(SETTINGS.canvas.paperColor);
 
-  image(paintLayer, 0, 0);
+  if (SETTINGS.view.showPaint) {
+    image(paintLayer, 0, 0);
+  }
 
   if (SETTINGS.boundary.visible) {
     image(boundaryLayer, 0, 0);
   }
 
-  if (uploadedTextureImage) {
+  if (
+    SETTINGS.view.showStructureLines ||
+    SETTINGS.view.showStructurePoints
+  ) {
+    drawStructureOverlay();
+  }
+
+  if (
+    uploadedTextureImage &&
+    SETTINGS.view.showPaint
+  ) {
     drawTextureOverlay();
   }
+}
+
+function drawStructureOverlay() {
+  if (!boundaryControlPoints.length) {
+    return;
+  }
+
+  push();
+
+  if (SETTINGS.view.showStructureLines) {
+    noFill();
+    stroke(20, 100);
+    strokeWeight(1);
+
+    beginShape();
+
+    for (const p of boundaryControlPoints) {
+      vertex(p.x, p.y);
+    }
+
+    endShape(CLOSE);
+  }
+
+  if (SETTINGS.view.showStructurePoints) {
+    noStroke();
+    fill(20, 160);
+
+    for (const p of boundaryControlPoints) {
+      circle(p.x, p.y, 6);
+    }
+  }
+
+  pop();
 }
 
 function drawTextureOverlay() {
