@@ -11,7 +11,7 @@ let brushNames = [];
 let lastGenerationTime = 0;
 
 let currentPreset = null;
-let generatationSeed = 12345;
+let generationSeed = 12345;
 
 const UI_STATE = {
   paletteMode: "inherit", // "inherit" | "random" | "fixed"
@@ -308,7 +308,7 @@ function saveArtwork() {
   const timestamp = getTimestamp();
 
   saveCanvas(
-    `regionPainter-seed${generationSeed}-${timestamp}`
+    `regionPainter-seed${generationSeed}-${timestamp}`,
     "png"
   );
 }
