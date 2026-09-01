@@ -211,6 +211,9 @@ function drawTextureOverlay() {
       width / imageRatio;
   }
 
+  drawW *= SETTINGS.texture.scale;
+  drawH *= SETTINGS.texture.scale;
+
   imageMode(CENTER);
 
   image(

@@ -168,6 +168,18 @@ function setupTextureControls() {
     }
   );
 
+  setupRangeControl(
+    "texture-scale",
+    "texture-scale-value",
+    () => SETTINGS.texture.scale,
+    value => {
+      SETTINGS.texture.scale =
+        Number(value);
+
+      renderArtwork();
+    }
+  );
+
   updateTextureFileDisplay();
 }
 
@@ -521,6 +533,12 @@ function syncTextureControls() {
     "texture-opacity",
     "texture-opacity-value",
     SETTINGS.texture.opacity
+  );
+
+  syncRangeControl(
+    "texture-scale",
+    "texture-scale-value",
+    SETTINGS.texture.scale
   );
 }
 
