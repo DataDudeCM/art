@@ -16,7 +16,20 @@ const SETTINGS = {
     cornerSoftness: 0.20, // .2 - .1 is jaggy, higher number = softer
     softeningPasses: 1, // 1 default
 
-    visible: true // is the line visible or notss
+    visible: true, // is the line visible or notss
+
+     // Visible boundary rendering
+    brushMode: "image",
+    forcedBrush: null,
+
+    brushSize: 36,
+    brushSpacing: 12,
+
+    brushAlpha: 180,
+
+    sizeJitter: 0.20,
+    rotationJitter: 0.12
+    
   },
 
   fill: {

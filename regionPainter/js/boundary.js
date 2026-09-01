@@ -100,13 +100,38 @@ function drawDetectionBoundary(g, points) {
 function drawVisibleBoundary(g, points) {
   g.clear();
 
+  if (
+    SETTINGS.boundary.brushMode !== "image" ||
+    brushImages.length === 0
+  ) {
+    drawVisibleBoundaryLine(g, points);
+    return;
+  }
+
+  const brush =
+    chooseBoundaryBrush();
+
+  if (!brush) {
+    drawVisibleBoundaryLine(g, points);
+    return;
+  }
+
+  const boundaryColor =
+    getDarkColor(palette);
+
+  stampBoundaryPath(
+    g,
+    points,
+    brush,
+    boundaryColor
+  );
+}
+
+function drawVisibleBoundaryLine(g, points) {
   g.push();
 
   g.noFill();
-
-  g.stroke(
-    getLightColor(palette)
-  );
+  g.stroke(getDarkColor(palette));
 
   g.strokeWeight(
     SETTINGS.boundary.strokeWeight
@@ -123,6 +148,154 @@ function drawVisibleBoundary(g, points) {
 
   g.endShape(CLOSE);
 
+  g.pop();
+}
+
+
+function chooseBoundaryBrush() {
+  if (brushImages.length === 0) {
+    return null;
+  }
+
+  const forcedName =
+    SETTINGS.boundary.forcedBrush;
+
+  if (forcedName) {
+    const index =
+      brushNames.indexOf(forcedName);
+
+    if (index !== -1) {
+      return {
+        name: brushNames[index],
+        image: brushImages[index]
+      };
+    }
+  }
+
+  const index =
+    floor(random(brushImages.length));
+
+  return {
+    name: brushNames[index],
+    image: brushImages[index]
+  };
+}
+
+function stampBoundaryPath(
+  g,
+  points,
+  brushInfo,
+  boundaryColor
+) {
+  const spacing =
+    SETTINGS.boundary.brushSpacing;
+
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    const b =
+      points[(i + 1) % points.length];
+
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+
+    const segmentLength =
+      sqrt(dx * dx + dy * dy);
+
+    if (segmentLength === 0) {
+      continue;
+    }
+
+    const angle =
+      atan2(dy, dx);
+
+    const steps =
+      max(
+        1,
+        ceil(segmentLength / spacing)
+      );
+
+    for (let j = 0; j < steps; j++) {
+      const t = j / steps;
+
+      const x =
+        lerp(a.x, b.x, t);
+
+      const y =
+        lerp(a.y, b.y, t);
+
+      stampBoundaryBrush(
+        g,
+        brushInfo,
+        x,
+        y,
+        angle,
+        boundaryColor
+      );
+    }
+  }
+}
+
+function stampBoundaryBrush(
+  g,
+  brushInfo,
+  x,
+  y,
+  angle,
+  boundaryColor
+) {
+  const brush =
+    brushInfo.image;
+
+  if (!brush) {
+    return;
+  }
+
+  const baseSize =
+    SETTINGS.boundary.brushSize;
+
+  const jitter =
+    SETTINGS.boundary.sizeJitter;
+
+  const size =
+    baseSize *
+    random(
+      1 - jitter,
+      1 + jitter
+    );
+
+  const rotation =
+    angle +
+    random(
+      -SETTINGS.boundary.rotationJitter,
+      SETTINGS.boundary.rotationJitter
+    );
+
+  const col =
+    color(boundaryColor);
+
+  g.push();
+
+  g.translate(x, y);
+  g.rotate(rotation);
+
+  g.imageMode(CENTER);
+
+  g.tint(
+    red(col),
+    green(col),
+    blue(col),
+    SETTINGS.boundary.brushAlpha
+  );
+
+  g.image(
+    brush,
+    0,
+    0,
+    size,
+    size
+  );
+
+  g.noTint();
   g.pop();
 }
 
