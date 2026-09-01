@@ -115,6 +115,7 @@ function setupPaletteControl() {
 function setupBoundaryControls() {
   setupBoundaryBrushMode();
   setupBoundaryBrushSelect();
+  setupBoundaryVisibility();
 
   setupRangeControl(
     "boundary-brush-size",
@@ -239,6 +240,24 @@ function setupBoundaryBrushSelect() {
   updateBoundaryBrushEnabledState();
 }
 
+function setupBoundaryVisibility() {
+  const checkbox =
+    document.getElementById("boundary-visible");
+
+  checkbox.checked =
+    SETTINGS.boundary.visible;
+
+  checkbox.addEventListener(
+    "change",
+    event => {
+      SETTINGS.boundary.visible =
+        event.target.checked;
+
+      renderArtwork();
+    }
+  );
+}
+
 function updateBoundaryBrushEnabledState() {
   const brushSelect =
     document.getElementById(
@@ -317,6 +336,11 @@ function syncBoundaryControls() {
     "boundary-subdivisions-value",
     SETTINGS.boundary.subdivisions
   );
+
+  document.getElementById(
+    "boundary-visible"
+  ).checked =
+    SETTINGS.boundary.visible;
 
   document.getElementById(
     "boundary-brush-mode"

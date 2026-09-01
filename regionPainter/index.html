@@ -21,6 +21,24 @@
       <section class="control-section">
         <label for="palette-select">Palette</label>
         <select id="palette-select"></select>
+        <div
+          id="active-palette"
+          class="control-note"
+        >
+          Current: —
+        </div>
+      </section>
+
+      
+
+      <section class="control-section">
+        <label class="checkbox-row">
+          <input
+            type="checkbox"
+            id="boundary-visible"
+          />
+          Show boundary
+        </label>
       </section>
 
       <section class="control-section">
@@ -42,7 +60,7 @@
         <select id="boundary-brush-select"></select>
       </section>
 
-      <section class="control-section">
+      <section class="control-section compact">
         <label for="boundary-brush-size">
           Thin Brush Size
         </label>
@@ -60,9 +78,7 @@
             class="range-value"
           ></span>
         </div>
-      </section>
 
-      <section class="control-section">
         <label for="boundary-multiplier">
           Mid Multiplier
         </label>
@@ -80,9 +96,7 @@
             class="range-value"
           ></span>
         </div>
-      </section>
 
-      <section class="control-section">
         <label for="boundary-alpha">
           Brush Alpha
         </label>
@@ -100,9 +114,6 @@
             class="range-value"
           ></span>
         </div>
-      </section>
-
-      <section class="control-section">
         <label for="boundary-scale">
           Boundary Scale
         </label>
@@ -120,9 +131,7 @@
             class="range-value"
           ></span>
         </div>
-      </section>
 
-      <section class="control-section">
         <label for="boundary-point-count">
           Point Count
         </label>
@@ -140,9 +149,7 @@
             class="range-value"
           ></span>
         </div>
-      </section>
 
-      <section class="control-section">
         <label for="boundary-subdivisions">
           Subdivisions
         </label>

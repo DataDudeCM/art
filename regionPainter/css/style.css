@@ -43,7 +43,11 @@ body {
 }
 
 .control-section {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+}
+
+.control-section.compact {
+  margin-bottom: 6px;
 }
 
 .control-section > label {
@@ -112,4 +116,10 @@ button {
   font-size: 11px;
   color: #5f5a52;
   font-variant-numeric: tabular-nums;
+}
+
+.control-note {
+  margin-top: 3px;
+  font-size: 10px;
+  color: #8a8378;
 }

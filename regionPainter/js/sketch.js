@@ -120,6 +120,13 @@ function generateArtwork() {
   paintLayer.clear();
 
   palette = resolveActivePalette();
+  const paletteDisplay =
+    document.getElementById("active-palette");
+
+  if (paletteDisplay) {
+    paletteDisplay.textContent =
+      `Current: ${palette?.name || "Unknown"}`;
+  }
 
   SETTINGS.canvas.paperColor =
     getLightColor(palette);

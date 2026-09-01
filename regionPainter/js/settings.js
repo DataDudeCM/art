@@ -22,11 +22,11 @@ const SETTINGS = {
     brushMode: "image",      // "image" or "line"
     forcedBrush: "Creamy.png",       // null = random boundary brush
 
-    thinBrushSize: 2,       // base thickness at segment start/end
-    midSizeMultiplier: 3,    // 2 = 2x thickness in the middle
+    thinBrushSize: 4,       // base thickness at segment start/end
+    midSizeMultiplier: 2,    // 2 = 2x thickness in the middle
     peakPosition: 0.6, // 0.5 = centered
 
-    brushSpacing: 4,
+    brushSpacing: 2,
     brushAlpha: 255,
 
     sizeJitter: 0.12,
@@ -35,7 +35,7 @@ const SETTINGS = {
   },
 
   fill: {
-    attempts: 40,
+    attempts: 60,
     minRegionPixels: 500,
     maxRegionFraction: 0.7
   },
