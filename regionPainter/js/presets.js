@@ -1,3 +1,40 @@
+let presetManifest = null;
+let loadedPresets = {};
+
+function loadPresetLibrary() {
+  loadJSON(
+    "presets/presets.json",
+
+    manifest => {
+      presetManifest = manifest;
+
+      for (const filename of manifest.presets || []) {
+        loadJSON(
+          `presets/${filename}`,
+
+          preset => {
+            loadedPresets[preset.presetName] = preset;
+          },
+
+          error => {
+            console.error(
+              `Could not load preset: ${filename}`,
+              error
+            );
+          }
+        );
+      }
+    },
+
+    error => {
+      console.error(
+        "Could not load preset manifest:",
+        error
+      );
+    }
+  );
+}
+
 function getChangedSettings(current, defaults) {
   const changed = {};
 
@@ -139,6 +176,4 @@ function applyPreset(preset) {
     SETTINGS,
     preset.settings || {}
   );
-
-  generateArtwork();
 }

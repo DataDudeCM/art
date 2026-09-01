@@ -12,10 +12,13 @@ let currentPreset = null;
 
 const UI_STATE = {
   paletteMode: "inherit", // "inherit" | "random" | "fixed"
-  fixedPaletteKey: null
+  fixedPaletteKey: null,
+  autoRegenerate: false,
+  isGenerating: false
 };
 
 function preload() {
+  loadPresetLibrary();
   loadJSON(
     "../common/brushes/brushes.json",
 
@@ -38,15 +41,21 @@ function preload() {
 
 function setup() {
   pixelDensity(1);
-  createCanvas(windowWidth, windowHeight);
+  const canvas =
+    createCanvas(
+      getCanvasWidth(),
+      windowHeight
+    );
+
+  canvas.parent("canvas-container");
 
   boundaryLayer = createGraphics(width, height);
   paintLayer = createGraphics(width, height);
 
-  generateArtwork();
-
-  lastGenerationTime = millis();
-
+  requestGenerate();
+  
+  setupUI();
+  
   console.log("Brushes loaded:", brushImages.length);
 }
 
@@ -63,15 +72,21 @@ function draw() {
     SETTINGS.canvas.regenerateSeconds * 1000;
 
   if (
-    SETTINGS.canvas.autoRegenerate &&
+    UI_STATE.autoRegenerate &&
+    !UI_STATE.isGenerating &&
     millis() - lastGenerationTime >= interval
   ) {
-    generateArtwork();
-    lastGenerationTime = millis();
+    requestGenerate();
   }
 }
 
-function resolvePalette() {
+function getCanvasWidth() {
+  return document
+    .getElementById("canvas-container")
+    .clientWidth;
+}
+
+function resolveActivePalette() {
   if (UI_STATE.paletteMode === "random") {
     return randomPalette();
   }
@@ -99,7 +114,7 @@ function generateArtwork() {
   boundaryLayer.clear();
   paintLayer.clear();
 
-  palette = resolvePalette();
+  palette = resolveActivePalette(); 
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
 
@@ -132,7 +147,10 @@ function testRegion() {
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
+  resizeCanvas(
+    getCanvasWidth(),
+    windowHeight
+  );
 
   boundaryLayer =
     createGraphics(width, height);
@@ -170,15 +188,58 @@ function getPaletteKey(paletteObject) {
   ) || null;
 }
 
+function setGenerationStatus(isGenerating) {
+  UI_STATE.isGenerating = isGenerating;
+
+  const statusEl =
+    document.getElementById("generation-status");
+
+  if (!statusEl) {
+    return;
+  }
+
+  statusEl.textContent =
+    isGenerating ? "Generating..." : "Ready";
+
+  statusEl.classList.toggle(
+    "generating",
+    isGenerating
+  );
+
+  statusEl.classList.toggle(
+    "idle",
+    !isGenerating
+  );
+}
+
+
+function requestGenerate() {
+  if (UI_STATE.isGenerating) {
+    return;
+  }
+
+  setGenerationStatus(true);
+
+  requestAnimationFrame(() => {
+    try {
+      generateArtwork();
+      lastGenerationTime = millis();
+    } finally {
+      setGenerationStatus(false);
+    }
+  });
+}
+
 function keyPressed() {
   if (key === "s" || key === "S") {
-    const wasAuto = SETTINGS.canvas.autoRegenerate;
+    const wasAuto =
+      UI_STATE.autoRegenerate;
 
-    SETTINGS.canvas.autoRegenerate = false;
+    UI_STATE.autoRegenerate = false;
 
     saveArtwork();
 
-    SETTINGS.canvas.autoRegenerate = wasAuto;
+    UI_STATE.autoRegenerate = wasAuto;
     lastGenerationTime = millis();
   }
 

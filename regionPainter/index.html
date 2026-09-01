@@ -5,32 +5,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>regionPainter</title>
   <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
       background: #ddd6c8;
+    }
+
+    #app {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #canvas-container {
+      flex: 1;
+      min-width: 0;
+      height: 100vh;
       overflow: hidden;
     }
 
-    canvas {
+    #canvas-container canvas {
       display: block;
-      margin: 0 auto;
+    }
+
+    #controls {
+      width: 320px;
+      box-sizing: border-box;
+      padding: 22px;
+      background: #f2eee6;
+      border-left: 1px solid #c8c1b5;
+      overflow-y: auto;
+    }
+
+    #controls h1 {
+      margin: 0 0 24px;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .control-section {
+      margin-bottom: 24px;
+    }
+
+    .control-section > label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    select,
+    button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-row {
+      display: flex !important;
+      align-items: center;
+      gap: 8px;
+      font-weight: normal !important;
+    }
+
+    .checkbox-row input {
+      margin: 0;
+    }
+    .status {
+      margin: 10px 0 12px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      border: 1px solid #c8c1b5;
+    }
+
+    .status.idle {
+      background: #f7f3ec;
+      color: #5f5a52;
+    }
+
+    .status.generating {
+      background: #e9efe8;
+      color: #2f4a34;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
+  <div id="app">
+    <div id="canvas-container"></div>
+
+    <aside id="controls">
+      <h1>regionPainter</h1>
+
+      <section class="control-section">
+        <label for="preset-select">Preset</label>
+        <select id="preset-select"></select>
+      </section>
+
+      <section class="control-section">
+        <label for="palette-select">Palette</label>
+        <select id="palette-select"></select>
+      </section>
+
+      <section class="control-section">
+        <button id="generate-button">
+          Generate
+        </button>
+
+        <div id="generation-status" class="status idle">
+          Ready
+        </div>
+
+        <label class="checkbox-row">
+          <input
+            type="checkbox"
+            id="auto-regenerate"
+          />
+          Auto regenerate
+        </label>
+      </section>
+    </aside>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 
-  <!-- shared repo utilities -->
   <script src="../common/js/palette.js"></script>
 
-  <!-- project files -->
   <script src="js/settings.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/boundary.js"></script>
   <script src="js/floodfill.js"></script>
   <script src="js/painter.js"></script>
   <script src="js/presets.js"></script>
+  <script src="js/ui.js"></script>
   <script src="js/sketch.js"></script>
 </body>
 </html>
