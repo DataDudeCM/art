@@ -158,7 +158,6 @@ function windowResized() {
   paintLayer =
     createGraphics(width, height);
 
-  generateArtwork();
   lastGenerationTime = millis();
 }
 
@@ -220,14 +219,15 @@ function requestGenerate() {
 
   setGenerationStatus(true);
 
-  requestAnimationFrame(() => {
+  // Give the browser time to paint "Generating..."
+  setTimeout(() => {
     try {
       generateArtwork();
       lastGenerationTime = millis();
     } finally {
       setGenerationStatus(false);
     }
-  });
+  }, 25);
 }
 
 function keyPressed() {
