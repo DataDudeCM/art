@@ -108,16 +108,14 @@ function drawVisibleBoundary(g, points) {
     return;
   }
 
-  const brush =
-    chooseBoundaryBrush();
+  const brush = chooseBoundaryBrush();
 
   if (!brush) {
     drawVisibleBoundaryLine(g, points);
     return;
   }
 
-  const boundaryColor =
-    getDarkColor(palette);
+  const boundaryColor = getDarkColor(palette);
 
   stampBoundaryPath(
     g,
@@ -192,8 +190,7 @@ function stampBoundaryPath(
 
   for (let i = 0; i < points.length; i++) {
     const a = points[i];
-    const b =
-      points[(i + 1) % points.length];
+    const b = points[(i + 1) % points.length];
 
     const dx = b.x - a.x;
     const dy = b.y - a.y;
@@ -209,19 +206,22 @@ function stampBoundaryPath(
       atan2(dy, dx);
 
     const steps =
-      max(
-        1,
-        ceil(segmentLength / spacing)
-      );
+      max(1, ceil(segmentLength / spacing));
 
     for (let j = 0; j < steps; j++) {
       const t = j / steps;
 
-      const x =
-        lerp(a.x, b.x, t);
+      const x = lerp(a.x, b.x, t);
+      const y = lerp(a.y, b.y, t);
 
-      const y =
-        lerp(a.y, b.y, t);
+      // Thin -> thick -> thin across the segment
+      const profile = sin(PI * t);
+
+      const sizeMultiplier = lerp(
+        1,
+        SETTINGS.boundary.midSizeMultiplier,
+        profile
+      );
 
       stampBoundaryBrush(
         g,
@@ -229,7 +229,8 @@ function stampBoundaryPath(
         x,
         y,
         angle,
-        boundaryColor
+        boundaryColor,
+        sizeMultiplier
       );
     }
   }
@@ -241,27 +242,25 @@ function stampBoundaryBrush(
   x,
   y,
   angle,
-  boundaryColor
+  boundaryColor,
+  sizeMultiplier = 1
 ) {
-  const brush =
-    brushInfo.image;
+  const brush = brushInfo?.image;
 
   if (!brush) {
     return;
   }
 
   const baseSize =
-    SETTINGS.boundary.brushSize;
+    SETTINGS.boundary.thinBrushSize;
 
   const jitter =
     SETTINGS.boundary.sizeJitter;
 
   const size =
     baseSize *
-    random(
-      1 - jitter,
-      1 + jitter
-    );
+    sizeMultiplier *
+    random(1 - jitter, 1 + jitter);
 
   const rotation =
     angle +
@@ -270,14 +269,11 @@ function stampBoundaryBrush(
       SETTINGS.boundary.rotationJitter
     );
 
-  const col =
-    color(boundaryColor);
+  const col = color(boundaryColor);
 
   g.push();
-
   g.translate(x, y);
   g.rotate(rotation);
-
   g.imageMode(CENTER);
 
   g.tint(

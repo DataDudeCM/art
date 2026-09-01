@@ -18,16 +18,17 @@ const SETTINGS = {
 
     visible: true, // is the line visible or notss
 
-     // Visible boundary rendering
-    brushMode: "image",
-    forcedBrush: null,
+    // Visible boundary rendering
+    brushMode: "image",      // "image" or "line"
+    forcedBrush: "Creamy",       // null = random boundary brush
 
-    brushSize: 36,
+    thinBrushSize: 14,       // base thickness at segment start/end
+    midSizeMultiplier: 1,    // 2 = 2x thickness in the middle
+
     brushSpacing: 12,
-
     brushAlpha: 180,
 
-    sizeJitter: 0.20,
+    sizeJitter: 0.12,
     rotationJitter: 0.12
     
   },
