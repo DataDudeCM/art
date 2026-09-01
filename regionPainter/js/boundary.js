@@ -53,15 +53,20 @@ function chaikin(points, iterations = 1) {
 
   for (let iter = 0; iter < iterations; iter++) {
     const next = [];
+    const count = result.length;
 
-    for (let i = 0; i < result.length; i++) {
+    for (let i = 0; i < count; i++) {
       const p0 = result[i];
-      const p1 = result[(i + 1) % result.length];
+      const p1 = result[(i + 1) % count];
 
-      const q = p5.Vector.lerp(p0, p1, 0.25);
-      const r = p5.Vector.lerp(p0, p1, 0.75);
+      const q =
+        p5.Vector.lerp(p0, p1, 0.25);
 
-      next.push(q, r);
+      const r =
+        p5.Vector.lerp(p0, p1, 0.75);
+
+      next.push(q);
+      next.push(r);
     }
 
     result = next;
@@ -81,7 +86,7 @@ function drawDetectionBoundary(g, points) {
   // Alpha/continuity are what flood fill cares about.
   g.stroke(0);
 
-  g.strokeWeight(3);
+  g.strokeWeight(2);
 
   g.strokeJoin(ROUND);
   g.strokeCap(ROUND);

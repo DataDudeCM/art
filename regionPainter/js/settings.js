@@ -22,13 +22,13 @@ const SETTINGS = {
     brushMode: "image",      // "image" or "line"
     forcedBrush: "Creamy",       // null = random boundary brush
 
-    thinBrushSize: 6,       // base thickness at segment start/end
-    midSizeMultiplier: 2.5,    // 2 = 2x thickness in the middle
+    thinBrushSize: 2,       // base thickness at segment start/end
+    midSizeMultiplier: 3,    // 2 = 2x thickness in the middle
     peakPosition: 0.6, // 0.5 = centered
     paintUnderBoundaryPixels: 3,
 
-    brushSpacing: 10,
-    brushAlpha: 180,
+    brushSpacing: 4,
+    brushAlpha: 255,
 
     sizeJitter: 0.12,
     rotationJitter: 0.12
