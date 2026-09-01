@@ -51,6 +51,7 @@ const SETTINGS = {
 
     fillStrength: 40,
     opacityVariation: 35,
+    bleedStrength: 30,
 
     // Region-size response
     referenceRegionPixels: 25000,

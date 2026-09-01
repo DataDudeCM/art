@@ -266,6 +266,69 @@
           </div>
 
           <div class="control-item">
+            <label for="fill-attempts">
+              Fill Attempts
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-attempts"
+                type="range"
+                min="1"
+                max="200"
+                step="1"
+              />
+
+              <span
+                id="fill-attempts-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="fill-bleed-amount">
+              Bleed Amount
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-bleed-amount"
+                type="range"
+                min="0"
+                max="30"
+                step="1"
+              />
+
+              <span
+                id="fill-bleed-amount-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="fill-bleed-strength">
+              Bleed Strength
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-bleed-strength"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+
+              <span
+                id="fill-bleed-strength-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
             <label for="fill-strength">
               Fill Strength
             </label>
@@ -306,6 +369,8 @@
               ></span>
             </div>
           </div>
+
+
 
           <div class="control-item">
             <label for="fill-marks-per-region">
@@ -433,6 +498,48 @@
 
               <span
                 id="boundary-multiplier-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="boundary-peak-position">
+              Peak Position
+            </label>
+
+            <div class="range-row">
+              <input
+                id="boundary-peak-position"
+                type="range"
+                min="0.1"
+                max="0.9"
+                step="0.05"
+              />
+
+              <span
+                id="boundary-peak-position-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="boundary-size-jitter">
+              Size Jitter
+            </label>
+
+            <div class="range-row">
+              <input
+                id="boundary-size-jitter"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+
+              <span
+                id="boundary-size-jitter-value"
                 class="range-value"
               ></span>
             </div>

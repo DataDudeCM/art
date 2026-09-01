@@ -293,6 +293,28 @@ function setupBoundaryControls() {
         Number(value);
     }
   );
+
+  setupRangeControl(
+    "boundary-peak-position",
+    "boundary-peak-position-value",
+    () => SETTINGS.boundary.peakPosition,
+    value => {
+      SETTINGS.boundary.peakPosition =
+        Number(value);
+    }
+  );
+  setupRangeControl(
+    "boundary-size-jitter",
+    "boundary-size-jitter-value",
+    () =>
+      Math.round(
+        SETTINGS.boundary.sizeJitter * 200
+      ),
+    value => {
+      SETTINGS.boundary.sizeJitter =
+        Number(value) / 200;
+    }
+  );
 }
 
 function setupFillControls() {
@@ -366,7 +388,40 @@ function setupFillControls() {
     }
   );
 
+  setupRangeControl(
+    "fill-attempts",
+    "fill-attempts-value",
+    () => SETTINGS.fill.attempts,
+    value => {
+      SETTINGS.fill.attempts =
+        Number(value);
+    }
+  );
+
+  setupRangeControl(
+    "fill-bleed-amount",
+    "fill-bleed-amount-value",
+    () => SETTINGS.paint.bleedPixels,
+    value => {
+      SETTINGS.paint.bleedPixels =
+        Number(value);
+    }
+  );
+
+  setupRangeControl(
+    "fill-bleed-strength",
+    "fill-bleed-strength-value",
+    () => SETTINGS.paint.bleedStrength,
+    value => {
+      SETTINGS.paint.bleedStrength =
+        Number(value);
+
+      updateBleedAlphaFromControls();
+    }
+  );
+
   updateFillAlphaFromControls();
+  updateBleedAlphaFromControls();
 }
 
 function setupFillBrushSelect() {
@@ -401,6 +456,25 @@ function setupFillBrushSelect() {
     SETTINGS.paint.forcedFillBrush =
       event.target.value || null;
   });
+}
+
+function updateBleedAlphaFromControls() {
+  const strength =
+    SETTINGS.paint.bleedStrength;
+
+  const maxAlpha = map(
+    strength,
+    0,
+    100,
+    0,
+    20
+  );
+
+  SETTINGS.paint.bleedAlphaMax =
+    Math.round(maxAlpha);
+
+  SETTINGS.paint.bleedAlphaMin =
+    Math.round(maxAlpha * 0.2);
 }
 
 function updateFillAlphaFromControls() {
@@ -720,6 +794,19 @@ function syncBoundaryControls() {
     "boundary-subdivisions-value",
     SETTINGS.boundary.subdivisions
   );
+  syncRangeControl(
+    "boundary-peak-position",
+    "boundary-peak-position-value",
+    SETTINGS.boundary.peakPosition
+  );
+
+  syncRangeControl(
+    "boundary-size-jitter",
+    "boundary-size-jitter-value",
+    Math.round(
+      SETTINGS.boundary.sizeJitter * 200
+    )
+  );
 
   document.getElementById(
     "boundary-visible"
@@ -808,6 +895,23 @@ function syncFillControls() {
     "fill-brush-size-max",
     "fill-brush-size-max-value",
     SETTINGS.paint.brushSizeMax
+  );
+  syncRangeControl(
+    "fill-attempts",
+    "fill-attempts-value",
+    SETTINGS.fill.attempts
+  );
+
+  syncRangeControl(
+    "fill-bleed-amount",
+    "fill-bleed-amount-value",
+    SETTINGS.paint.bleedPixels
+  );
+
+  syncRangeControl(
+    "fill-bleed-strength",
+    "fill-bleed-strength-value",
+    SETTINGS.paint.bleedStrength
   );
 }
 
