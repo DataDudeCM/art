@@ -5,6 +5,7 @@ function setupUI() {
   setupPresetFileControls();
   setupTextureControls();
   setupCollapsibleSections();
+  setupFillControls();
 
   document
     .getElementById("generate-button")
@@ -294,6 +295,181 @@ function setupBoundaryControls() {
   );
 }
 
+function setupFillControls() {
+  setupFillBrushSelect();
+
+  setupRangeControl(
+    "fill-strength",
+    "fill-strength-value",
+    () => SETTINGS.paint.fillStrength,
+    value => {
+      SETTINGS.paint.fillStrength =
+        Number(value);
+
+      updateFillAlphaFromControls();
+    }
+  );
+
+  setupRangeControl(
+    "fill-opacity-variation",
+    "fill-opacity-variation-value",
+    () => SETTINGS.paint.opacityVariation,
+    value => {
+      SETTINGS.paint.opacityVariation =
+        Number(value);
+
+      updateFillAlphaFromControls();
+    }
+  );
+
+  setupRangeControl(
+    "fill-marks-per-region",
+    "fill-marks-per-region-value",
+    () => SETTINGS.paint.marksPerRegion,
+    value => {
+      SETTINGS.paint.marksPerRegion =
+        Number(value);
+    }
+  );
+
+  setupRangeControl(
+    "fill-brush-size-min",
+    "fill-brush-size-min-value",
+    () => SETTINGS.paint.brushSizeMin,
+    value => {
+      SETTINGS.paint.brushSizeMin =
+        Number(value);
+
+      enforceFillBrushSizeOrder("min");
+      syncRangeControl(
+        "fill-brush-size-max",
+        "fill-brush-size-max-value",
+        SETTINGS.paint.brushSizeMax
+      );
+    }
+  );
+
+  setupRangeControl(
+    "fill-brush-size-max",
+    "fill-brush-size-max-value",
+    () => SETTINGS.paint.brushSizeMax,
+    value => {
+      SETTINGS.paint.brushSizeMax =
+        Number(value);
+
+      enforceFillBrushSizeOrder("max");
+      syncRangeControl(
+        "fill-brush-size-min",
+        "fill-brush-size-min-value",
+        SETTINGS.paint.brushSizeMin
+      );
+    }
+  );
+
+  updateFillAlphaFromControls();
+}
+
+function setupFillBrushSelect() {
+  const select =
+    document.getElementById("fill-brush-select");
+
+  select.innerHTML = "";
+
+  const randomOption =
+    document.createElement("option");
+
+  randomOption.value = "";
+  randomOption.textContent = "Random";
+
+  select.appendChild(randomOption);
+
+  for (const brushName of brushNames) {
+    const option =
+      document.createElement("option");
+
+    option.value = brushName;
+    option.textContent =
+      brushName.replace(/\.png$/i, "");
+
+    select.appendChild(option);
+  }
+
+  select.value =
+    SETTINGS.paint.forcedFillBrush || "";
+
+  select.addEventListener("change", event => {
+    SETTINGS.paint.forcedFillBrush =
+      event.target.value || null;
+  });
+}
+
+function updateFillAlphaFromControls() {
+  const center = map(
+    SETTINGS.paint.fillStrength,
+    0,
+    100,
+    1,
+    20
+  );
+
+  const spread = map(
+    SETTINGS.paint.opacityVariation,
+    0,
+    100,
+    0,
+    15
+  );
+
+  SETTINGS.paint.alphaMin = constrain(
+    Math.round(center - spread),
+    1,
+    255
+  );
+
+  SETTINGS.paint.alphaMax = constrain(
+    Math.round(center + spread),
+    SETTINGS.paint.alphaMin,
+    255
+  );
+}
+
+function deriveFillControlsFromAlpha() {
+  const center =
+    (SETTINGS.paint.alphaMin +
+      SETTINGS.paint.alphaMax) / 2;
+
+  const spread =
+    (SETTINGS.paint.alphaMax -
+      SETTINGS.paint.alphaMin) / 2;
+
+  SETTINGS.paint.fillStrength = constrain(
+    Math.round(map(center, 1, 20, 0, 100)),
+    0,
+    100
+  );
+
+  SETTINGS.paint.opacityVariation = constrain(
+    Math.round(map(spread, 0, 15, 0, 100)),
+    0,
+    100
+  );
+}
+
+function enforceFillBrushSizeOrder(changed) {
+  if (
+    SETTINGS.paint.brushSizeMin >
+    SETTINGS.paint.brushSizeMax
+  ) {
+    if (changed === "min") {
+      SETTINGS.paint.brushSizeMax =
+        SETTINGS.paint.brushSizeMin;
+    } else {
+      SETTINGS.paint.brushSizeMin =
+        SETTINGS.paint.brushSizeMax;
+    }
+  }
+}
+
 function setupBoundaryBrushMode() {
   const select =
     document.getElementById(
@@ -500,6 +676,7 @@ function loadPresetFromFile(file) {
 
 function syncAllControls() {
   syncBoundaryControls();
+  syncFillControls();
   syncTextureControls();
 
   // Future:
@@ -593,6 +770,45 @@ function syncRangeControl(
   document.getElementById(
     valueId
   ).textContent = value;
+}
+
+function syncFillControls() {
+  deriveFillControlsFromAlpha();
+
+  document.getElementById(
+    "fill-brush-select"
+  ).value =
+    SETTINGS.paint.forcedFillBrush || "";
+
+  syncRangeControl(
+    "fill-strength",
+    "fill-strength-value",
+    SETTINGS.paint.fillStrength
+  );
+
+  syncRangeControl(
+    "fill-opacity-variation",
+    "fill-opacity-variation-value",
+    SETTINGS.paint.opacityVariation
+  );
+
+  syncRangeControl(
+    "fill-marks-per-region",
+    "fill-marks-per-region-value",
+    SETTINGS.paint.marksPerRegion
+  );
+
+  syncRangeControl(
+    "fill-brush-size-min",
+    "fill-brush-size-min-value",
+    SETTINGS.paint.brushSizeMin
+  );
+
+  syncRangeControl(
+    "fill-brush-size-max",
+    "fill-brush-size-max-value",
+    SETTINGS.paint.brushSizeMax
+  );
 }
 
 function addPaletteOption(select, value, label) {

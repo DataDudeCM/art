@@ -49,34 +49,36 @@ const SETTINGS = {
   paint: {
     marksPerRegion: 200,
 
+    fillStrength: 40,
+    opacityVariation: 35,
+
     // Region-size response
-    referenceRegionPixels: 25000, 
-    markAreaExponent: 0.50, 
+    referenceRegionPixels: 25000,
+    markAreaExponent: 0.50,
     brushAreaExponent: 0.15,
 
     minMarkScale: 0.5,
-    maxMarkScale: 1.25, // default 1
+    maxMarkScale: 1.25,
 
-    minBrushScale: 0.65, // default 0.65
-    maxBrushScale: 2.5, // default 8
+    minBrushScale: 0.65,
+    maxBrushScale: 2.5,
 
     brushMode: "image",
-    brushStrategy: "singlePerRegion", // "singlePerRegion" or "randomPerStamp"
-    forcedFillBrush: null, // set to null for random-per-region
+    brushStrategy: "singlePerRegion",
+    forcedFillBrush: null,
     useSameBrushForBleed: true,
 
-    brushSizeMin: 12, // default 12
-    brushSizeMax: 250, // default 400
+    brushSizeMin: 12,
+    brushSizeMax: 250,
 
-    alphaMin: 3, // default 0.25
-    alphaMax: 14, // default 2
+    alphaMin: 3,
+    alphaMax: 14,
 
     bleedMarks: 100,
     bleedPixels: 5,
     bleedAlphaMin: 1,
-    bleedAlphaMax: 6, 
-       // 0 = exact mask
-    maskFeatherSteps: 0      // optional later softness
+    bleedAlphaMax: 6,
+    maskFeatherSteps: 0
   },
 
   debug: {

@@ -246,6 +246,133 @@
 
       <div class="control-divider"></div>
 
+      <section class="control-group fill-group collapsible-group">
+        <button
+          type="button"
+          class="section-toggle"
+          aria-expanded="true"
+        >
+          <span>Fill</span>
+          <span class="section-arrow">▾</span>
+        </button>
+
+        <div class="section-content">
+          <div class="control-item">
+            <label for="fill-brush-select">
+              Fill Brush
+            </label>
+
+            <select id="fill-brush-select"></select>
+          </div>
+
+          <div class="control-item">
+            <label for="fill-strength">
+              Fill Strength
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-strength"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+
+              <span
+                id="fill-strength-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="fill-opacity-variation">
+              Opacity Variation
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-opacity-variation"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+
+              <span
+                id="fill-opacity-variation-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="fill-marks-per-region">
+              Marks Per Region
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-marks-per-region"
+                type="range"
+                min="20"
+                max="600"
+                step="1"
+              />
+
+              <span
+                id="fill-marks-per-region-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="fill-brush-size-min">
+              Brush Size Min
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-brush-size-min"
+                type="range"
+                min="1"
+                max="200"
+                step="1"
+              />
+
+              <span
+                id="fill-brush-size-min-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="fill-brush-size-max">
+              Brush Size Max
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-brush-size-max"
+                type="range"
+                min="1"
+                max="500"
+                step="1"
+              />
+
+              <span
+                id="fill-brush-size-max-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="control-divider"></div>
 
       <section
         class="control-group brush-group collapsible-group collapsed"
