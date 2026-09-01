@@ -37,6 +37,45 @@ let ink = getDarkColor(palette);
 
 */
 
+/*
+Palette design note:
+
+Reserved semantic colors such as `ink` should live as
+top-level palette properties, NOT inside `colors[]`.
+
+Why:
+- colors[] participates in randomColor()
+- reserved colors should only be used explicitly
+- `ink` can therefore control outlines/boundaries without
+  accidentally appearing in fills or other random selections
+
+Example:
+
+{
+  name: "Charcoal Coral",
+  tags: [...],
+
+  ink: "#171717",
+
+  colors: [
+    { hex: "#2a2b2a", role: "dark" },
+    ...
+  ]
+}
+
+Helper should fall back to getDarkColor() when ink is absent.
+
+  function getInkColor(paletteOrName) {
+    const palette = resolvePalette(paletteOrName);
+
+    return (
+      palette?.ink ||
+      getDarkColor(palette)
+    );
+  }
+
+*/
+
 const PALETTES = {
   vividPrimary: {
     name: "Vivid Primary",

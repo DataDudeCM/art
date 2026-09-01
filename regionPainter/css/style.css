@@ -42,19 +42,42 @@ body {
   font-weight: 600;
 }
 
-.control-section {
-  margin-bottom: 12px;
+.setup-group {
+  margin-bottom: 18px;
 }
 
-.control-section.compact {
-  margin-bottom: 6px;
+.control-group {
+  margin-bottom: 14px;
 }
 
-.control-section > label {
-  display: block;
-  margin-bottom: 5px;
+.control-group h2 {
+  margin: 0 0 9px;
   font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5f5a52;
+}
+
+.control-item {
+  margin-bottom: 8px;
+}
+
+.control-item:last-child {
+  margin-bottom: 0;
+}
+
+.control-item > label {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 11px;
   font-weight: 600;
+}
+
+.control-divider {
+  height: 1px;
+  margin: 12px 0 14px;
+  background: #c8c1b5;
 }
 
 select,
@@ -102,7 +125,7 @@ button {
 .range-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .range-row input[type="range"] {
@@ -111,9 +134,9 @@ button {
 }
 
 .range-value {
-  width: 38px;
+  width: 34px;
   text-align: right;
-  font-size: 11px;
+  font-size: 10px;
   color: #5f5a52;
   font-variant-numeric: tabular-nums;
 }
@@ -122,4 +145,17 @@ button {
   margin-top: 3px;
   font-size: 10px;
   color: #8a8378;
+}
+
+.checkbox-row {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: normal !important;
+}
+
+.boundary-group .control-item,
+.brush-group .control-item {
+  margin-bottom: 8px;
 }
