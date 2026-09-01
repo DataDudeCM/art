@@ -1,68 +1,50 @@
-function generateTextureLayer() {
-  textureLayer.clear();
+let uploadedTextureImage = null;
+let uploadedTextureName = null;
 
-  if (!SETTINGS.texture.enabled) {
+function loadTextureFile(file) {
+  if (!file) {
     return;
   }
 
-  textureLayer.push();
+  const objectURL =
+    URL.createObjectURL(file);
 
-  textureLayer.noStroke();
+  loadImage(
+    objectURL,
 
-  const amount =
-    SETTINGS.texture.opacity;
+    img => {
+      uploadedTextureImage = img;
+      uploadedTextureName = file.name;
 
-  // broad uneven paper/canvas tone
-  for (let y = 0; y < height; y += 4) {
-    for (let x = 0; x < width; x += 4) {
-      const n =
-        noise(x * 0.008, y * 0.008);
+      URL.revokeObjectURL(objectURL);
 
-      const alpha =
-        map(n, 0, 1, 0, amount);
+      updateTextureFileDisplay();
 
-      textureLayer.fill(
-        40,
-        alpha * 0.18
-      );
+      renderArtwork();
+    },
 
-      textureLayer.rect(
-        x,
-        y,
-        4,
-        4
+    error => {
+      URL.revokeObjectURL(objectURL);
+
+      console.error(
+        "Could not load texture image:",
+        error
       );
     }
-  }
+  );
+}
 
-  // Sparse fibers / tiny imperfections
-  const fibers =
-    width * height * 0.00012;
-
-  textureLayer.strokeWeight(0.5);
-
-  for (let i = 0; i < fibers; i++) {
-    const x = random(width);
-    const y = random(height);
-
-    const len =
-      random(2, 12);
-
-    const angle =
-      random(TWO_PI);
-
-    textureLayer.stroke(
-      30,
-      random(3, amount * 0.3)
+function updateTextureFileDisplay() {
+  const display =
+    document.getElementById(
+      "texture-file-name"
     );
 
-    textureLayer.line(
-      x,
-      y,
-      x + cos(angle) * len,
-      y + sin(angle) * len
-    );
+  if (!display) {
+    return;
   }
 
-  textureLayer.pop();
+  display.textContent =
+    uploadedTextureName ||
+    "No texture selected";
 }

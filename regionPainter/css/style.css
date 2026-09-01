@@ -159,3 +159,15 @@ button {
 .brush-group .control-item {
   margin-bottom: 8px;
 }
+
+.preset-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.preset-actions button {
+  flex: 1;
+  width: auto;
+  margin-bottom: 0;
+}

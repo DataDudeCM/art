@@ -7,11 +7,8 @@ const SETTINGS = {
   },
 
   texture: {
-    enabled: true,
-    opacity: 100,
-    scale: 1.0,
-    blendMode: "multiply",
-    textureName: null
+    opacity: 140,
+    blendMode: "multiply"
   },
 
   boundary: {

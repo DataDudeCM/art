@@ -19,8 +19,13 @@
           <select id="preset-select"></select>
         </div>
         <div class="preset-actions">
-          <button id="save-preset-button">Save Preset</button>
-          <button id="load-preset-button">Load Preset</button>
+          <button id="save-preset-button">
+            Save
+          </button>
+
+          <button id="load-preset-button">
+            Load
+          </button>
 
           <input
             id="preset-file-input"
@@ -44,21 +49,31 @@
       </section>
 
       <section class="control-group texture-group">
-        <h2>Surface</h2>
+        <h2>Surface Texture</h2>
 
         <div class="control-item">
-          <label class="checkbox-row">
-            <input
-              type="checkbox"
-              id="texture-enabled"
-            />
-            Surface texture
-          </label>
+          <button id="texture-file-button">
+            Choose Texture
+          </button>
+
+          <input
+            id="texture-file-input"
+            type="file"
+            accept="image/*"
+            hidden
+          />
+
+          <div
+            id="texture-file-name"
+            class="control-note"
+          >
+            No texture selected
+          </div>
         </div>
 
         <div class="control-item">
           <label for="texture-opacity">
-            Texture Strength
+            Opacity
           </label>
 
           <div class="range-row">
@@ -66,7 +81,7 @@
               id="texture-opacity"
               type="range"
               min="0"
-              max="100"
+              max="255"
               step="1"
             />
 
@@ -85,11 +100,11 @@
           <select id="texture-blend-mode">
             <option value="multiply">Multiply</option>
             <option value="overlay">Overlay</option>
+            <option value="screen">Screen</option>
             <option value="normal">Normal</option>
           </select>
         </div>
       </section>
-
 
       <section class="control-group boundary-group">
         <h2>Boundary</h2>

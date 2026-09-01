@@ -3,7 +3,6 @@ let palette;
 let boundaryDetectionLayer;
 let boundaryLayer;
 let paintLayer;
-let textureLayer;
 
 let brushManifest;
 let brushImages = [];
@@ -145,7 +144,6 @@ function generateArtwork() {
     testRegion();
   }
 
-  generateTextureLayer();
 
   renderArtwork();
 }
@@ -159,19 +157,74 @@ function renderArtwork() {
     image(boundaryLayer, 0, 0);
   }
 
-  if (SETTINGS.texture.enabled) {
-    push();
-
-    if (SETTINGS.texture.blendMode === "multiply") {
-      blendMode(MULTIPLY);
-    } else if (SETTINGS.texture.blendMode === "overlay") {
-      blendMode(OVERLAY);
-    }
-
-    image(textureLayer, 0, 0);
-
-    pop();
+  if (uploadedTextureImage) {
+    drawTextureOverlay();
   }
+}
+
+function drawTextureOverlay() {
+  if (!uploadedTextureImage) {
+    return;
+  }
+
+  push();
+
+  if (SETTINGS.texture.blendMode === "multiply") {
+    blendMode(MULTIPLY);
+  } else if (
+    SETTINGS.texture.blendMode === "overlay"
+  ) {
+    blendMode(OVERLAY);
+  } else if (
+    SETTINGS.texture.blendMode === "screen"
+  ) {
+    blendMode(SCREEN);
+  } else {
+    blendMode(BLEND);
+  }
+
+  tint(
+    255,
+    SETTINGS.texture.opacity
+  );
+
+  const img =
+    uploadedTextureImage;
+
+  // Cover canvas without distorting texture.
+  const canvasRatio =
+    width / height;
+
+  const imageRatio =
+    img.width / img.height;
+
+  let drawW;
+  let drawH;
+
+  if (imageRatio > canvasRatio) {
+    drawH = height;
+    drawW =
+      height * imageRatio;
+  } else {
+    drawW = width;
+    drawH =
+      width / imageRatio;
+  }
+
+  imageMode(CENTER);
+
+  image(
+    img,
+    width / 2,
+    height / 2,
+    drawW,
+    drawH
+  );
+
+  noTint();
+  imageMode(CORNER);
+
+  pop();
 }
 
 function testRegion() {
@@ -214,9 +267,6 @@ function windowResized() {
     createGraphics(width, height);
 
   paintLayer =
-    createGraphics(width, height);
-
-  textureLayer =
     createGraphics(width, height);
 
   lastGenerationTime = millis();

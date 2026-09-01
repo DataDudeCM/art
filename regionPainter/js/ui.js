@@ -106,32 +106,55 @@ function setupPresetFileControls() {
 }
 
 function setupTextureControls() {
-  const enabled =
-    document.getElementById("texture-enabled");
+  const chooseButton =
+    document.getElementById(
+      "texture-file-button"
+    );
+
+  const fileInput =
+    document.getElementById(
+      "texture-file-input"
+    );
 
   const blendMode =
-    document.getElementById("texture-blend-mode");
+    document.getElementById(
+      "texture-blend-mode"
+    );
 
-  enabled.checked =
-    SETTINGS.texture.enabled;
+  chooseButton.addEventListener(
+    "click",
+    () => {
+      fileInput.click();
+    }
+  );
+
+  fileInput.addEventListener(
+    "change",
+    event => {
+      const file =
+        event.target.files?.[0];
+
+      if (file) {
+        loadTextureFile(file);
+      }
+
+      // Allows choosing the same file again.
+      event.target.value = "";
+    }
+  );
 
   blendMode.value =
     SETTINGS.texture.blendMode;
 
-  enabled.addEventListener("change", event => {
-    SETTINGS.texture.enabled =
-      event.target.checked;
+  blendMode.addEventListener(
+    "change",
+    event => {
+      SETTINGS.texture.blendMode =
+        event.target.value;
 
-    generateTextureLayer();
-    renderArtwork();
-  });
-
-  blendMode.addEventListener("change", event => {
-    SETTINGS.texture.blendMode =
-      event.target.value;
-
-    renderArtwork();
-  });
+      renderArtwork();
+    }
+  );
 
   setupRangeControl(
     "texture-opacity",
@@ -141,10 +164,11 @@ function setupTextureControls() {
       SETTINGS.texture.opacity =
         Number(value);
 
-      generateTextureLayer();
       renderArtwork();
     }
   );
+
+  updateTextureFileDisplay();
 }
 
 function setupPaletteControl() {
@@ -488,11 +512,6 @@ function syncBoundaryControls() {
 }
 
 function syncTextureControls() {
-  document.getElementById(
-    "texture-enabled"
-  ).checked =
-    SETTINGS.texture.enabled;
-
   document.getElementById(
     "texture-blend-mode"
   ).value =
