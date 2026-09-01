@@ -70,13 +70,21 @@ function chaikin(points, iterations = 1) {
   return result;
 }
 
-function drawBoundary(g, points) {
+function drawDetectionBoundary(g, points) {
   g.clear();
 
   g.push();
+
   g.noFill();
-  g.stroke(getLightColor(palette));
-  g.strokeWeight(SETTINGS.boundary.strokeWeight);
+
+  // Color doesn't matter much here.
+  // Alpha/continuity are what flood fill cares about.
+  g.stroke(0);
+
+  g.strokeWeight(
+    SETTINGS.boundary.strokeWeight
+  );
+
   g.strokeJoin(ROUND);
   g.strokeCap(ROUND);
 
@@ -87,27 +95,68 @@ function drawBoundary(g, points) {
   }
 
   g.endShape(CLOSE);
+
+  g.pop();
+}
+
+function drawVisibleBoundary(g, points) {
+  g.clear();
+
+  g.push();
+
+  g.noFill();
+
+  g.stroke(
+    getLightColor(palette)
+  );
+
+  g.strokeWeight(
+    SETTINGS.boundary.strokeWeight
+  );
+
+  g.strokeJoin(ROUND);
+  g.strokeCap(ROUND);
+
+  g.beginShape();
+
+  for (const p of points) {
+    g.vertex(p.x, p.y);
+  }
+
+  g.endShape(CLOSE);
+
   g.pop();
 }
 
 function generateBoundary() {
-  let controlPoints = generateControlPoints(
-    SETTINGS.boundary.pointCount,
-    SETTINGS.boundary.scale
+  let controlPoints =
+    generateControlPoints(
+      SETTINGS.boundary.pointCount,
+      SETTINGS.boundary.scale
+    );
+
+  controlPoints =
+    softenControlPoints(
+      controlPoints,
+      SETTINGS.boundary.cornerSoftness,
+      SETTINGS.boundary.softeningPasses
+    );
+
+  const smoothedPoints =
+    chaikin(
+      controlPoints,
+      SETTINGS.boundary.subdivisions
+    );
+
+  drawDetectionBoundary(
+    boundaryDetectionLayer,
+    smoothedPoints
   );
 
-  controlPoints = softenControlPoints(
-    controlPoints,
-    SETTINGS.boundary.cornerSoftness,
-    SETTINGS.boundary.softeningPasses
+  drawVisibleBoundary(
+    boundaryLayer,
+    smoothedPoints
   );
-
-  const smoothedPoints = chaikin(
-    controlPoints,
-    SETTINGS.boundary.subdivisions
-  );
-
-  drawBoundary(boundaryLayer, smoothedPoints);
 
   return {
     controlPoints,

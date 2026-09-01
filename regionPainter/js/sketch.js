@@ -1,4 +1,6 @@
 let palette;
+
+let boundaryDetectionLayer;
 let boundaryLayer;
 let paintLayer;
 
@@ -49,8 +51,14 @@ function setup() {
 
   canvas.parent("canvas-container");
 
-  boundaryLayer = createGraphics(width, height);
-  paintLayer = createGraphics(width, height);
+  boundaryDetectionLayer =
+    createGraphics(width, height);
+
+  boundaryLayer =
+    createGraphics(width, height);
+
+  paintLayer =
+    createGraphics(width, height);
 
   requestGenerate();
   
@@ -111,16 +119,22 @@ function resolveActivePalette() {
 }
 
 function generateArtwork() {
+  boundaryDetectionLayer.clear();
   boundaryLayer.clear();
   paintLayer.clear();
 
-  palette = resolveActivePalette(); 
+  palette = resolveActivePalette();
+
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
 
   generateBoundary();
 
-  for (let i = 0; i < SETTINGS.fill.attempts; i++) {
+  for (
+    let i = 0;
+    i < SETTINGS.fill.attempts;
+    i++
+  ) {
     testRegion();
   }
 }
@@ -130,7 +144,11 @@ function testRegion() {
   const y = random(height);
 
   const region =
-    floodFillRegion(boundaryLayer, x, y);
+    floodFillRegion(
+      boundaryDetectionLayer,
+      x,
+      y
+    );
 
   if (!region) {
     return;
@@ -151,6 +169,9 @@ function windowResized() {
     getCanvasWidth(),
     windowHeight
   );
+
+  boundaryDetectionLayer =
+    createGraphics(width, height);
 
   boundaryLayer =
     createGraphics(width, height);
