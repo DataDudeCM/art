@@ -188,6 +188,9 @@ function stampBoundaryPath(
   const spacing =
     SETTINGS.boundary.brushSpacing;
 
+  const subdivisionsPerSegment =
+    2 ** SETTINGS.boundary.subdivisions;
+
   for (let i = 0; i < points.length; i++) {
     const a = points[i];
     const b = points[(i + 1) % points.length];
@@ -208,20 +211,49 @@ function stampBoundaryPath(
     const steps =
       max(1, ceil(segmentLength / spacing));
 
-    for (let j = 0; j < steps; j++) {
-      const t = j / steps;
+    // Position within the original large segment
+    const localSegmentIndex =
+      i % subdivisionsPerSegment;
 
-      const x = lerp(a.x, b.x, t);
-      const y = lerp(a.y, b.y, t);
+    const segmentT =
+      localSegmentIndex /
+      subdivisionsPerSegment;
 
-      // Thin -> thick -> thin across the segment
-      const profile = sin(PI * t);
+    // Thin -> thick -> thin across the original segment
+    const peak =
+      SETTINGS.boundary.peakPosition;
 
-      const sizeMultiplier = lerp(
+    let profile;
+
+    if (segmentT <= peak) {
+      profile =
+        segmentT / peak;
+    } else {
+      profile =
+        1 -
+        (segmentT - peak) /
+        (1 - peak);
+    }
+
+    profile =
+      profile * profile *
+      (3 - 2 * profile);
+
+    const sizeMultiplier =
+      lerp(
         1,
         SETTINGS.boundary.midSizeMultiplier,
         profile
       );
+
+    for (let j = 0; j < steps; j++) {
+      const t = j / steps;
+
+      const x =
+        lerp(a.x, b.x, t);
+
+      const y =
+        lerp(a.y, b.y, t);
 
       stampBoundaryBrush(
         g,
