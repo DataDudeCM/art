@@ -439,6 +439,14 @@ function setupFillBrushSelect() {
 
   select.appendChild(randomOption);
 
+  const proceduralOption =
+    document.createElement("option");
+
+  proceduralOption.value = "__procedural__";
+  proceduralOption.textContent = "Procedural";
+
+  select.appendChild(proceduralOption);
+
   for (const brushName of brushNames) {
     const option =
       document.createElement("option");
@@ -450,15 +458,31 @@ function setupFillBrushSelect() {
     select.appendChild(option);
   }
 
-  select.value =
-    SETTINGS.paint.forcedFillBrush || "";
+  if (SETTINGS.paint.brushMode === "procedural") {
+    select.value = "__procedural__";
+  } else {
+    select.value =
+      SETTINGS.paint.forcedFillBrush || "";
+  }
 
   select.addEventListener("change", event => {
-    SETTINGS.paint.forcedFillBrush =
-      event.target.value || null;
+    const value = event.target.value;
+
+    if (value === "__procedural__") {
+      SETTINGS.paint.brushMode =
+        "procedural";
+
+      SETTINGS.paint.forcedFillBrush =
+        null;
+    } else {
+      SETTINGS.paint.brushMode =
+        "image";
+
+      SETTINGS.paint.forcedFillBrush =
+        value || null;
+    }
   });
 }
-
 function setupSeedControls() {
   const input =
     document.getElementById("generation-seed");

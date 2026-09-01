@@ -152,6 +152,7 @@ function generateArtwork() {
     getLightColor(palette);
 
   generateBoundary();
+  boundaryDetectionLayer.loadPixels();
 
   for (
     let i = 0;

@@ -1,5 +1,7 @@
 function floodFillRegion(g, startX, startY) {
-  g.loadPixels();
+  // Assumes g.loadPixels() has already been called
+  // for the current boundary state.
+  // //g.loadPixels();
 
   const w = g.width;
   const h = g.height;
