@@ -1,164 +1,211 @@
 # regionPainter
 
-`regionPainter` is a p5.js creative-coding experiment that discovers enclosed regions in a line drawing and paints those regions using translucent, layered marks.
+`regionPainter` is a p5.js generative painting instrument that discovers enclosed spaces in line structures and selectively paints those regions with translucent image brushes.
 
-The first version generates a self-intersecting **Chaikin-smoothed curve**, chooses random seed points, flood-fills the region surrounding each seed, and then paints the detected region.
+The original experiment began with a self-intersecting Chaikin-smoothed curve and raster flood fill. It has since grown into a more complete painting system with image-brush fills, expressive brush-rendered boundaries, palettes, presets, a control panel, real user-selected surface textures, and export.
 
-The longer-term goal is broader: the boundary can eventually come from a hand-drawn doodle or uploaded black-ink image, while the painter can use watercolor, ink, dry brush, stippling, texture, or other rendering styles.
-
-## Core Idea
+## The Core Idea
 
 ```text
-Boundary Source
+Boundary Structure
     ->
-Boundary Mask
+Raster Detection Mask
     ->
-Flood-Fill Region Detection
+Region Discovery
     ->
-Region Selection
+Probabilistic Region Selection
     ->
-Region Painter
+Layered Painting
+    ->
+Visible Boundary Rendering
+    ->
+Texture Overlay
+    ->
+Final Artwork
 ```
 
-Flood fill is used only to **discover** a region. Painting is handled separately.
+Flood fill is used to discover regions. It does not decide how those regions look.
 
-That separation lets the same detected region be rendered in many different ways.
-
----
-
-## Why This Exists
-
-A self-intersecting line naturally creates accidental enclosed spaces.
-
-Rather than explicitly designing those shapes, `regionPainter`:
-
-1. creates or receives a boundary drawing;
-2. randomly chooses points;
-3. discovers whatever regions those points happen to occupy;
-4. paints those regions;
-5. allows the same region to be selected repeatedly.
-
-Because the paint is translucent, repeated hits naturally create richer and darker areas while untouched regions remain as negative space.
-
-The resulting composition emerges from the interaction between the boundary, probability, and the painter.
+That separation is what makes the system extensible.
 
 ---
 
-## V0.1
+## Why It Works
 
-The first version focuses on proving the smallest complete system:
+A self-intersecting line naturally creates accidental spaces.
 
-- generate random control points;
-- smooth them using Chaikin subdivision;
-- rasterize the resulting self-intersecting line;
-- choose random seed points;
-- flood fill to identify enclosed regions;
-- paint valid regions with low-opacity brush marks;
-- allow repeated regions;
-- optionally show/hide the boundary;
-- save the result.
+`regionPainter` does not explicitly design those spaces. Instead it:
 
-Watercolor-style rendering is the first painter, but the project is intentionally **not watercolor-specific**.
+1. creates boundary geometry;
+2. chooses random points;
+3. discovers whatever enclosed region contains each point;
+4. paints valid regions with low-opacity brush marks;
+5. allows regions to be selected repeatedly.
+
+Repeated selection creates natural visual hierarchy:
+
+```text
+few hits  -> pale / quiet
+more hits -> richer / stronger
+many hits -> dominant
+```
+
+Untouched regions remain negative space.
+
+The composition therefore emerges from the interaction between geometry, chance, repetition, palette, brush character, and surface texture.
 
 ---
 
+## Current Features
 
-## Shared Palettes
+- self-intersecting Chaikin boundary generation;
+- separate computational and visible boundary layers;
+- 4-neighbor raster flood-fill region detection;
+- configurable region-size limits;
+- repeated random region selection;
+- translucent PNG brush painting;
+- region-size-responsive mark count and brush scale;
+- exact region masking;
+- controlled edge bleed;
+- shared palette system from `../common/js/palette.js`;
+- shared brush manifest/images from `../common/brushes/`;
+- brush-rendered visible boundary with line fallback;
+- boundary size, alpha, spacing, and profile controls;
+- preset dropdown plus Save / Load workflow;
+- user-selected texture overlay through the browser/Windows file picker;
+- texture opacity, blend mode, and scale controls;
+- auto regeneration;
+- PNG export.
 
-`regionPainter` should use the existing shared palette library:
+---
+
+## Surface Textures
+
+Textures are selected from the local computer at runtime.
+
+```text
+Choose Texture
+    ->
+Windows file picker
+    ->
+select an image
+    ->
+regionPainter overlays it on the artwork
+```
+
+The selected file does not need to be copied into the repository.
+
+Texture controls currently include:
+
+- opacity;
+- blend mode;
+- scale/zoom.
+
+Scale `1.0` covers the canvas without exposing edges. Higher values zoom into the texture and make its structure appear coarser.
+
+Because browsers do not retain arbitrary access to local files, a preset can remember texture settings but cannot reliably reopen the exact local texture image later without the user selecting it again.
+
+---
+
+## Boundary Rendering
+
+The hidden flood-fill boundary and the visible artistic boundary are deliberately separate.
+
+```text
+same boundary geometry
+    |-- detection mask: continuous, reliable
+    `-- visible renderer: expressive, brushy, optional
+```
+
+This allows the visible line to use textured PNG brushes without risking gaps that would break flood fill.
+
+---
+
+## Boundary Vocabulary — Next Exploration
+
+The system is **not limited to Chaikin curves**.
+
+Flood fill only cares about the final detection mask, so additional geometry can participate in the same painting pipeline.
+
+Planned experiments include:
+
+- squares / rectangles;
+- circles / ellipses;
+- polygons;
+- open divider lines;
+- uploaded hand-drawn boundaries.
+
+A first experiment will likely keep the organic Chaikin path and add only a few rigid rectangles or squares. This may introduce an interesting visual tension between organic flow and geometric order.
+
+---
+
+## Animation — Planned
+
+Animation is still a desired direction.
+
+The preferred first approach is **progressive painting** rather than regenerating the entire system every frame.
+
+Possible behavior:
+
+```text
+boundary appears
+    ->
+regions receive pigment gradually
+    ->
+repeated hits deepen areas over time
+    ->
+edge bleed follows
+    ->
+texture remains as a finishing layer
+```
+
+This should preserve the current painting logic while making the composition visibly emerge.
+
+Slowly morphing boundary geometry is possible later, but it is more expensive because changing the boundary changes region topology and requires region detection to be rebuilt.
+
+---
+
+## Performance — Planned Focus
+
+Performance work is now important both for faster iteration and for animation.
+
+Highest-value opportunities include:
+
+1. load boundary pixels once per generation rather than once per flood-fill attempt;
+2. label/cache all connected regions once per boundary;
+3. preserve current random-seed probability and repeated-hit behavior while reusing cached regions;
+4. cache region edge pixels;
+5. replace full-canvas temporary paint/mask buffers with small buffers based on region bounds;
+6. reuse graphics/image buffers where possible;
+7. resample the high-resolution Chaikin path before visible brush stamping;
+8. profile each generation phase with `performance.now()` before optimizing blindly.
+
+The goal is to improve speed **without changing the visual semantics that make the current output work**.
+
+---
+
+## Shared Repository Assets
+
+### Palettes
 
 ```text
 ../common/js/palette.js
 ```
 
-The shared library already provides named palettes, semantic color roles, tags, and helpers including:
+The shared palette system is the source of truth for named palettes and semantic color helpers.
 
-```js
-getPalette()
-randomPalette()
-randomPaletteByTag()
-randomColor()
-getDarkColor()
-getLightColor()
-getAccentColor()
-```
-
-A typical setup might be:
-
-```html
-<script src="../common/js/palette.js"></script>
-```
-
-```js
-let palette = getPalette("earthMagenta");
-
-let paperColor = getLightColor(palette);
-let boundaryColor = getDarkColor(palette);
-let regionColor = randomColor(palette);
-```
-
-`regionPainter` should not maintain a separate palette list. The live repository version of `common/js/palette.js` remains the source of truth.
-
----
-
-## Brush Images
-
-`regionPainter` should support actual transparent brush images in addition to procedural brush marks.
-
-The shared brushes are expected to live at:
-
-```text
-../common/brushes/
-```
-
-from the `regionPainter` project folder.
-
-The shared art repository already contains:
+### Brushes
 
 ```text
 ../common/brushes/brushes.json
+../common/brushes/*.png
 ```
 
-That manifest should be used as the source of truth for available brushes. `regionPainter` should load the manifest and then load the referenced PNG files from the same folder rather than maintaining its own duplicate brush list.
-
-The current shared manifest includes acrylic, creamy, gouache, random, splatter, and six watercolor brush images.
-
-Brush stamps can vary in:
-
-- scale;
-- rotation;
-- opacity;
-- color/tint;
-- aspect ratio;
-- selected brush image.
-
-Because browsers cannot reliably enumerate an arbitrary folder, `regionPainter` should load the existing `../common/brushes/brushes.json` manifest from the repository.
+`regionPainter` loads brushes from the shared manifest rather than maintaining a duplicate list.
 
 ---
 
-## Future Boundary Input
-
-The generated Chaikin curve is only the first boundary source.
-
-A later version should allow an uploaded black-line doodle or sketch:
-
-```text
-uploaded drawing
-    ->
-grayscale / threshold
-    ->
-optional line thickening and gap closing
-    ->
-boundary mask
-    ->
-same flood-fill and painting pipeline
-```
-
-This allows a hand-drawn abstract doodle to provide the structure while the code decides which regions to paint and how strongly to paint them.
-
----
-
-## Suggested Project Structure
+## Current Project Structure
 
 ```text
 regionPainter/
@@ -166,82 +213,48 @@ regionPainter/
 |-- README.md
 |-- DESIGN.md
 |-- index.html
-|
+|-- css/
+|   `-- style.css
+|-- presets/
+|   `-- ...
 `-- js/
-    |-- sketch.js
     |-- settings.js
+    |-- utils.js
     |-- boundary.js
     |-- floodfill.js
     |-- painter.js
-    `-- utils.js
+    |-- presets.js
+    |-- ui.js
+    |-- texture.js
+    `-- sketch.js
 ```
-
-The structure can become more formal later if multiple painter types are added.
 
 ---
 
-## Initial Controls
+## Design Philosophy
+
+A few principles are now worth protecting:
+
+- discovered regions are more interesting than explicitly authored regions;
+- repeated random hits are a feature, not a bug;
+- computational boundaries should be reliable even when visible boundaries are messy;
+- physical-looking brush and texture assets are preferable when they produce better artwork than simulated equivalents;
+- not every region should be painted;
+- performance optimizations should preserve the character of the generator;
+- new features should earn their place visually.
+
+---
+
+## Next Milestones
 
 ```text
-R = regenerate
-S = save image
-B = toggle boundary visibility
-D = toggle debug visualization
+1. Make artwork with the current version
+2. Add performance timing / easy cleanup
+3. Cache or label regions once per boundary
+4. Experiment with a few square/rectangular boundary elements
+5. Add progressive painting animation
+6. Reduce full-canvas temporary buffer work
+7. Explore additional boundary sources only when useful
 ```
 
----
-
-## Development Order
-
-```text
-1. Generate Chaikin boundary
-2. Verify self-intersections
-3. Implement flood fill
-4. Debug-display detected region
-5. Select multiple random regions
-6. Add procedural translucent brush
-7. Add image brushes from common/brushes
-8. Tune the visual behavior
-9. Add edge pooling / bleed
-10. Add uploaded doodle boundaries
-```
-
-The emphasis is deliberately on getting an interesting image quickly rather than overengineering the first version.
-
----
-
-## Longer-Term Possibilities
-
-Possible painter types:
-
-- watercolor;
-- ink hatching;
-- dry brush;
-- charcoal-like smudge;
-- stippling;
-- patterned texture;
-- image-derived color;
-- collage fragments.
-
-Possible selection behaviors:
-
-- uniform random;
-- clustered around a focal point;
-- Gaussian probability fields;
-- intentional revisiting;
-- avoid previously painted areas;
-- composition-directed emphasis.
-
-Possible watercolor refinements:
-
-- pigment pooling near boundaries;
-- granulation;
-- edge blooms;
-- controlled bleed beyond a region;
-- darker seams where neighboring bleeds overlap.
-
----
-
-## Design Document
-
-See [`DESIGN.md`](DESIGN.md) for the architecture, milestones, region detection approach, brush-image design, and future uploaded-image pipeline.
+See [`DESIGN.md`](DESIGN.md) for the detailed architecture and roadmap.

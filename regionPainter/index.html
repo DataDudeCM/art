@@ -48,248 +48,288 @@
         </div>
       </section>
 
-      <section class="control-group texture-group">
-        <h2>Surface Texture</h2>
+      <div class="control-divider"></div>
 
-        <div class="control-item">
-          <button id="texture-file-button">
-            Choose Texture
-          </button>
+      <section
+        class="control-group texture-group collapsible-group collapsed" 
+      >
+        <button
+          type="button"
+          class="section-toggle"
+          aria-expanded="false"
+        >
+          <span>Surface Texture</span>
+          <span class="section-arrow">▾</span>
+        </button>
 
-          <input
-            id="texture-file-input"
-            type="file"
-            accept="image/*"
-            hidden
-          />
+        <div class="section-content">
 
-          <div
-            id="texture-file-name"
-            class="control-note"
-          >
-            No texture selected
-          </div>
-        </div>
+          <div class="control-item">
+            <button id="texture-file-button">
+              Choose Texture
+            </button>
 
-        <div class="control-item">
-          <label for="texture-opacity">
-            Opacity
-          </label>
-
-          <div class="range-row">
             <input
-              id="texture-opacity"
-              type="range"
-              min="0"
-              max="255"
-              step="1"
+              id="texture-file-input"
+              type="file"
+              accept="image/*"
+              hidden
             />
 
-            <span
-              id="texture-opacity-value"
-              class="range-value"
-            ></span>
+            <div
+              id="texture-file-name"
+              class="control-note"
+            >
+              No texture selected
+            </div>
           </div>
-        </div>
 
-        <div class="control-item">
-          <label for="texture-scale">
-            Scale
-          </label>
+          <div class="control-item">
+            <label for="texture-opacity">
+              Opacity
+            </label>
 
-          <div class="range-row">
-            <input
-              id="texture-scale"
-              type="range"
-              min="0.5"
-              max="3"
-              step="0.05"
-            />
+            <div class="range-row">
+              <input
+                id="texture-opacity"
+                type="range"
+                min="0"
+                max="255"
+                step="1"
+              />
 
-            <span
-              id="texture-scale-value"
-              class="range-value"
-            ></span>
+              <span
+                id="texture-opacity-value"
+                class="range-value"
+              ></span>
+            </div>
           </div>
-        </div>
 
-        <div class="control-item">
-          <label for="texture-blend-mode">
-            Blend Mode
-          </label>
+          <div class="control-item">
+            <label for="texture-scale">
+              Scale
+            </label>
 
-          <select id="texture-blend-mode">
-            <option value="multiply">Multiply</option>
-            <option value="overlay">Overlay</option>
-            <option value="screen">Screen</option>
-            <option value="normal">Normal</option>
-          </select>
+            <div class="range-row">
+              <input
+                id="texture-scale"
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.05"
+              />
+
+              <span
+                id="texture-scale-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="texture-blend-mode">
+              Blend Mode
+            </label>
+
+            <select id="texture-blend-mode">
+              <option value="multiply">Multiply</option>
+              <option value="overlay">Overlay</option>
+              <option value="screen">Screen</option>
+              <option value="normal">Normal</option>
+            </select>
+          </div>
         </div>
       </section>
 
-      <section class="control-group boundary-group">
-        <h2>Boundary</h2>
+      <div class="control-divider"></div>
 
-        <div class="control-item">
-          <label class="checkbox-row">
-            <input
-              type="checkbox"
-              id="boundary-visible"
-            />
-            Show boundary
-          </label>
-        </div>
+      <section
+        class="control-group boundary-group collapsible-group"
+      >
+        <button
+          type="button"
+          class="section-toggle"
+          aria-expanded="true"
+        >
+          <span>Boundary</span>
+          <span class="section-arrow">▾</span>
+        </button>
 
-        <div class="control-item">
-          <label for="boundary-brush-mode">
-            Boundary Mode
-          </label>
+        <div class="section-content">
 
-          <select id="boundary-brush-mode">
-            <option value="image">Brush</option>
-            <option value="line">Line</option>
-          </select>
-        </div>
-
-        <div class="control-item">
-          <label for="boundary-scale">
-            Scale
-          </label>
-
-          <div class="range-row">
-            <input
-              id="boundary-scale"
-              type="range"
-              min="0.5"
-              max="10"
-              step="0.05"
-            />
-
-            <span
-              id="boundary-scale-value"
-              class="range-value"
-            ></span>
+          <div class="control-item">
+            <label class="checkbox-row">
+              <input
+                type="checkbox"
+                id="boundary-visible"
+              />
+              Show boundary
+            </label>
           </div>
-        </div>
 
-        <div class="control-item">
-          <label for="boundary-point-count">
-            Point Count
-          </label>
+          <div class="control-item">
+            <label for="boundary-brush-mode">
+              Boundary Mode
+            </label>
 
-          <div class="range-row">
-            <input
-              id="boundary-point-count"
-              type="range"
-              min="4"
-              max="100"
-              step="1"
-            />
-
-            <span
-              id="boundary-point-count-value"
-              class="range-value"
-            ></span>
+            <select id="boundary-brush-mode">
+              <option value="image">Brush</option>
+              <option value="line">Line</option>
+            </select>
           </div>
-        </div>
 
-        <div class="control-item">
-          <label for="boundary-subdivisions">
-            Subdivisions
-          </label>
+          <div class="control-item">
+            <label for="boundary-scale">
+              Scale
+            </label>
 
-          <div class="range-row">
-            <input
-              id="boundary-subdivisions"
-              type="range"
-              min="0"
-              max="10"
-              step="1"
-            />
+            <div class="range-row">
+              <input
+                id="boundary-scale"
+                type="range"
+                min="0.5"
+                max="10"
+                step="0.05"
+              />
 
-            <span
-              id="boundary-subdivisions-value"
-              class="range-value"
-            ></span>
+              <span
+                id="boundary-scale-value"
+                class="range-value"
+              ></span>
+            </div>
           </div>
-        </div>
+
+          <div class="control-item">
+            <label for="boundary-point-count">
+              Point Count
+            </label>
+
+            <div class="range-row">
+              <input
+                id="boundary-point-count"
+                type="range"
+                min="4"
+                max="100"
+                step="1"
+              />
+
+              <span
+                id="boundary-point-count-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="boundary-subdivisions">
+              Subdivisions
+            </label>
+
+            <div class="range-row">
+              <input
+                id="boundary-subdivisions"
+                type="range"
+                min="0"
+                max="10"
+                step="1"
+              />
+
+              <span
+                id="boundary-subdivisions-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+        </div>  
       </section>
 
 
       <div class="control-divider"></div>
 
 
-      <section class="control-group brush-group">
-        <h2>Boundary Brush</h2>
+      <section
+        class="control-group brush-group collapsible-group collapsed"
+      >
+        <button
+          type="button"
+          class="section-toggle"
+          aria-expanded="false"
+        >
+          <span>Boundary Brush</span>
+          <span class="section-arrow">▾</span>
+        </button>
 
-        <div class="control-item">
-          <label for="boundary-brush-select">
-            Brush
-          </label>
+        <div class="section-content">
 
-          <select id="boundary-brush-select"></select>
-        </div>
+          <div class="control-item">
+            <label for="boundary-brush-select">
+              Brush
+            </label>
 
-        <div class="control-item">
-          <label for="boundary-brush-size">
-            Thin Brush Size
-          </label>
-
-          <div class="range-row">
-            <input
-              id="boundary-brush-size"
-              type="range"
-              min="1"
-              max="50"
-              step="1"
-            />
-
-            <span
-              id="boundary-brush-size-value"
-              class="range-value"
-            ></span>
+            <select id="boundary-brush-select"></select>
           </div>
-        </div>
 
-        <div class="control-item">
-          <label for="boundary-multiplier">
-            Mid Multiplier
-          </label>
+          <div class="control-item">
+            <label for="boundary-brush-size">
+              Thin Brush Size
+            </label>
 
-          <div class="range-row">
-            <input
-              id="boundary-multiplier"
-              type="range"
-              min="1"
-              max="8"
-              step="0.1"
-            />
+            <div class="range-row">
+              <input
+                id="boundary-brush-size"
+                type="range"
+                min="1"
+                max="50"
+                step="1"
+              />
 
-            <span
-              id="boundary-multiplier-value"
-              class="range-value"
-            ></span>
+              <span
+                id="boundary-brush-size-value"
+                class="range-value"
+              ></span>
+            </div>
           </div>
-        </div>
 
-        <div class="control-item">
-          <label for="boundary-alpha">
-            Brush Alpha
-          </label>
+          <div class="control-item">
+            <label for="boundary-multiplier">
+              Mid Multiplier
+            </label>
 
-          <div class="range-row">
-            <input
-              id="boundary-alpha"
-              type="range"
-              min="1"
-              max="255"
-              step="1"
-            />
+            <div class="range-row">
+              <input
+                id="boundary-multiplier"
+                type="range"
+                min="1"
+                max="8"
+                step="0.1"
+              />
 
-            <span
-              id="boundary-alpha-value"
-              class="range-value"
-            ></span>
+              <span
+                id="boundary-multiplier-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="boundary-alpha">
+              Brush Alpha
+            </label>
+
+            <div class="range-row">
+              <input
+                id="boundary-alpha"
+                type="range"
+                min="1"
+                max="255"
+                step="1"
+              />
+
+              <span
+                id="boundary-alpha-value"
+                class="range-value"
+              ></span>
+            </div>
           </div>
         </div>
       </section>

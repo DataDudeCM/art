@@ -4,6 +4,7 @@ function setupUI() {
   setupBoundaryControls();
   setupPresetFileControls();
   setupTextureControls();
+  setupCollapsibleSections();
 
   document
     .getElementById("generate-button")
@@ -371,6 +372,44 @@ function setupBoundaryVisibility() {
       renderArtwork();
     }
   );
+}
+
+function setupCollapsibleSections() {
+  const sections =
+    document.querySelectorAll(
+      ".collapsible-group"
+    );
+
+  for (const section of sections) {
+    const button =
+      section.querySelector(
+        ".section-toggle"
+      );
+
+    const content =
+      section.querySelector(
+        ".section-content"
+      );
+
+    if (!button || !content) {
+      continue;
+    }
+
+    button.addEventListener(
+      "click",
+      () => {
+        const collapsed =
+          section.classList.toggle(
+            "collapsed"
+          );
+
+        button.setAttribute(
+          "aria-expanded",
+          String(!collapsed)
+        );
+      }
+    );
+  }
 }
 
 function updateBoundaryBrushEnabledState() {
