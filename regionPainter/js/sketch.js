@@ -90,11 +90,7 @@ function getCanvasWidth() {
 }
 
 function resolveActivePalette() {
-  console.log(
-    "palette state:",
-    UI_STATE.paletteMode,
-    UI_STATE.fixedPaletteKey
-  );
+
   if (UI_STATE.paletteMode === "random") {
     return randomPalette();
   }
@@ -124,26 +120,11 @@ function generateArtwork() {
   paintLayer.clear();
 
   palette = resolveActivePalette();
-  console.log(
-    "resolved palette:",
-    palette?.name,
-    "paper:",
-    getLightColor(palette)
-  );
 
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
 
   generateBoundary();
-
-  for (
-    let i = 0;
-    i < SETTINGS.fill.attempts;
-    i++
-  ) {
-    testRegion();
-  }
-  background(SETTINGS.canvas.paperColor);
 
   for (
     let i = 0;
@@ -172,7 +153,7 @@ function testRegion() {
 
   const region =
     floodFillRegion(
-      boundaryLayer,
+      boundaryDetectionLayer,
       x,
       y
     );

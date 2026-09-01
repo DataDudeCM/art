@@ -81,9 +81,6 @@ function drawDetectionBoundary(g, points) {
   // Alpha/continuity are what flood fill cares about.
   g.stroke(0);
 
-  g.strokeWeight(
-    SETTINGS.boundary.strokeWeight
-  );
   g.strokeWeight(3);
 
   g.strokeJoin(ROUND);
