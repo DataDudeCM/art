@@ -1,4 +1,8 @@
 const SETTINGS = {
+  generation: {
+    seed: 12345
+  },
+  
   canvas: {
     paperColor: null,
 
@@ -48,6 +52,7 @@ const SETTINGS = {
 
   paint: {
     marksPerRegion: 200,
+    maskExpansionPixels: 2,
 
     fillStrength: 40,
     opacityVariation: 35,

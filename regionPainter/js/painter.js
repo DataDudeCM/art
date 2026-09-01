@@ -113,13 +113,33 @@ function compositeRegionPaint(tempLayer, region, targetLayer) {
   }
 
   // Make flood-filled region opaque in the mask.
-  for (const p of region.pixels) {
-    const index = 4 * (p.y * width + p.x);
+  const expand =
+    SETTINGS.paint.maskExpansionPixels || 0;
 
-    maskImage.pixels[index] = 255;
-    maskImage.pixels[index + 1] = 255;
-    maskImage.pixels[index + 2] = 255;
-    maskImage.pixels[index + 3] = 255;
+  for (const p of region.pixels) {
+    for (let oy = -expand; oy <= expand; oy++) {
+      for (let ox = -expand; ox <= expand; ox++) {
+        const x = p.x + ox;
+        const y = p.y + oy;
+
+        if (
+          x < 0 ||
+          x >= width ||
+          y < 0 ||
+          y >= height
+        ) {
+          continue;
+        }
+
+        const index =
+          4 * (y * width + x);
+
+        maskImage.pixels[index] = 255;
+        maskImage.pixels[index + 1] = 255;
+        maskImage.pixels[index + 2] = 255;
+        maskImage.pixels[index + 3] = 255;
+      }
+    }
   }
 
   maskImage.updatePixels();

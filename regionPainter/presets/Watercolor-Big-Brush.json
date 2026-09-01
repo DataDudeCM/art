@@ -1,0 +1,22 @@
+{
+  "presetVersion": 1,
+  "presetName": "Watercolor Big Brush",
+  "updatedAt": "2026-09-01T21:22:06.909Z",
+  "paletteKey": "neonDusk",
+  "paletteName": "Neon Dusk",
+  "settings": {
+    "canvas": {
+      "paperColor": "#7c86ae"
+    },
+    "boundary": {
+      "forcedBrush": "Watercolor 2.png",
+      "thinBrushSize": 34,
+      "brushAlpha": 5,
+      "sizeJitter": 0.065
+    },
+    "paint": {
+      "forcedFillBrush": "Watercolor 2.png",
+      "brushSizeMin": 73
+    }
+  }
+}

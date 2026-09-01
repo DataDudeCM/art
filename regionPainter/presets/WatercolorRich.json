@@ -1,0 +1,32 @@
+{
+  "presetVersion": 1,
+  "presetName": "WatercolorRich",
+  "updatedAt": "2026-09-01T21:29:18.722Z",
+  "paletteKey": "evidenceOfEncounter",
+  "paletteName": "Evidence of Encounter",
+  "settings": {
+    "canvas": {
+      "paperColor": "#EEE4D2"
+    },
+    "texture": {
+      "opacity": 202,
+      "blendMode": "overlay"
+    },
+    "boundary": {
+      "pointCount": 17,
+      "scale": 1.7,
+      "forcedBrush": "Watercolor 2.png",
+      "thinBrushSize": 48,
+      "brushAlpha": 26,
+      "sizeJitter": 0.065
+    },
+    "paint": {
+      "marksPerRegion": 132,
+      "fillStrength": 23,
+      "opacityVariation": 55,
+      "forcedFillBrush": "Watercolor 2.png",
+      "brushSizeMin": 73,
+      "alphaMin": 1
+    }
+  }
+}

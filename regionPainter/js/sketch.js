@@ -118,6 +118,8 @@ function resolveActivePalette() {
 }
 
 function generateArtwork() {
+  randomSeed(SETTINGS.generation.seed);
+  noiseSeed(SETTINGS.generation.seed);
   boundaryDetectionLayer.clear();
   boundaryLayer.clear();
   paintLayer.clear();
