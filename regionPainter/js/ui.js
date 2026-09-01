@@ -3,6 +3,7 @@ function setupUI() {
   setupPaletteControl();
   setupBoundaryControls();
   setupPresetFileControls();
+  setupTextureControls();
 
   document
     .getElementById("generate-button")
@@ -104,6 +105,47 @@ function setupPresetFileControls() {
   });
 }
 
+function setupTextureControls() {
+  const enabled =
+    document.getElementById("texture-enabled");
+
+  const blendMode =
+    document.getElementById("texture-blend-mode");
+
+  enabled.checked =
+    SETTINGS.texture.enabled;
+
+  blendMode.value =
+    SETTINGS.texture.blendMode;
+
+  enabled.addEventListener("change", event => {
+    SETTINGS.texture.enabled =
+      event.target.checked;
+
+    generateTextureLayer();
+    renderArtwork();
+  });
+
+  blendMode.addEventListener("change", event => {
+    SETTINGS.texture.blendMode =
+      event.target.value;
+
+    renderArtwork();
+  });
+
+  setupRangeControl(
+    "texture-opacity",
+    "texture-opacity-value",
+    () => SETTINGS.texture.opacity,
+    value => {
+      SETTINGS.texture.opacity =
+        Number(value);
+
+      generateTextureLayer();
+      renderArtwork();
+    }
+  );
+}
 
 function setupPaletteControl() {
   const select =
@@ -383,6 +425,7 @@ function loadPresetFromFile(file) {
 
 function syncAllControls() {
   syncBoundaryControls();
+  syncTextureControls();
 
   // Future:
   // syncPaintControls();
@@ -442,6 +485,24 @@ function syncBoundaryControls() {
     SETTINGS.boundary.forcedBrush || "";
 
   updateBoundaryBrushEnabledState();
+}
+
+function syncTextureControls() {
+  document.getElementById(
+    "texture-enabled"
+  ).checked =
+    SETTINGS.texture.enabled;
+
+  document.getElementById(
+    "texture-blend-mode"
+  ).value =
+    SETTINGS.texture.blendMode;
+
+  syncRangeControl(
+    "texture-opacity",
+    "texture-opacity-value",
+    SETTINGS.texture.opacity
+  );
 }
 
 function syncRangeControl(

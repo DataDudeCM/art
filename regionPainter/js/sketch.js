@@ -216,6 +216,9 @@ function windowResized() {
   paintLayer =
     createGraphics(width, height);
 
+  textureLayer =
+    createGraphics(width, height);
+
   lastGenerationTime = millis();
 
 }
