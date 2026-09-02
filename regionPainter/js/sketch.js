@@ -204,7 +204,7 @@ function drawStructureOverlay() {
 
   if (SETTINGS.view.showStructureLines) {
     noFill();
-    stroke(20, 100);
+    stroke(20, 75);
     strokeWeight(1);
 
     beginShape();
@@ -218,10 +218,10 @@ function drawStructureOverlay() {
 
   if (SETTINGS.view.showStructurePoints) {
     noStroke();
-    fill(20, 160);
+    fill(20, 110);
 
     for (const p of boundaryControlPoints) {
-      circle(p.x, p.y, 6);
+      circle(p.x, p.y, 4);
     }
   }
 

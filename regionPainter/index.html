@@ -13,6 +13,54 @@
     <aside id="controls">
       <h1>regionPainter</h1>
 
+       <section class="control-group action-group">
+
+        <div class="control-item">
+          <label for="generation-seed">
+            Seed
+          </label>
+
+          <div class="seed-row">
+            <input
+              id="generation-seed"
+              type="number"
+              min="0"
+              max="999999999"
+              step="1"
+            />
+
+            <button
+              id="new-seed-button"
+              type="button"
+            >
+              New
+            </button>
+          </div>
+        </div>
+
+        <button id="generate-button">
+          Generate
+        </button>
+
+        <div
+          id="generation-status"
+          class="status idle"
+        >
+          Ready
+        </div>
+
+        <div class="control-item">
+          <label class="checkbox-row">
+            <input
+              type="checkbox"
+              id="auto-regenerate"
+            />
+            Auto regenerate
+          </label>
+        </div>
+
+      </section>
+
       <section class="control-group setup-group">
         <div class="control-item">
           <label for="preset-select">Preset</label>
@@ -329,6 +377,27 @@
           </div>
 
           <div class="control-item">
+            <label for="fill-edge-expansion">
+              Edge Expansion
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-edge-expansion"
+                type="range"
+                min="0"
+                max="8"
+                step="1"
+              />
+
+              <span
+                id="fill-edge-expansion-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
             <label for="fill-strength">
               Fill Strength
             </label>
@@ -616,53 +685,7 @@
         </div>
       </section>
 
-      <section class="control-group action-group">
-
-        <div class="control-item">
-          <label for="generation-seed">
-            Seed
-          </label>
-
-          <div class="seed-row">
-            <input
-              id="generation-seed"
-              type="number"
-              min="0"
-              max="999999999"
-              step="1"
-            />
-
-            <button
-              id="new-seed-button"
-              type="button"
-            >
-              New
-            </button>
-          </div>
-        </div>
-
-        <button id="generate-button">
-          Generate
-        </button>
-
-        <div
-          id="generation-status"
-          class="status idle"
-        >
-          Ready
-        </div>
-
-        <div class="control-item">
-          <label class="checkbox-row">
-            <input
-              type="checkbox"
-              id="auto-regenerate"
-            />
-            Auto regenerate
-          </label>
-        </div>
-
-      </section>
+     
     </aside>
   </div>
 

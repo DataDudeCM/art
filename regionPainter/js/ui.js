@@ -422,6 +422,16 @@ function setupFillControls() {
     }
   );
 
+  setupRangeControl(
+    "fill-edge-expansion",
+    "fill-edge-expansion-value",
+    () => SETTINGS.paint.maskExpansionPixels,
+    value => {
+      SETTINGS.paint.maskExpansionPixels =
+        Number(value);
+    }
+  );
+
   updateFillAlphaFromControls();
   updateBleedAlphaFromControls();
 }
