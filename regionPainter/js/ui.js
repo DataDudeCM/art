@@ -232,6 +232,7 @@ function setupPaletteControl() {
 }
 
 function setupBoundaryControls() {
+  setupBoundarySource();
   setupBoundaryBrushMode();
   setupBoundaryBrushSelect();
   setupBoundaryVisibility();
@@ -315,6 +316,22 @@ function setupBoundaryControls() {
     value => {
       SETTINGS.boundary.sizeJitter =
         Number(value) / 200;
+    }
+  );
+}
+
+function setupBoundarySource() {
+  const select =
+    document.getElementById("boundary-source");
+
+  select.value =
+    SETTINGS.boundary.source;
+
+  select.addEventListener(
+    "change",
+    event => {
+      SETTINGS.boundary.source =
+        event.target.value;
     }
   );
 }
@@ -864,6 +881,13 @@ function syncAllControls() {
   syncFillControls();
   syncTextureControls();
   syncViewControls();
+  const boundarySource =
+    document.getElementById("boundary-source");
+
+  if (boundarySource) {
+    boundarySource.value =
+      SETTINGS.boundary.source;
+  }
 
   // Future:
   // syncPaintControls();

@@ -1,3 +1,4 @@
+  
 function generateControlPoints(count, scale = 1.0) {
   const points = [];
 
@@ -333,43 +334,27 @@ function stampBoundaryBrush(
 }
 
 function generateBoundary() {
-  let controlPoints =
-    generateControlPoints(
-      SETTINGS.boundary.pointCount,
-      SETTINGS.boundary.scale
-    );
+  const boundarySource =
+    getActiveBoundarySource();
 
-  controlPoints =
-    softenControlPoints(
-      controlPoints,
-      SETTINGS.boundary.cornerSoftness,
-      SETTINGS.boundary.softeningPasses
-    );
+  const boundary =
+    boundarySource.generate();
 
   boundaryControlPoints =
-    controlPoints.map(p => ({ x: p.x, y: p.y }));
-
-  const smoothedPoints =
-    chaikin(
-      controlPoints,
-      SETTINGS.boundary.subdivisions
-    );
+    boundary.controlPoints || [];
 
   boundarySmoothedPoints =
-    smoothedPoints.map(p => ({ x: p.x, y: p.y }));
+    boundary.points || [];
 
   drawDetectionBoundary(
     boundaryDetectionLayer,
-    smoothedPoints
+    boundary.points
   );
 
   drawVisibleBoundary(
     boundaryLayer,
-    smoothedPoints
+    boundary.points
   );
 
-  return {
-    controlPoints,
-    smoothedPoints
-  };
+  return boundary;
 }
