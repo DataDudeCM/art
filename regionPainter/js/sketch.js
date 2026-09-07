@@ -22,6 +22,8 @@ let perfStats = {
   successfulRegions: 0
 };
 
+const SHOW_PERF_STATS = false;
+
 const UI_STATE = {
   paletteMode: "inherit", // "inherit" | "random" | "fixed"
   fixedPaletteKey: null,
@@ -199,30 +201,32 @@ function generateArtwork() {
   const totalMs =
     performance.now() - totalStart;
 
-  console.table({
-    "Boundary": {
-      ms: Math.round(boundaryMs)
-    },
-    "Flood fill": {
-      ms: Math.round(perfStats.floodMs)
-    },
-    "Painting": {
-      ms: Math.round(perfStats.paintMs)
-    },
-    "Region loop total": {
-      ms: Math.round(regionsMs)
-    },
-    "Final render": {
-      ms: Math.round(renderMs)
-    },
-    "TOTAL": {
-      ms: Math.round(totalMs)
-    }
-  });
+  if (SHOW_PERF_STATS) {
+    console.table({
+      "Boundary": {
+        ms: Math.round(boundaryMs)
+      },
+      "Flood fill": {
+        ms: Math.round(perfStats.floodMs)
+      },
+      "Painting": {
+        ms: Math.round(perfStats.paintMs)
+      },
+      "Region loop total": {
+        ms: Math.round(regionsMs)
+      },
+      "Final render": {
+        ms: Math.round(renderMs)
+      },
+      "TOTAL": {
+        ms: Math.round(totalMs)
+      }
+    });
 
-  console.log(
-    `Successful regions: ${perfStats.successfulRegions} / ${SETTINGS.fill.attempts}`
-  );
+    console.log(
+      `Successful regions: ${perfStats.successfulRegions} / ${SETTINGS.fill.attempts}`
+    );
+  }
 }
 
 function renderArtwork() {
