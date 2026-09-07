@@ -410,6 +410,10 @@ function setupBoundarySource() {
         event.target.value;
 
       updateDrawnBoundaryControls();
+
+      if (SETTINGS.boundary.source === "drawn") {
+        enterDrawnBoundaryMode();
+      }
     }
   );
 }
@@ -1165,4 +1169,28 @@ function scheduleGenerate() {
       lastGenerationTime = millis();
     }, 0);
   });
+}
+
+function enterDrawnBoundaryMode() {
+  drawnBoundaryStrokes = [];
+
+  boundaryDetectionLayer.clear();
+  boundaryLayer.clear();
+  paintLayer.clear();
+
+  if (drawingPreviewLayer) {
+    drawingPreviewLayer.clear();
+  }
+
+  const status =
+    document.getElementById(
+      "drawing-status"
+    );
+
+  if (status) {
+    status.textContent =
+      "Draw on the canvas";
+  }
+
+  renderArtwork();
 }

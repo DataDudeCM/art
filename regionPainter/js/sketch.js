@@ -56,6 +56,7 @@ function preload() {
 
 function setup() {
   pixelDensity(1);
+
   const canvas =
     createCanvas(
       getCanvasWidth(),
@@ -63,7 +64,6 @@ function setup() {
     );
 
   canvas.parent("canvas-container");
-  setupBoundaryInput(canvas.elt);
 
   boundaryDetectionLayer =
     createGraphics(width, height);
@@ -74,15 +74,22 @@ function setup() {
   paintLayer =
     createGraphics(width, height);
 
+  textureLayer =
+    createGraphics(width, height);
+
   drawingPreviewLayer =
     createGraphics(width, height);
 
+  // Set up drawing input only once,
+  // after all layers exist.
   setupBoundaryInput(canvas.elt);
-  //requestGenerate();
-  
+
   setupUI();
-  
-  console.log("Brushes loaded:", brushImages.length);
+
+  console.log(
+    "Brushes loaded:",
+    brushImages.length
+  );
 }
 
 function draw() {
@@ -233,7 +240,10 @@ function generateArtwork() {
 }
 
 function renderArtwork() {
-  background(SETTINGS.canvas.paperColor);
+  const paperColor =
+    SETTINGS.canvas.paperColor || "#f2eee6";
+
+  background(paperColor);
 
   if (SETTINGS.view.showPaint) {
     image(paintLayer, 0, 0);
