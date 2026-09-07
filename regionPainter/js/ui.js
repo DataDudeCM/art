@@ -236,6 +236,7 @@ function setupBoundaryControls() {
   setupBoundaryBrushMode();
   setupBoundaryBrushSelect();
   setupBoundaryVisibility();
+  setupDrawnBoundaryControls();
 
   setupRangeControl(
     "boundary-brush-size",
@@ -320,18 +321,95 @@ function setupBoundaryControls() {
   );
 }
 
+
+function setupDrawnBoundaryControls() {
+  const clearButton =
+    document.getElementById(
+      "clear-drawing-button"
+    );
+
+  const completeButton =
+    document.getElementById(
+      "complete-drawing-button"
+    );
+
+  const status =
+    document.getElementById(
+      "drawing-status"
+    );
+
+  clearButton.addEventListener(
+    "click",
+    () => {
+      drawnBoundaryStrokes = [];
+
+      if (drawingPreviewLayer) {
+        drawingPreviewLayer.clear();
+      }
+
+      status.textContent =
+        "Draw on the canvas";
+
+      renderArtwork();
+    }
+  );
+
+  completeButton.addEventListener(
+    "click",
+    () => {
+      if (drawnBoundaryStrokes.length === 0) {
+        status.textContent =
+          "Nothing drawn yet";
+
+        return;
+      }
+
+      status.textContent =
+        `${drawnBoundaryStrokes.length} stroke(s) captured`;
+
+      if (drawingPreviewLayer) {
+        drawingPreviewLayer.clear();
+      }
+
+      requestGenerate();
+    }
+  );
+}
+
+function updateDrawnBoundaryControls() {
+  const controls =
+    document.getElementById(
+      "drawn-boundary-controls"
+    );
+
+  if (!controls) {
+    return;
+  }
+
+  controls.style.display =
+    SETTINGS.boundary.source === "drawn"
+      ? ""
+      : "none";
+}
+
 function setupBoundarySource() {
   const select =
-    document.getElementById("boundary-source");
+    document.getElementById(
+      "boundary-source"
+    );
 
   select.value =
     SETTINGS.boundary.source;
+
+  updateDrawnBoundaryControls();
 
   select.addEventListener(
     "change",
     event => {
       SETTINGS.boundary.source =
         event.target.value;
+
+      updateDrawnBoundaryControls();
     }
   );
 }
@@ -888,6 +966,8 @@ function syncAllControls() {
     boundarySource.value =
       SETTINGS.boundary.source;
   }
+
+  updateDrawnBoundaryControls();
 
   // Future:
   // syncPaintControls();

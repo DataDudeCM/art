@@ -3,6 +3,7 @@ let palette;
 let boundaryDetectionLayer;
 let boundaryLayer;
 let paintLayer;
+let drawingPreviewLayer;
 
 let boundaryControlPoints = [];
 let boundarySmoothedPoints = [];
@@ -62,6 +63,7 @@ function setup() {
     );
 
   canvas.parent("canvas-container");
+  setupBoundaryInput(canvas.elt);
 
   boundaryDetectionLayer =
     createGraphics(width, height);
@@ -72,9 +74,10 @@ function setup() {
   paintLayer =
     createGraphics(width, height);
 
-  textureLayer =
+  drawingPreviewLayer =
     createGraphics(width, height);
 
+  setupBoundaryInput(canvas.elt);
   //requestGenerate();
   
   setupUI();
@@ -253,6 +256,17 @@ function renderArtwork() {
   ) {
     drawTextureOverlay();
   }
+
+  if (
+    SETTINGS.boundary.source === "drawn" &&
+    drawingPreviewLayer
+  ) {
+    image(
+      drawingPreviewLayer,
+      0,
+      0
+    );
+  }
 }
 
 function drawStructureOverlay() {
@@ -410,6 +424,9 @@ function windowResized() {
     createGraphics(width, height);
 
   paintLayer =
+    createGraphics(width, height);
+
+  drawingPreviewLayer =
     createGraphics(width, height);
 
   lastGenerationTime = millis();
