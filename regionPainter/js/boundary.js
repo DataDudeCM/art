@@ -76,7 +76,7 @@ function chaikin(points, iterations = 1) {
   return result;
 }
 
-function drawDetectionBoundary(g, points) {
+function drawDetectionBoundary(g, points, closed=true) {
   g.clear();
 
   g.push();
@@ -98,12 +98,16 @@ function drawDetectionBoundary(g, points) {
     g.vertex(p.x, p.y);
   }
 
-  g.endShape(CLOSE);
+  if (closed) {
+    g.endShape(CLOSE);
+  } else {
+    g.endShape();
+  }
 
   g.pop();
 }
 
-function drawVisibleBoundary(g, points) {
+function drawVisibleBoundary(g, points, closed=true) {
   g.clear();
 
   if (
@@ -131,7 +135,7 @@ function drawVisibleBoundary(g, points) {
   );
 }
 
-function drawVisibleBoundaryLine(g, points) {
+function drawVisibleBoundaryLine(g, points, closed=true) {
   g.push();
 
   g.noFill();
@@ -150,7 +154,11 @@ function drawVisibleBoundaryLine(g, points) {
     g.vertex(p.x, p.y);
   }
 
-  g.endShape(CLOSE);
+  if (closed) {
+    g.endShape(CLOSE);
+  } else {
+    g.endShape();
+  }
 
   g.pop();
 }
@@ -189,7 +197,8 @@ function stampBoundaryPath(
   g,
   points,
   brushInfo,
-  boundaryColor
+  boundaryColor,
+  closed = true
 ) {
   const spacing =
     SETTINGS.boundary.brushSpacing;
@@ -197,9 +206,18 @@ function stampBoundaryPath(
   const subdivisionsPerSegment =
     2 ** SETTINGS.boundary.subdivisions;
 
-  for (let i = 0; i < points.length; i++) {
+  const segmentCount =
+    closed
+      ? points.length
+      : points.length - 1;
+
+  for (let i = 0; i < segmentCount; i++) {
     const a = points[i];
-    const b = points[(i + 1) % points.length];
+
+    const b =
+      closed
+        ? points[(i + 1) % points.length]
+        : points[i + 1];
 
     const dx = b.x - a.x;
     const dy = b.y - a.y;
@@ -340,21 +358,36 @@ function generateBoundary() {
   const boundary =
     boundarySource.generate();
 
+  const strokes =
+    boundary.strokes || [
+      {
+        points: boundary.points || [],
+        closed: boundary.closed ?? true
+      }
+    ];
+
   boundaryControlPoints =
     boundary.controlPoints || [];
 
   boundarySmoothedPoints =
     boundary.points || [];
 
-  drawDetectionBoundary(
-    boundaryDetectionLayer,
-    boundary.points
-  );
+  boundaryDetectionLayer.clear();
+  boundaryLayer.clear();
 
-  drawVisibleBoundary(
-    boundaryLayer,
-    boundary.points
-  );
+  for (const stroke of strokes) {
+    drawDetectionBoundary(
+      boundaryDetectionLayer,
+      stroke.points,
+      stroke.closed
+    );
+
+    drawVisibleBoundary(
+      boundaryLayer,
+      stroke.points,
+      stroke.closed
+    );
+  }
 
   return boundary;
 }

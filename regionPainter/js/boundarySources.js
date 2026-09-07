@@ -73,7 +73,8 @@ function createRectangleBoundarySource() {
 
 const BOUNDARY_SOURCES = {
   chaikin: createChaikinBoundarySource,
-  rectangle: createRectangleBoundarySource
+  rectangle: createRectangleBoundarySource,
+  drawn: createDrawnBoundarySource
 };
 
 function getActiveBoundarySource() {
@@ -89,4 +90,27 @@ function getActiveBoundarySource() {
   }
 
   return sourceFactory();
+}
+
+let drawnBoundaryStrokes = [];
+
+function createDrawnBoundarySource() {
+  return {
+    type: "drawn",
+
+    generate() {
+      return {
+        type: "drawn",
+        strokes: drawnBoundaryStrokes.map(stroke => ({
+          points: stroke.points.map(p => ({
+            x: p.x,
+            y: p.y,
+            time: p.time,
+            pressure: p.pressure
+          })),
+          closed: false
+        }))
+      };
+    }
+  };
 }
