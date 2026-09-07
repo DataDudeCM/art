@@ -20,7 +20,7 @@ const SETTINGS = {
   },
 
   boundary: {
-    source: "chaikin", // "chaikin" | "rectangle" | "circle" | "random"
+    source: "chaikin", // "chaikin" | "rectangle" | "drawn"
     pointCount: 30, // more points = more lines and potential intersections
     subdivisions: 8, // 8 number of segments between points
     strokeWeight: 1, // width of line

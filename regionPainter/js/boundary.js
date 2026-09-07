@@ -77,7 +77,6 @@ function chaikin(points, iterations = 1) {
 }
 
 function drawDetectionBoundary(g, points, closed=true) {
-  g.clear();
 
   g.push();
 
@@ -107,31 +106,42 @@ function drawDetectionBoundary(g, points, closed=true) {
   g.pop();
 }
 
-function drawVisibleBoundary(g, points, closed=true) {
-  g.clear();
-
+function drawVisibleBoundary(g, points, closed = true) {
   if (
     SETTINGS.boundary.brushMode !== "image" ||
     brushImages.length === 0
   ) {
-    drawVisibleBoundaryLine(g, points);
+    drawVisibleBoundaryLine(
+      g,
+      points,
+      closed
+    );
+
     return;
   }
 
-  const brush = chooseBoundaryBrush();
+  const brush =
+    chooseBoundaryBrush();
 
   if (!brush) {
-    drawVisibleBoundaryLine(g, points);
+    drawVisibleBoundaryLine(
+      g,
+      points,
+      closed
+    );
+
     return;
   }
 
-  const boundaryColor = getDarkColor(palette);
+  const boundaryColor =
+    getDarkColor(palette);
 
   stampBoundaryPath(
     g,
     points,
     brush,
-    boundaryColor
+    boundaryColor,
+    closed
   );
 }
 
