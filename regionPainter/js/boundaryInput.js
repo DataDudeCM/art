@@ -1,5 +1,6 @@
 let activeDrawnStroke = null;
 let isDrawingBoundary = false;
+let showDrawingPreview = true;
 
 function setupBoundaryInput(canvasElement) {
   canvasElement.addEventListener(
@@ -29,6 +30,7 @@ function handleBoundaryPointerDown(event) {
   }
 
   isDrawingBoundary = true;
+  showDrawingPreview = true;
 
   activeDrawnStroke = {
     points: []

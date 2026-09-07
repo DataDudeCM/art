@@ -269,6 +269,7 @@ function renderArtwork() {
 
   if (
     SETTINGS.boundary.source === "drawn" &&
+    showDrawingPreview &&
     drawingPreviewLayer
   ) {
     image(

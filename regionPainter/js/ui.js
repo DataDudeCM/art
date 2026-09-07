@@ -342,10 +342,15 @@ function setupDrawnBoundaryControls() {
     "click",
     () => {
       drawnBoundaryStrokes = [];
+      showDrawingPreview = true;
 
       if (drawingPreviewLayer) {
         drawingPreviewLayer.clear();
       }
+
+      boundaryDetectionLayer.clear();
+      boundaryLayer.clear();
+      paintLayer.clear();
 
       status.textContent =
         "Draw on the canvas";
@@ -366,6 +371,8 @@ function setupDrawnBoundaryControls() {
 
       status.textContent =
         `${drawnBoundaryStrokes.length} stroke(s) captured`;
+
+      showDrawingPreview = false;
 
       if (drawingPreviewLayer) {
         drawingPreviewLayer.clear();
@@ -1173,6 +1180,7 @@ function scheduleGenerate() {
 
 function enterDrawnBoundaryMode() {
   drawnBoundaryStrokes = [];
+  showDrawingPreview = true;
 
   boundaryDetectionLayer.clear();
   boundaryLayer.clear();
