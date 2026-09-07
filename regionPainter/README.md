@@ -182,6 +182,10 @@ Highest-value opportunities include:
 
 The goal is to improve speed **without changing the visual semantics that make the current output work**.
 
+### IMPORTANT NOTE:
+- RegionPainter may behave poorly in Chrome on some hybrid-GPU systems
+- If black/blank canvases or massive slowdowns occur, force Chrome to use the dedicated GPU Edge may be a stable fallback
+
 ---
 
 ## Shared Repository Assets

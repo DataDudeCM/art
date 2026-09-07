@@ -1,3 +1,7 @@
+let regionMaskCanvas = null;
+let regionMaskContext = null;
+let regionMaskImageData = null;
+
 function paintRegion(region, g, baseColor) {
   const markScale = getRegionMarkScale(region);
   const brushScale = getRegionBrushScale(region);
@@ -97,28 +101,60 @@ function getRegionBrushScale(region) {
 // Region mask / clipping
 // --------------------------------------------------
 
-function compositeRegionPaint(tempLayer, region, targetLayer) {
-  const paintImage = tempLayer.get();
-
-  const maskImage = createImage(width, height);
-
-  maskImage.loadPixels();
-
-  // Start fully transparent.
-  for (let i = 0; i < maskImage.pixels.length; i += 4) {
-    maskImage.pixels[i] = 0;
-    maskImage.pixels[i + 1] = 0;
-    maskImage.pixels[i + 2] = 0;
-    maskImage.pixels[i + 3] = 0;
+function ensureRegionMaskCanvas() {
+  if (
+    regionMaskCanvas &&
+    regionMaskCanvas.width === width &&
+    regionMaskCanvas.height === height
+  ) {
+    return;
   }
 
-  // Make flood-filled region opaque in the mask.
+  regionMaskCanvas =
+    document.createElement("canvas");
+
+  regionMaskCanvas.width = width;
+  regionMaskCanvas.height = height;
+
+  regionMaskContext =
+    regionMaskCanvas.getContext("2d");
+
+  regionMaskImageData =
+    regionMaskContext.createImageData(
+      width,
+      height
+    );
+}
+
+function compositeRegionPaint(
+  tempLayer,
+  region,
+  targetLayer
+) {
+  ensureRegionMaskCanvas();
+
+  const maskPixels =
+    regionMaskImageData.data;
+
+  // Reset previous region mask.
+  maskPixels.fill(0);
+
   const expand =
     SETTINGS.paint.maskExpansionPixels || 0;
 
+  // Build the mask directly in memory.
+  // Only alpha matters for destination-in.
   for (const p of region.pixels) {
-    for (let oy = -expand; oy <= expand; oy++) {
-      for (let ox = -expand; ox <= expand; ox++) {
+    for (
+      let oy = -expand;
+      oy <= expand;
+      oy++
+    ) {
+      for (
+        let ox = -expand;
+        ox <= expand;
+        ox++
+      ) {
         const x = p.x + ox;
         const y = p.y + oy;
 
@@ -134,20 +170,40 @@ function compositeRegionPaint(tempLayer, region, targetLayer) {
         const index =
           4 * (y * width + x);
 
-        maskImage.pixels[index] = 255;
-        maskImage.pixels[index + 1] = 255;
-        maskImage.pixels[index + 2] = 255;
-        maskImage.pixels[index + 3] = 255;
+        maskPixels[index + 3] = 255;
       }
     }
   }
 
-  maskImage.updatePixels();
+  // Write the mask to its reusable canvas.
+  regionMaskContext.putImageData(
+    regionMaskImageData,
+    0,
+    0
+  );
 
-  paintImage.mask(maskImage);
+  // Clip the existing brush paint in-place.
+  // This avoids tempLayer.get() and p5.Image.mask().
+  const ctx =
+    tempLayer.drawingContext;
 
+  ctx.save();
+
+  ctx.globalCompositeOperation =
+    "destination-in";
+
+  ctx.drawImage(
+    regionMaskCanvas,
+    0,
+    0
+  );
+
+  ctx.restore();
+
+  // Composite the already-clipped canvas
+  // directly onto the final paint layer.
   targetLayer.image(
-    paintImage,
+    tempLayer,
     0,
     0
   );
