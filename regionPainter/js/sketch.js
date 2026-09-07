@@ -16,6 +16,12 @@ let lastGenerationTime = 0;
 let currentPreset = null;
 let generationSeed = 12345;
 
+let perfStats = {
+  floodMs: 0,
+  paintMs: 0,
+  successfulRegions: 0
+};
+
 const UI_STATE = {
   paletteMode: "inherit", // "inherit" | "random" | "fixed"
   fixedPaletteKey: null,
@@ -136,13 +142,21 @@ function resolveActivePalette() {
 }
 
 function generateArtwork() {
+  const totalStart = performance.now();
+
+  perfStats.floodMs = 0;
+  perfStats.paintMs = 0;
+  perfStats.successfulRegions = 0;
+
   randomSeed(generationSeed);
   noiseSeed(generationSeed);
+
   boundaryDetectionLayer.clear();
   boundaryLayer.clear();
   paintLayer.clear();
 
   palette = resolveActivePalette();
+
   const paletteDisplay =
     document.getElementById("active-palette");
 
@@ -154,8 +168,15 @@ function generateArtwork() {
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
 
+  const boundaryStart = performance.now();
+
   generateBoundary();
   boundaryDetectionLayer.loadPixels();
+
+  const boundaryMs =
+    performance.now() - boundaryStart;
+
+  const regionsStart = performance.now();
 
   for (
     let i = 0;
@@ -165,8 +186,43 @@ function generateArtwork() {
     testRegion();
   }
 
+  const regionsMs =
+    performance.now() - regionsStart;
+
+  const renderStart = performance.now();
 
   renderArtwork();
+
+  const renderMs =
+    performance.now() - renderStart;
+
+  const totalMs =
+    performance.now() - totalStart;
+
+  console.table({
+    "Boundary": {
+      ms: Math.round(boundaryMs)
+    },
+    "Flood fill": {
+      ms: Math.round(perfStats.floodMs)
+    },
+    "Painting": {
+      ms: Math.round(perfStats.paintMs)
+    },
+    "Region loop total": {
+      ms: Math.round(regionsMs)
+    },
+    "Final render": {
+      ms: Math.round(renderMs)
+    },
+    "TOTAL": {
+      ms: Math.round(totalMs)
+    }
+  });
+
+  console.log(
+    `Successful regions: ${perfStats.successfulRegions} / ${SETTINGS.fill.attempts}`
+  );
 }
 
 function renderArtwork() {
@@ -300,6 +356,9 @@ function testRegion() {
   const x = random(width);
   const y = random(height);
 
+  const floodStart =
+    performance.now();
+
   const region =
     floodFillRegion(
       boundaryDetectionLayer,
@@ -307,18 +366,29 @@ function testRegion() {
       y
     );
 
+  perfStats.floodMs +=
+    performance.now() - floodStart;
+
   if (!region) {
     return;
   }
 
+  perfStats.successfulRegions++;
+
   const regionColor =
     randomColor(palette);
+
+  const paintStart =
+    performance.now();
 
   paintRegion(
     region,
     paintLayer,
     regionColor
   );
+
+  perfStats.paintMs +=
+    performance.now() - paintStart;
 }
 
 function windowResized() {
