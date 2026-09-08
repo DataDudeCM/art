@@ -96,10 +96,16 @@ function generateParticleControlPoints() {
 
   let totalSamples = 0;
   let steps = 0;
+  
+  const samplingGap =
+    SETTINGS.particle.samplingMode ===
+    "headingChange"
+      ? SETTINGS.particle.maxSampleGap
+      : SETTINGS.particle.sampleEvery;
 
   const maxSteps =
     targetCount *
-    SETTINGS.particle.sampleEvery *
+    samplingGap *
     SETTINGS.particle.maxStepsMultiplier;
 
   while (
@@ -113,25 +119,36 @@ function generateParticleControlPoints() {
       );
     }
 
-    if (
-      steps %
-        SETTINGS.particle.sampleEvery ===
-      0
+    for (
+      let i = 0;
+      i < particles.length;
+      i++
     ) {
-      for (
-        let i = 0;
-        i < particles.length;
-        i++
+      const particle =
+        particles[i];
+
+      particle.stepsSinceSample++;
+
+      if (
+        shouldSampleParticle(
+          particle,
+          steps
+        )
       ) {
+        samplesByParticle[i].push(
+          particle.pos.copy()
+        );
+
+        particle.lastSampleHeading =
+          particle.vel.heading();
+
+        particle.stepsSinceSample = 0;
+
+        totalSamples++;
+
         if (totalSamples >= targetCount) {
           break;
         }
-
-        samplesByParticle[i].push(
-          particles[i].pos.copy()
-        );
-
-        totalSamples++;
       }
     }
 
@@ -287,7 +304,10 @@ function createBoundaryParticle(bounds) {
     ),
 
     noiseX: random(1000),
-    noiseY: random(1000)
+    noiseY: random(1000),
+
+    lastSampleHeading: null,
+    stepsSinceSample: 0
   };
 }
 
@@ -400,6 +420,66 @@ function bounceParticleInBounds(particle, bounds) {
     particle.pos.y = bounds.maxY;
     particle.vel.y *= -1;
   }
+}
+
+function shouldSampleParticle(
+  particle,
+  globalStep
+) {
+  const mode =
+    SETTINGS.particle.samplingMode;
+
+  if (mode === "interval") {
+    return (
+      globalStep %
+        SETTINGS.particle.sampleEvery ===
+      0
+    );
+  }
+
+  if (mode === "headingChange") {
+    const currentHeading =
+      particle.vel.heading();
+
+    // Always capture the first available point.
+    if (particle.lastSampleHeading === null) {
+      return true;
+    }
+
+    const change =
+      abs(
+        angleDifference(
+          currentHeading,
+          particle.lastSampleHeading
+        )
+      );
+
+    const headingTriggered =
+      change >=
+      SETTINGS.particle.headingChangeThreshold;
+
+    const gapTriggered =
+      particle.stepsSinceSample >=
+      SETTINGS.particle.maxSampleGap;
+
+    return headingTriggered || gapTriggered;
+  }
+
+  return false;
+}
+
+function angleDifference(a, b) {
+  let diff = a - b;
+
+  while (diff > PI) {
+    diff -= TWO_PI;
+  }
+
+  while (diff < -PI) {
+    diff += TWO_PI;
+  }
+
+  return diff;
 }
 
 function createRectangleBoundarySource() {

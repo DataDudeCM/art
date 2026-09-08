@@ -238,6 +238,7 @@ function setupBoundaryControls() {
   setupBoundaryVisibility();
   setupDrawnBoundaryControls();
   setupParticleFeedMode();
+  setupParticleSamplingMode();
 
   setupRangeControl(
     "boundary-brush-size",
@@ -344,6 +345,24 @@ function setupParticleFeedMode() {
     "change",
     event => {
       SETTINGS.particle.feedMode =
+        event.target.value;
+    }
+  );
+}
+
+function setupParticleSamplingMode() {
+  const select =
+    document.getElementById(
+      "particle-sampling-mode"
+    );
+
+  select.value =
+    SETTINGS.particle.samplingMode;
+
+  select.addEventListener(
+    "change",
+    event => {
+      SETTINGS.particle.samplingMode =
         event.target.value;
     }
   );

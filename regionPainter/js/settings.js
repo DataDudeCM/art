@@ -52,7 +52,13 @@ const SETTINGS = {
     count: 1,
     feedMode: "roundRobin", // "roundRobin" | "sequential" | "randomParticle"
 
+    samplingMode: "interval", // "interval" | "headingChange"
+
     sampleEvery: 10,
+
+    headingChangeThreshold: 0.35,
+    maxSampleGap: 30,
+
     minSpeed: 1.5,
     maxSpeed: 4.0,
     steeringStrength: 0.30,
