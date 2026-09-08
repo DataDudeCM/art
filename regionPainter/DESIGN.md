@@ -117,24 +117,32 @@ This separation is increasingly important. Chaikin is a boundary *source*, not t
 
 ## Point-Generated Boundary Sources
 
-Point Generation
+Dynamic Point Source
     |
-    |-- random points        [current]
-    |-- particle trajectory  [next]
-    |-- force-driven agent   [future]
-    |-- flow field           [future]
-    |-- stylus samples       [possible]
+    |-- one or more particles
+    |-- sampled over time
     |
     v
-Point Processing
-    |-- optional resampling
-    |-- optional softening
+Point Collection
+    |
+    |-- total point count
+    |-- sampling interval
     |
     v
-Chaikin
+Point Ordering
+    |
+    |-- round robin
+    |-- sequential
+    |-- random particle
+    |
+    v
+Chaikin Processing
     |
     v
 Boundary Path
+    |
+    v
+Existing Region Painter Pipeline
 
 ---
 
