@@ -91,8 +91,10 @@ function generateParticleControlPoints() {
     );
   }
 
-  const points = [];
+  const samplesByParticle =
+    particles.map(() => []);
 
+  let totalSamples = 0;
   let steps = 0;
 
   const maxSteps =
@@ -101,12 +103,9 @@ function generateParticleControlPoints() {
     SETTINGS.particle.maxStepsMultiplier;
 
   while (
-    points.length < targetCount &&
+    totalSamples < targetCount &&
     steps < maxSteps
   ) {
-
-    // All particles continue moving,
-    // whether or not this frame is sampled.
     for (const particle of particles) {
       updateBoundaryParticle(
         particle,
@@ -114,32 +113,58 @@ function generateParticleControlPoints() {
       );
     }
 
-    // At each sampling moment, collect
-    // one point from each particle.
-    //
-    // This naturally creates:
-    //
-    // P1, P2, P3...
-    // P1, P2, P3...
-    //
-    // until total Point Count is reached.
     if (
       steps %
         SETTINGS.particle.sampleEvery ===
       0
     ) {
-      for (const particle of particles) {
-        if (points.length >= targetCount) {
+      for (
+        let i = 0;
+        i < particles.length;
+        i++
+      ) {
+        if (totalSamples >= targetCount) {
           break;
         }
 
-        points.push(
-          particle.pos.copy()
+        samplesByParticle[i].push(
+          particles[i].pos.copy()
         );
+
+        totalSamples++;
       }
     }
 
     steps++;
+  }
+
+  let points;
+
+  switch (SETTINGS.particle.feedMode) {
+    case "sequential":
+      points =
+        buildSequentialParticlePoints(
+          samplesByParticle,
+          targetCount
+        );
+      break;
+
+    case "randomParticle":
+      points =
+        buildRandomParticlePoints(
+          samplesByParticle,
+          targetCount
+        );
+      break;
+
+    case "roundRobin":
+    default:
+      points =
+        buildRoundRobinParticlePoints(
+          samplesByParticle,
+          targetCount
+        );
+      break;
   }
 
   if (points.length < 4) {
@@ -151,6 +176,102 @@ function generateParticleControlPoints() {
 
   return points;
 }
+
+function buildRoundRobinParticlePoints(
+  samplesByParticle,
+  targetCount
+) {
+  const points = [];
+
+  let sampleIndex = 0;
+
+  while (points.length < targetCount) {
+    let addedAny = false;
+
+    for (
+      let p = 0;
+      p < samplesByParticle.length;
+      p++
+    ) {
+      const sample =
+        samplesByParticle[p][sampleIndex];
+
+      if (!sample) {
+        continue;
+      }
+
+      points.push(sample.copy());
+      addedAny = true;
+
+      if (points.length >= targetCount) {
+        break;
+      }
+    }
+
+    if (!addedAny) {
+      break;
+    }
+
+    sampleIndex++;
+  }
+
+  return points;
+}
+
+function buildSequentialParticlePoints(
+  samplesByParticle,
+  targetCount
+) {
+  const points = [];
+
+  for (const samples of samplesByParticle) {
+    for (const sample of samples) {
+      points.push(sample.copy());
+
+      if (points.length >= targetCount) {
+        return points;
+      }
+    }
+  }
+
+  return points;
+}
+
+function buildRandomParticlePoints(
+  samplesByParticle,
+  targetCount
+) {
+  const pools =
+    samplesByParticle.map(samples =>
+      samples.map(p => p.copy())
+    );
+
+  const points = [];
+
+  while (points.length < targetCount) {
+    const available = [];
+
+    for (let i = 0; i < pools.length; i++) {
+      if (pools[i].length > 0) {
+        available.push(i);
+      }
+    }
+
+    if (available.length === 0) {
+      break;
+    }
+
+    const particleIndex =
+      random(available);
+
+    points.push(
+      pools[particleIndex].shift()
+    );
+  }
+
+  return points;
+}
+
 function createBoundaryParticle(bounds) {
   return {
     pos: createVector(

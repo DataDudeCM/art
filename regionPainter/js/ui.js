@@ -237,6 +237,7 @@ function setupBoundaryControls() {
   setupBoundaryBrushSelect();
   setupBoundaryVisibility();
   setupDrawnBoundaryControls();
+  setupParticleFeedMode();
 
   setupRangeControl(
     "boundary-brush-size",
@@ -330,21 +331,48 @@ function setupBoundaryControls() {
   );
 }
 
+function setupParticleFeedMode() {
+  const select =
+    document.getElementById(
+      "particle-feed-mode"
+    );
+
+  select.value =
+    SETTINGS.particle.feedMode;
+
+  select.addEventListener(
+    "change",
+    event => {
+      SETTINGS.particle.feedMode =
+        event.target.value;
+    }
+  );
+}
+
 function updateParticleBoundaryControls() {
-  const control =
+  const countControl =
     document.getElementById(
       "particle-count-control"
     );
 
-  if (!control) {
-    return;
+  const feedModeControl =
+    document.getElementById(
+      "particle-feed-mode-control"
+    );
+
+  const visible =
+    SETTINGS.boundary.source ===
+    "particleChaikin";
+
+  if (countControl) {
+    countControl.style.display =
+      visible ? "" : "none";
   }
 
-  control.style.display =
-    SETTINGS.boundary.source ===
-    "particleChaikin"
-      ? ""
-      : "none";
+  if (feedModeControl) {
+    feedModeControl.style.display =
+      visible ? "" : "none";
+  }
 }
 
 function setupDrawnBoundaryControls() {

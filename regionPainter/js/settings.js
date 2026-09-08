@@ -48,15 +48,17 @@ const SETTINGS = {
     
   },
 
-    particle: {
+  particle: {
     count: 1,
-    sampleEvery: 10,        // register a control point every N simulation steps
+    feedMode: "roundRobin", // "roundRobin" | "sequential" | "randomParticle"
+
+    sampleEvery: 10,
     minSpeed: 1.5,
-    maxSpeed: 8.0,
-    steeringStrength: 0.30, // how strongly the particle changes direction
-    noiseStep: 0.015,       // how fast the steering field changes
-    wrap: true,             // wrap around the boundary bounds
-    maxStepsMultiplier: 30  // emergency loop guard
+    maxSpeed: 4.0,
+    steeringStrength: 0.30,
+    noiseStep: 0.015,
+    wrap: true,
+    maxStepsMultiplier: 30
   },
 
   fill: {
