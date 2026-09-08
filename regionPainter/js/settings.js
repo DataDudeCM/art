@@ -20,7 +20,7 @@ const SETTINGS = {
   },
 
   boundary: {
-    source: "chaikin", // "chaikin" | "rectangle" | "drawn"
+    source: "chaikin", // "chaikin" | "particleChaikin" | "rectangle" | "drawn"
     pointCount: 30, // more points = more lines and potential intersections
     subdivisions: 8, // 8 number of segments between points
     strokeWeight: 1, // width of line
@@ -46,6 +46,17 @@ const SETTINGS = {
     sizeJitter: 0.12,
     rotationJitter: 0.12
     
+  },
+
+    particle: {
+    count: 1,
+    sampleEvery: 10,        // register a control point every N simulation steps
+    minSpeed: 1.5,
+    maxSpeed: 8.0,
+    steeringStrength: 0.30, // how strongly the particle changes direction
+    noiseStep: 0.015,       // how fast the steering field changes
+    wrap: true,             // wrap around the boundary bounds
+    maxStepsMultiplier: 30  // emergency loop guard
   },
 
   fill: {

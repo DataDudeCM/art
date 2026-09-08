@@ -212,6 +212,7 @@
 
             <select id="boundary-source">
               <option value="chaikin">Chaikin</option>
+              <option value="particleChaikin">Particle Chaikin</option>
               <option value="rectangle">Rectangle</option>
               <option value="drawn">Drawn</option>
             </select>
@@ -303,6 +304,30 @@
 
               <span
                 id="boundary-point-count-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div
+            id="particle-count-control"
+            class="control-item"
+          >
+            <label for="particle-count">
+              Particle Count
+            </label>
+
+            <div class="range-row">
+              <input
+                id="particle-count"
+                type="range"
+                min="1"
+                max="20"
+                step="1"
+              />
+
+              <span
+                id="particle-count-value"
                 class="range-value"
               ></span>
             </div>

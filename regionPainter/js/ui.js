@@ -319,8 +319,33 @@ function setupBoundaryControls() {
         Number(value) / 200;
     }
   );
+  setupRangeControl(
+    "particle-count",
+    "particle-count-value",
+    () => SETTINGS.particle.count,
+    value => {
+      SETTINGS.particle.count =
+        Number(value);
+    }
+  );
 }
 
+function updateParticleBoundaryControls() {
+  const control =
+    document.getElementById(
+      "particle-count-control"
+    );
+
+  if (!control) {
+    return;
+  }
+
+  control.style.display =
+    SETTINGS.boundary.source ===
+    "particleChaikin"
+      ? ""
+      : "none";
+}
 
 function setupDrawnBoundaryControls() {
   const clearButton =
@@ -409,6 +434,7 @@ function setupBoundarySource() {
     SETTINGS.boundary.source;
 
   updateDrawnBoundaryControls();
+  updateParticleBoundaryControls();
 
   select.addEventListener(
     "change",
@@ -417,6 +443,7 @@ function setupBoundarySource() {
         event.target.value;
 
       updateDrawnBoundaryControls();
+      updateParticleBoundaryControls();
 
       if (SETTINGS.boundary.source === "drawn") {
         enterDrawnBoundaryMode();

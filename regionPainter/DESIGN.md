@@ -115,6 +115,27 @@ Paint Layer
 
 This separation is increasingly important. Chaikin is a boundary *source*, not the definition of the boundary system.
 
+## Point-Generated Boundary Sources
+
+Point Generation
+    |
+    |-- random points        [current]
+    |-- particle trajectory  [next]
+    |-- force-driven agent   [future]
+    |-- flow field           [future]
+    |-- stylus samples       [possible]
+    |
+    v
+Point Processing
+    |-- optional resampling
+    |-- optional softening
+    |
+    v
+Chaikin
+    |
+    v
+Boundary Path
+
 ---
 
 # Current Working State
