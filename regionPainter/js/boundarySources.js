@@ -296,12 +296,14 @@ function createBoundaryParticle(bounds) {
       random(bounds.minY, bounds.maxY)
     ),
 
-    vel: p5.Vector.random2D().setMag(
-      random(
-        SETTINGS.particle.minSpeed,
-        SETTINGS.particle.maxSpeed
-      )
-    ),
+    vel: p5.Vector
+      .fromAngle(random(TWO_PI))
+      .setMag(
+        random(
+          SETTINGS.particle.minSpeed,
+          SETTINGS.particle.maxSpeed
+        )
+      ),
 
     noiseX: random(1000),
     noiseY: random(1000),

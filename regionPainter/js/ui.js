@@ -330,6 +330,18 @@ function setupBoundaryControls() {
         Number(value);
     }
   );
+  setupRangeControl(
+    "particle-heading-threshold",
+    "particle-heading-threshold-value",
+    () =>
+      degrees(
+        SETTINGS.particle.headingChangeThreshold
+      ),
+    value => {
+      SETTINGS.particle.headingChangeThreshold =
+        radians(Number(value));
+    }
+  );
 }
 
 function setupParticleFeedMode() {
@@ -510,6 +522,8 @@ function setupBoundarySource() {
     }
   );
 }
+
+
 
 function setupFillControls() {
   setupFillBrushSelect();

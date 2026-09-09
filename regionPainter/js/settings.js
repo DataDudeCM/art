@@ -56,7 +56,7 @@ const SETTINGS = {
 
     sampleEvery: 10,
 
-    headingChangeThreshold: 0.35,
+    headingChangeThreshold: 20 * Math.PI / 180,
     maxSampleGap: 30,
 
     minSpeed: 1.5,
