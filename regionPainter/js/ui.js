@@ -379,6 +379,11 @@ function updateParticleBoundaryControls() {
       "particle-feed-mode-control"
     );
 
+  const samplingModeControl =
+    document.getElementById(
+      "particle-sampling-mode-control"
+    );
+
   const visible =
     SETTINGS.boundary.source ===
     "particleChaikin";
@@ -390,6 +395,11 @@ function updateParticleBoundaryControls() {
 
   if (feedModeControl) {
     feedModeControl.style.display =
+      visible ? "" : "none";
+  }
+
+  if (samplingModeControl) {
+    samplingModeControl.style.display =
       visible ? "" : "none";
   }
 }
@@ -482,7 +492,8 @@ function setupBoundarySource() {
 
   updateDrawnBoundaryControls();
   updateParticleBoundaryControls();
-
+  updateBoundaryTouchAction();
+  
   select.addEventListener(
     "change",
     event => {
@@ -491,6 +502,7 @@ function setupBoundarySource() {
 
       updateDrawnBoundaryControls();
       updateParticleBoundaryControls();
+      updateBoundaryTouchAction();
 
       if (SETTINGS.boundary.source === "drawn") {
         enterDrawnBoundaryMode();

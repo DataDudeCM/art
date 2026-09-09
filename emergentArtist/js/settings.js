@@ -42,7 +42,7 @@ const SETTINGS = {
 
     // Probability of leaving a mark on any frame.
     // Example: 0.01 = about a 1% chance per frame.
-    drawFrequency: [0.0001, 0.00a5],
+    drawFrequency: [0.0001, 0.005],
 
     // Future trait for sensing/reacting to interesting areas.
     // Currently not used.

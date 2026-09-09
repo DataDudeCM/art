@@ -1,8 +1,13 @@
 let activeDrawnStroke = null;
 let isDrawingBoundary = false;
 let showDrawingPreview = true;
+let boundaryCanvasElement = null;
 
 function setupBoundaryInput(canvasElement) {
+  boundaryCanvasElement = canvasElement;
+
+  updateBoundaryTouchAction();
+
   canvasElement.addEventListener(
     "pointerdown",
     handleBoundaryPointerDown
@@ -139,4 +144,15 @@ function drawBoundaryPreview() {
   drawingPreviewLayer.pop();
 
   renderArtwork();
+}
+
+function updateBoundaryTouchAction() {
+  if (!boundaryCanvasElement) {
+    return;
+  }
+
+  boundaryCanvasElement.style.touchAction =
+    SETTINGS.boundary.source === "drawn"
+      ? "none"
+      : "auto";
 }
