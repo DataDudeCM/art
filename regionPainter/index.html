@@ -334,6 +334,73 @@
           </div>
 
           <div
+            id="particle-max-speed-control"
+            class="control-item"
+          >
+            <label for="particle-max-speed">
+              Max Speed
+            </label>
+
+            <div class="range-row">
+              <input
+                id="particle-max-speed"
+                type="range"
+                min="1"
+                max="20"
+                step="0.5"
+              />
+
+              <span
+                id="particle-max-speed-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div
+            id="particle-motion-mode-control"
+            class="control-item"
+          >
+            <label for="particle-motion-mode">
+              Motion Mode
+            </label>
+
+            <select id="particle-motion-mode">
+              <option value="noise">
+                Noise
+              </option>
+
+              <option value="attractor">
+                Attractor + Noise
+              </option>
+            </select>
+          </div>
+
+          <div
+            id="particle-attractor-strength-control"
+            class="control-item"
+          >
+            <label for="particle-attractor-strength">
+              Attractor Strength
+            </label>
+
+            <div class="range-row">
+              <input
+                id="particle-attractor-strength"
+                type="range"
+                min="0"
+                max="0.5"
+                step="0.01"
+              />
+
+              <span
+                id="particle-attractor-strength-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div
             id="particle-feed-mode-control"
             class="control-item"
           >

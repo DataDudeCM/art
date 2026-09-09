@@ -333,6 +333,9 @@ function updateBoundaryParticle(
       );
 
   particle.vel.add(steering);
+  if (SETTINGS.particle.motionMode === "attractor") {
+    applyAttractorForce(particle);
+  }
 
   const speed =
     particle.vel.mag();
@@ -375,6 +378,32 @@ function updateBoundaryParticle(
   particle.noiseY +=
     SETTINGS.particle.noiseStep *
     0.77;
+}
+
+function applyAttractorForce(particle) {
+  const attractor =
+    createVector(
+      width / 2,
+      height / 2
+    );
+
+  const force =
+    p5.Vector.sub(
+      attractor,
+      particle.pos
+    );
+
+  if (force.magSq() === 0) {
+    return;
+  }
+
+  force
+    .normalize()
+    .mult(
+      SETTINGS.particle.attractorStrength
+    );
+
+  particle.vel.add(force);
 }
 
 function getParticleBounds(scale = 1.0) {

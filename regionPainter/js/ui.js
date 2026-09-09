@@ -239,6 +239,7 @@ function setupBoundaryControls() {
   setupDrawnBoundaryControls();
   setupParticleFeedMode();
   setupParticleSamplingMode();
+  setupParticleMotionMode();
 
   setupRangeControl(
     "boundary-brush-size",
@@ -342,6 +343,45 @@ function setupBoundaryControls() {
         radians(Number(value));
     }
   );
+  setupRangeControl(
+    "particle-attractor-strength",
+    "particle-attractor-strength-value",
+    () =>
+      SETTINGS.particle.attractorStrength,
+    value => {
+      SETTINGS.particle.attractorStrength =
+        Number(value);
+    }
+  );
+  setupRangeControl(
+    "particle-max-speed",
+    "particle-max-speed-value",
+    () => SETTINGS.particle.maxSpeed,
+    value => {
+      SETTINGS.particle.maxSpeed =
+        Number(value);
+    }
+  );
+}
+
+function setupParticleMotionMode() {
+  const select =
+    document.getElementById(
+      "particle-motion-mode"
+    );
+
+  select.value =
+    SETTINGS.particle.motionMode;
+
+  select.addEventListener(
+    "change",
+    event => {
+      SETTINGS.particle.motionMode =
+        event.target.value;
+
+      updateParticleBoundaryControls();
+    }
+  );
 }
 
 function setupParticleFeedMode() {
@@ -376,11 +416,17 @@ function setupParticleSamplingMode() {
     event => {
       SETTINGS.particle.samplingMode =
         event.target.value;
+
+      updateParticleBoundaryControls();
     }
   );
 }
 
 function updateParticleBoundaryControls() {
+  const isParticle =
+    SETTINGS.boundary.source ===
+    "particleChaikin";
+
   const countControl =
     document.getElementById(
       "particle-count-control"
@@ -396,23 +442,57 @@ function updateParticleBoundaryControls() {
       "particle-sampling-mode-control"
     );
 
-  const visible =
-    SETTINGS.boundary.source ===
-    "particleChaikin";
+  const headingThresholdControl =
+    document.getElementById(
+      "particle-heading-threshold-control"
+    );
+
+  const motionModeControl =
+    document.getElementById(
+      "particle-motion-mode-control"
+    );
+
+  const attractorStrengthControl =
+    document.getElementById(
+      "particle-attractor-strength-control"
+    );
 
   if (countControl) {
     countControl.style.display =
-      visible ? "" : "none";
+      isParticle ? "" : "none";
   }
 
   if (feedModeControl) {
     feedModeControl.style.display =
-      visible ? "" : "none";
+      isParticle ? "" : "none";
   }
 
   if (samplingModeControl) {
     samplingModeControl.style.display =
-      visible ? "" : "none";
+      isParticle ? "" : "none";
+  }
+
+  if (motionModeControl) {
+    motionModeControl.style.display =
+      isParticle ? "" : "none";
+  }
+
+  if (headingThresholdControl) {
+    headingThresholdControl.style.display =
+      isParticle &&
+      SETTINGS.particle.samplingMode ===
+        "headingChange"
+        ? ""
+        : "none";
+  }
+
+  if (attractorStrengthControl) {
+    attractorStrengthControl.style.display =
+      isParticle &&
+      SETTINGS.particle.motionMode ===
+        "attractor"
+        ? ""
+        : "none";
   }
 }
 

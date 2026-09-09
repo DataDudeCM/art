@@ -50,9 +50,11 @@ const SETTINGS = {
 
   particle: {
     count: 1,
-    feedMode: "roundRobin", // "roundRobin" | "sequential" | "randomParticle"
+    feedMode: "roundRobin",
 
-    samplingMode: "interval", // "interval" | "headingChange"
+    samplingMode: "interval",
+
+    motionMode: "noise", // "noise" | "attractor"
 
     sampleEvery: 10,
 
@@ -60,9 +62,12 @@ const SETTINGS = {
     maxSampleGap: 30,
 
     minSpeed: 1.5,
-    maxSpeed: 4.0,
+    maxSpeed: 8.0,
     steeringStrength: 0.30,
     noiseStep: 0.015,
+
+    attractorStrength: 0.08,
+
     wrap: true,
     maxStepsMultiplier: 30
   },
