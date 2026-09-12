@@ -17,6 +17,8 @@ let lastGenerationTime = 0;
 let currentPreset = null;
 let generationSeed = 12345;
 
+let generationRegionColors = new Map();
+
 let perfStats = {
   floodMs: 0,
   paintMs: 0,
@@ -175,6 +177,8 @@ function generateArtwork() {
 
   randomSeed(generationSeed);
   noiseSeed(generationSeed);
+
+  generationRegionColors = new Map();
 
   boundaryDetectionLayer.clear();
   boundaryLayer.clear();
@@ -418,7 +422,11 @@ function testRegion() {
   perfStats.successfulRegions++;
 
   const regionColor =
-    randomColor(palette);
+    getOrAssignRegionColor(
+      region,
+      generationRegionColors,
+      palette
+    );
 
   const paintStart =
     performance.now();
@@ -521,6 +529,7 @@ function requestGenerate() {
       noiseSeed(generationSeed);
 
       palette = resolveActivePalette();
+
       SETTINGS.canvas.paperColor =
         getLightColor(palette);
 
@@ -528,11 +537,14 @@ function requestGenerate() {
         startGenerationAnimation();
       } else {
         generateArtwork();
+        setGenerationStatus(false);
       }
 
       lastGenerationTime = millis();
-    } finally {
+
+    } catch (error) {
       setGenerationStatus(false);
+      throw error;
     }
   }, 25);
 }

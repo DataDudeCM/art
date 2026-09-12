@@ -75,9 +75,11 @@ const SETTINGS = {
   animation: {
     enabled: true,
 
-    mode: "progressive", // "progressive" for now
+    mode: "progressive",
 
-    particleStepsPerFrame: 2,
+    particleStepsPerFrame: 1,
+    particleMinDurationMs: 3000,
+
     showParticleTrail: true,
     trailAlpha: 80,
     sampleDotSize: 7,
@@ -85,7 +87,7 @@ const SETTINGS = {
     boundaryRevealPointsPerFrame: 40,
 
     paintEventsPerFrame: 1,
-    pauseAfterBoundaryMs: 300
+    pauseAfterBoundaryMs: 150
   },
 
   fill: {

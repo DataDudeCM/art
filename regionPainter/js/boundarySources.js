@@ -731,3 +731,14 @@ function getActiveBoundarySource() {
 
   return sourceFactory();
 }
+
+function moveParticleBoundaryState(state) {
+  for (const particle of state.particles) {
+    updateBoundaryParticle(
+      particle,
+      state.bounds
+    );
+  }
+
+  state.steps++;
+}

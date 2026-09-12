@@ -18,6 +18,8 @@ function createAnimationState() {
     collectedControlPoints: [],
     revealedBoundaryCount: 0,
     lastBoundaryRevealCount: 0,
+    particleStartMs: 0,
+    paintAttemptsRemaining: 0,
 
     boundaryReady: null,
     paintQueue: [],
@@ -37,9 +39,14 @@ function startGenerationAnimation() {
   boundaryLayer.clear();
   paintLayer.clear();
 
+  generationRegionColors = new Map();
+
   if (SETTINGS.boundary.source === "particleChaikin") {
     animationState.phase =
       ANIMATION_PHASE.PARTICLE;
+
+    animationState.particleStartMs =
+      millis();
 
     animationState.particleState =
       createParticleBoundaryState();
@@ -215,9 +222,16 @@ function buildPaintQueue() {
 
     if (!region) continue;
 
+    const regionColor =
+      getOrAssignRegionColor(
+        region,
+        generationRegionColors,
+        palette
+      );
+
     queue.push({
       region,
-      color: randomColor(palette)
+      color: regionColor
     });
   }
 
@@ -229,21 +243,39 @@ function updateProgressivePaint() {
     SETTINGS.animation.paintEventsPerFrame;
 
   for (let i = 0; i < count; i++) {
+
     if (
-      animationState.paintQueue.length === 0
+      animationState.paintAttemptsRemaining <= 0
     ) {
       animationState.phase =
         ANIMATION_PHASE.COMPLETE;
+
       return;
     }
 
-    const event =
-      animationState.paintQueue.shift();
+    animationState.paintAttemptsRemaining--;
+
+    const x = random(width);
+    const y = random(height);
+
+    const region =
+      floodFillRegion(
+        boundaryDetectionLayer,
+        x,
+        y
+      );
+
+    if (!region) {
+      continue;
+    }
+
+    const regionColor =
+      randomColor(palette);
 
     paintRegion(
-      event.region,
+      region,
       paintLayer,
-      event.color
+      regionColor
     );
   }
 }
@@ -268,8 +300,8 @@ function updateAnimation() {
 
     case ANIMATION_PHASE.PAINT_PREP:
       if (millis() >= animationState.pauseUntilMs) {
-        animationState.paintQueue =
-          buildPaintQueue();
+        animationState.paintAttemptsRemaining =
+          SETTINGS.fill.attempts;
 
         animationState.phase =
           ANIMATION_PHASE.PAINT;
@@ -281,6 +313,8 @@ function updateAnimation() {
       break;
 
     case ANIMATION_PHASE.COMPLETE:
+      setGenerationStatus(false);
+      animationState = null;
       break;
   }
 }
@@ -298,8 +332,14 @@ function updateParticlePhase() {
     step < SETTINGS.animation.particleStepsPerFrame;
     step++
   ) {
-    const samples =
-      stepParticleBoundaryState(state);
+    let samples = [];
+
+    if (!state.done) {
+      samples =
+        stepParticleBoundaryState(state);
+    } else {
+      moveParticleBoundaryState(state);
+    }
 
     for (
       let i = 0;
@@ -309,10 +349,34 @@ function updateParticlePhase() {
       const particle =
         state.particles[i];
 
-      animationState.particleTrails[i].push({
+      const trail =
+        animationState.particleTrails[i];
+
+      const previous =
+        trail[trail.length - 1];
+
+      const current = {
         x: particle.pos.x,
         y: particle.pos.y
-      });
+      };
+
+      if (previous) {
+        const dx =
+          abs(current.x - previous.x);
+
+        const dy =
+          abs(current.y - previous.y);
+
+        const wrapped =
+          dx > width * 0.5 ||
+          dy > height * 0.5;
+
+        if (wrapped) {
+          trail.push(null);
+        }
+      }
+
+      trail.push(current);
     }
 
     for (const sample of samples) {
@@ -321,10 +385,17 @@ function updateParticlePhase() {
         y: sample.point.y
       });
     }
+  }
 
-    if (state.done) {
+  if (state.done) {
+    const elapsed =
+      millis() - animationState.particleStartMs;
+
+    if (
+      elapsed >=
+      SETTINGS.animation.particleMinDurationMs
+    ) {
       finishParticlePhase();
-      return;
     }
   }
 }
@@ -367,13 +438,29 @@ function renderAnimationOverlay() {
         continue;
       }
 
-      beginShape();
+      let drawing = false;
 
       for (const p of trail) {
+        if (p === null) {
+          if (drawing) {
+            endShape();
+            drawing = false;
+          }
+
+          continue;
+        }
+
+        if (!drawing) {
+          beginShape();
+          drawing = true;
+        }
+
         vertex(p.x, p.y);
       }
 
-      endShape();
+      if (drawing) {
+        endShape();
+      }
     }
   }
 
