@@ -96,7 +96,9 @@ const SETTINGS = {
     maxRegionFraction: 0.7,
 
     sampleMode: "uniform", // "uniform" | "centerWeighted"
-    centerWeight: 60
+    centerWeight: 60,
+
+    colorMode: "fixedPerRegion" // "fixedPerRegion" | "randomPerHit"
   },
 
   paint: {

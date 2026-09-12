@@ -82,6 +82,21 @@ function prepareBoundaryRevealFromCurrentSource() {
 
   boundaryLayer.clear();
 
+  // Drawn boundaries are multi-stroke and do not use
+  // the single-path animated reveal.
+  if (boundary.strokes) {
+    finalizeBoundaryForDetection(boundary);
+
+    animationState.pauseUntilMs =
+      millis() +
+      SETTINGS.animation.pauseAfterBoundaryMs;
+
+    animationState.phase =
+      ANIMATION_PHASE.PAINT_PREP;
+
+    return;
+  }
+
   animationState.phase =
     ANIMATION_PHASE.BOUNDARY;
 }
@@ -115,7 +130,13 @@ function updateBoundaryReveal() {
   const boundary =
     animationState.boundaryReady;
 
-  if (!boundary) return;
+  if (
+    !boundary ||
+    !boundary.points ||
+    boundary.points.length === 0
+  ) {
+    return;
+  }
 
   const total =
     boundary.points.length;
@@ -136,7 +157,8 @@ function updateBoundaryReveal() {
       millis() +
       SETTINGS.animation.pauseAfterBoundaryMs;
 
-    animationState.phase = ANIMATION_PHASE.PAINT_PREP;
+    animationState.phase =
+      ANIMATION_PHASE.PAINT_PREP;
   }
 }
 
@@ -229,9 +251,8 @@ function buildPaintQueue() {
     if (!region) continue;
 
     const regionColor =
-      getOrAssignRegionColor(
+      getRegionPaintColor(
         region,
-        generationRegionColors,
         palette
       );
 
@@ -279,9 +300,8 @@ function updateProgressivePaint() {
     }
 
     const regionColor =
-      getOrAssignRegionColor(
+      getRegionPaintColor(
         region,
-        generationRegionColors,
         palette
       );
 

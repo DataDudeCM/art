@@ -609,6 +609,7 @@ function setupBoundarySource() {
 function setupFillControls() {
   setupFillBrushSelect();
   setupFillSamplingControls();
+  setupFillColorMode();
 
   setupRangeControl(
     "fill-strength",
@@ -722,6 +723,23 @@ function setupFillControls() {
 
   updateFillAlphaFromControls();
   updateBleedAlphaFromControls();
+}
+
+function setupFillColorMode() {
+  const select =
+    document.getElementById("fill-color-mode");
+
+  if (!select) {
+    return;
+  }
+
+  select.value =
+    SETTINGS.fill.colorMode;
+
+  select.addEventListener("change", event => {
+    SETTINGS.fill.colorMode =
+      event.target.value;
+  });
 }
 
 function setupFillSamplingControls() {
@@ -1319,6 +1337,11 @@ function syncRangeControl(
 
 function syncFillControls() {
   deriveFillControlsFromAlpha();
+  
+  document.getElementById(
+    "fill-color-mode"
+  ).value =
+    SETTINGS.fill.colorMode;
 
   document.getElementById(
     "fill-sample-mode"

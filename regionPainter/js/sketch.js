@@ -419,9 +419,8 @@ function testRegion() {
   perfStats.successfulRegions++;
 
   const regionColor =
-    getOrAssignRegionColor(
+    getRegionPaintColor(
       region,
-      generationRegionColors,
       palette
     );
 

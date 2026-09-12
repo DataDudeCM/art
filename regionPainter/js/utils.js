@@ -70,3 +70,15 @@ function getFillSamplePoint() {
     )
   };
 }
+
+function getRegionPaintColor(region, palette) {
+  if (SETTINGS.fill.colorMode === "randomPerHit") {
+    return randomColor(palette);
+  }
+
+  return getOrAssignRegionColor(
+    region,
+    generationRegionColors,
+    palette
+  );
+}
