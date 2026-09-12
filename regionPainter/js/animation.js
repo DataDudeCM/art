@@ -2,6 +2,7 @@ const ANIMATION_PHASE = {
   IDLE: "idle",
   PARTICLE: "particle",
   BOUNDARY: "boundary",
+  PAINT_PREP: "paintPrep",
   PAINT: "paint",
   COMPLETE: "complete"
 };
@@ -16,10 +17,13 @@ function createAnimationState() {
 
     collectedControlPoints: [],
     revealedBoundaryCount: 0,
-    revealedBoundaryPoints: [],
+    lastBoundaryRevealCount: 0,
 
     boundaryReady: null,
     paintQueue: [],
+
+    particleTrails: [],
+    sampledPoints: [],
 
     pauseUntilMs: 0
   };
@@ -34,9 +38,21 @@ function startGenerationAnimation() {
   paintLayer.clear();
 
   if (SETTINGS.boundary.source === "particleChaikin") {
-    animationState.phase = ANIMATION_PHASE.PARTICLE;
+    animationState.phase =
+      ANIMATION_PHASE.PARTICLE;
+
     animationState.particleState =
       createParticleBoundaryState();
+
+    animationState.particleTrails =
+      animationState.particleState.particles.map(
+        particle => [
+          {
+            x: particle.pos.x,
+            y: particle.pos.y
+          }
+        ]
+      );
   } else {
     prepareBoundaryRevealFromCurrentSource();
   }
@@ -50,8 +66,14 @@ function prepareBoundaryRevealFromCurrentSource() {
     boundarySource.generate();
 
   animationState.boundaryReady = boundary;
+
   animationState.revealedBoundaryCount = 0;
-  animationState.phase = ANIMATION_PHASE.BOUNDARY;
+  animationState.lastBoundaryRevealCount = 0;
+
+  boundaryLayer.clear();
+
+  animationState.phase =
+    ANIMATION_PHASE.BOUNDARY;
 }
 
 function finishParticlePhase() {
@@ -69,8 +91,14 @@ function finishParticlePhase() {
     controlPoints.map(p => p.copy());
 
   animationState.boundaryReady = boundary;
+
   animationState.revealedBoundaryCount = 0;
-  animationState.phase = ANIMATION_PHASE.BOUNDARY;
+  animationState.lastBoundaryRevealCount = 0;
+
+  boundaryLayer.clear();
+
+  animationState.phase =
+    ANIMATION_PHASE.BOUNDARY;
 }
 
 function updateBoundaryReveal() {
@@ -103,21 +131,37 @@ function updateBoundaryReveal() {
 }
 
 function renderPartialBoundary(boundary) {
-  boundaryLayer.clear();
+  if (!boundary) {
+    return;
+  }
 
-  const partialPoints =
-    boundary.points.slice(
+  const from =
+    max(
       0,
-      animationState.revealedBoundaryCount
+      animationState.lastBoundaryRevealCount - 1
     );
 
-  if (partialPoints.length < 2) return;
+  const to =
+    animationState.revealedBoundaryCount;
+
+  if (to - from < 2) {
+    return;
+  }
+
+  const newPoints =
+    boundary.points.slice(
+      from,
+      to
+    );
 
   drawVisibleBoundary(
     boundaryLayer,
-    partialPoints,
+    newPoints,
     false
   );
+
+  animationState.lastBoundaryRevealCount =
+    animationState.revealedBoundaryCount;
 }
 
 function finalizeBoundaryForDetection(boundary) {
@@ -202,4 +246,161 @@ function updateProgressivePaint() {
       event.color
     );
   }
+}
+
+function updateAnimation() {
+  if (!animationState) {
+    return;
+  }
+
+  switch (animationState.phase) {
+
+    case ANIMATION_PHASE.PARTICLE:
+      updateParticlePhase();
+      break;
+
+    case ANIMATION_PHASE.BOUNDARY:
+      updateBoundaryReveal();
+      renderPartialBoundary(
+        animationState.boundaryReady
+      );
+      break;
+
+    case ANIMATION_PHASE.PAINT_PREP:
+      if (millis() >= animationState.pauseUntilMs) {
+        animationState.paintQueue =
+          buildPaintQueue();
+
+        animationState.phase =
+          ANIMATION_PHASE.PAINT;
+      }
+      break;
+
+    case ANIMATION_PHASE.PAINT:
+      updateProgressivePaint();
+      break;
+
+    case ANIMATION_PHASE.COMPLETE:
+      break;
+  }
+}
+
+function updateParticlePhase() {
+  const state =
+    animationState.particleState;
+
+  if (!state) {
+    return;
+  }
+
+  for (
+    let step = 0;
+    step < SETTINGS.animation.particleStepsPerFrame;
+    step++
+  ) {
+    const samples =
+      stepParticleBoundaryState(state);
+
+    for (
+      let i = 0;
+      i < state.particles.length;
+      i++
+    ) {
+      const particle =
+        state.particles[i];
+
+      animationState.particleTrails[i].push({
+        x: particle.pos.x,
+        y: particle.pos.y
+      });
+    }
+
+    for (const sample of samples) {
+      animationState.sampledPoints.push({
+        x: sample.point.x,
+        y: sample.point.y
+      });
+    }
+
+    if (state.done) {
+      finishParticlePhase();
+      return;
+    }
+  }
+}
+
+function renderAnimationOverlay() {
+  if (!animationState) {
+    return;
+  }
+
+  if (
+    animationState.phase !== ANIMATION_PHASE.PARTICLE
+  ) {
+    return;
+  }
+
+  const state =
+    animationState.particleState;
+
+  if (!state) {
+    return;
+  }
+
+  push();
+
+  // Trails
+  if (SETTINGS.animation.showParticleTrail) {
+    noFill();
+
+    stroke(
+      30,
+      SETTINGS.animation.trailAlpha
+    );
+
+    strokeWeight(1);
+
+    for (
+      const trail of animationState.particleTrails
+    ) {
+      if (trail.length < 2) {
+        continue;
+      }
+
+      beginShape();
+
+      for (const p of trail) {
+        vertex(p.x, p.y);
+      }
+
+      endShape();
+    }
+  }
+
+  // Deposited control points
+  noStroke();
+  fill(20, 180);
+
+  for (
+    const p of animationState.sampledPoints
+  ) {
+    circle(
+      p.x,
+      p.y,
+      SETTINGS.animation.sampleDotSize
+    );
+  }
+
+  // Current particles
+  fill(20);
+
+  for (const particle of state.particles) {
+    circle(
+      particle.pos.x,
+      particle.pos.y,
+      8
+    );
+  }
+
+  pop();
 }

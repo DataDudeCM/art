@@ -98,7 +98,11 @@ function draw() {
     animationState
   ) {
     updateAnimation();
+
     renderArtwork();
+
+    renderAnimationOverlay();
+
     return;
   }
 
