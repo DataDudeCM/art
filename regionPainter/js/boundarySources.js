@@ -194,6 +194,111 @@ function generateParticleControlPoints() {
   return points;
 }
 
+function createParticleBoundaryState() {
+  const particleCount =
+    max(1, SETTINGS.particle.count);
+
+  const bounds =
+    getParticleBounds(
+      SETTINGS.boundary.scale
+    );
+
+  return {
+    bounds,
+
+    particles: Array.from(
+      { length: particleCount },
+      () => createBoundaryParticle(bounds)
+    ),
+
+    samplesByParticle:
+      Array.from(
+        { length: particleCount },
+        () => []
+      ),
+
+    totalSamples: 0,
+    steps: 0,
+    done: false
+  };
+}
+
+function stepParticleBoundaryState(state) {
+  const targetCount =
+    max(4, SETTINGS.boundary.pointCount);
+
+  const samplingGap =
+    SETTINGS.particle.samplingMode ===
+    "headingChange"
+      ? SETTINGS.particle.maxSampleGap
+      : SETTINGS.particle.sampleEvery;
+
+  const maxSteps =
+    targetCount *
+    samplingGap *
+    SETTINGS.particle.maxStepsMultiplier;
+
+  if (
+    state.done ||
+    state.totalSamples >= targetCount ||
+    state.steps >= maxSteps
+  ) {
+    state.done = true;
+    return [];
+  }
+
+  const newSamples = [];
+
+  for (const particle of state.particles) {
+    updateBoundaryParticle(
+      particle,
+      state.bounds
+    );
+  }
+
+  for (let i = 0; i < state.particles.length; i++) {
+    const particle = state.particles[i];
+
+    particle.stepsSinceSample++;
+
+    if (
+      shouldSampleParticle(
+        particle,
+        state.steps
+      )
+    ) {
+      const sample = particle.pos.copy();
+
+      state.samplesByParticle[i].push(sample);
+      particle.lastSampleHeading =
+        particle.vel.heading();
+      particle.stepsSinceSample = 0;
+
+      state.totalSamples++;
+
+      newSamples.push({
+        particleIndex: i,
+        point: sample.copy()
+      });
+
+      if (state.totalSamples >= targetCount) {
+        break;
+      }
+    }
+  }
+
+  state.steps++;
+
+  if (
+    state.totalSamples >= targetCount ||
+    state.steps >= maxSteps
+  ) {
+    state.done = true;
+  }
+
+  return newSamples;
+}
+
 function buildRoundRobinParticlePoints(
   samplesByParticle,
   targetCount
@@ -283,6 +388,47 @@ function buildRandomParticlePoints(
 
     points.push(
       pools[particleIndex].shift()
+    );
+  }
+
+  return points;
+}
+
+//converts a finished animation particle state into a set of control points for the boundary
+function finalizeParticleBoundaryPoints(state) {
+  const targetCount =
+    max(4, SETTINGS.boundary.pointCount);
+
+  let points;
+
+  switch (SETTINGS.particle.feedMode) {
+    case "sequential":
+      points = buildSequentialParticlePoints(
+        state.samplesByParticle,
+        targetCount
+      );
+      break;
+
+    case "randomParticle":
+      points = buildRandomParticlePoints(
+        state.samplesByParticle,
+        targetCount
+      );
+      break;
+
+    case "roundRobin":
+    default:
+      points = buildRoundRobinParticlePoints(
+        state.samplesByParticle,
+        targetCount
+      );
+      break;
+  }
+
+  if (points.length < 4) {
+    return generateControlPoints(
+      targetCount,
+      SETTINGS.boundary.scale
     );
   }
 

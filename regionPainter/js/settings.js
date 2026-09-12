@@ -72,6 +72,22 @@ const SETTINGS = {
     maxStepsMultiplier: 30
   },
 
+  animation: {
+    enabled: true,
+
+    mode: "progressive", // "progressive" for now
+
+    particleStepsPerFrame: 2,
+    showParticleTrail: true,
+    trailAlpha: 80,
+    sampleDotSize: 7,
+
+    boundaryRevealPointsPerFrame: 40,
+
+    paintEventsPerFrame: 1,
+    pauseAfterBoundaryMs: 300
+  },
+
   fill: {
     attempts: 60,
     minRegionPixels: 500,

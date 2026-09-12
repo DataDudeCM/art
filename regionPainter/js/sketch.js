@@ -93,6 +93,15 @@ function setup() {
 }
 
 function draw() {
+  if (
+    SETTINGS.animation.enabled &&
+    animationState
+  ) {
+    updateAnimation();
+    renderArtwork();
+    return;
+  }
+
   if (!UI_STATE.autoRegenerate) {
     return;
   }
@@ -502,10 +511,21 @@ function requestGenerate() {
 
   setGenerationStatus(true);
 
-  // Give the browser time to paint "Generating..."
   setTimeout(() => {
     try {
-      generateArtwork();
+      randomSeed(generationSeed);
+      noiseSeed(generationSeed);
+
+      palette = resolveActivePalette();
+      SETTINGS.canvas.paperColor =
+        getLightColor(palette);
+
+      if (SETTINGS.animation.enabled) {
+        startGenerationAnimation();
+      } else {
+        generateArtwork();
+      }
+
       lastGenerationTime = millis();
     } finally {
       setGenerationStatus(false);
