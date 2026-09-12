@@ -93,7 +93,10 @@ const SETTINGS = {
   fill: {
     attempts: 60,
     minRegionPixels: 500,
-    maxRegionFraction: 0.7
+    maxRegionFraction: 0.7,
+
+    sampleMode: "uniform", // "uniform" | "centerWeighted"
+    centerWeight: 60
   },
 
   paint: {

@@ -32,3 +32,41 @@ function getOrAssignRegionColor(region, colorMap, palette) {
 
   return colorMap.get(key);
 }
+
+function getFillSamplePoint() {
+  if (SETTINGS.fill.sampleMode !== "centerWeighted") {
+    return {
+      x: random(width),
+      y: random(height)
+    };
+  }
+
+  const strength =
+    constrain(
+      SETTINGS.fill.centerWeight / 100,
+      0,
+      1
+    );
+
+  const baseSigma =
+    min(width, height);
+
+  const sigma = lerp(
+    baseSigma * 0.35,
+    baseSigma * 0.08,
+    strength
+  );
+
+  return {
+    x: constrain(
+      randomGaussian(width / 2, sigma),
+      0,
+      width - 1
+    ),
+    y: constrain(
+      randomGaussian(height / 2, sigma),
+      0,
+      height - 1
+    )
+  };
+}

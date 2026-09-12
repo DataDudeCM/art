@@ -213,8 +213,11 @@ function buildPaintQueue() {
   const queue = [];
 
   for (let i = 0; i < SETTINGS.fill.attempts; i++) {
-    const x = random(width);
-    const y = random(height);
+    const samplePoint =
+      getFillSamplePoint();
+
+    const x = samplePoint.x;
+    const y = samplePoint.y;
 
     const region =
       floodFillRegion(
@@ -258,8 +261,11 @@ function updateProgressivePaint() {
 
     animationState.paintAttemptsRemaining--;
 
-    const x = random(width);
-    const y = random(height);
+    const samplePoint =
+      getFillSamplePoint();
+
+    const x = samplePoint.x;
+    const y = samplePoint.y;
 
     const region =
       floodFillRegion(

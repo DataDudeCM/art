@@ -393,8 +393,11 @@ function drawTextureOverlay() {
 }
 
 function testRegion() {
-  const x = random(width);
-  const y = random(height);
+  const samplePoint =
+    getFillSamplePoint();
+
+  const x = samplePoint.x;
+  const y = samplePoint.y;
 
   const floodStart =
     performance.now();

@@ -8,6 +8,7 @@ function setupUI() {
   setupFillControls();
   setupSeedControls();
   setupViewControls();
+  setupAnimationControls();
 
   document
     .getElementById("generate-button")
@@ -607,6 +608,7 @@ function setupBoundarySource() {
 
 function setupFillControls() {
   setupFillBrushSelect();
+  setupFillSamplingControls();
 
   setupRangeControl(
     "fill-strength",
@@ -720,6 +722,54 @@ function setupFillControls() {
 
   updateFillAlphaFromControls();
   updateBleedAlphaFromControls();
+}
+
+function setupFillSamplingControls() {
+  const modeSelect =
+    document.getElementById("fill-sample-mode");
+
+  const weightControl =
+    document.getElementById("fill-center-weight-control");
+
+  if (!modeSelect || !weightControl) {
+    return;
+  }
+
+  modeSelect.value =
+    SETTINGS.fill.sampleMode;
+
+  modeSelect.addEventListener("change", event => {
+    SETTINGS.fill.sampleMode =
+      event.target.value;
+
+    updateFillSamplingControls();
+  });
+
+  setupRangeControl(
+    "fill-center-weight",
+    "fill-center-weight-value",
+    () => SETTINGS.fill.centerWeight,
+    value => {
+      SETTINGS.fill.centerWeight =
+        Number(value);
+    }
+  );
+
+  updateFillSamplingControls();
+}
+
+function updateFillSamplingControls() {
+  const weightControl =
+    document.getElementById("fill-center-weight-control");
+
+  if (!weightControl) {
+    return;
+  }
+
+  weightControl.style.display =
+    SETTINGS.fill.sampleMode === "centerWeighted"
+      ? ""
+      : "none";
 }
 
 function setupViewControls() {
@@ -1150,6 +1200,7 @@ function syncAllControls() {
   syncFillControls();
   syncTextureControls();
   syncViewControls();
+  syncAnimationControls();
   const boundarySource =
     document.getElementById("boundary-source");
 
@@ -1270,6 +1321,19 @@ function syncFillControls() {
   deriveFillControlsFromAlpha();
 
   document.getElementById(
+    "fill-sample-mode"
+  ).value =
+    SETTINGS.fill.sampleMode;
+
+  syncRangeControl(
+    "fill-center-weight",
+    "fill-center-weight-value",
+    SETTINGS.fill.centerWeight
+  );
+
+  updateFillSamplingControls();
+
+  document.getElementById(
     "fill-brush-select"
   ).value =
     SETTINGS.paint.forcedFillBrush || "";
@@ -1381,4 +1445,31 @@ function enterDrawnBoundaryMode() {
   }
 
   renderArtwork();
+}
+
+function setupAnimationControls() {
+  const checkbox =
+    document.getElementById("animation-enabled");
+
+  if (!checkbox) {
+    return;
+  }
+
+  checkbox.checked =
+    SETTINGS.animation.enabled;
+
+  checkbox.addEventListener("change", event => {
+    SETTINGS.animation.enabled =
+      event.target.checked;
+  });
+}
+
+function syncAnimationControls() {
+  const checkbox =
+    document.getElementById("animation-enabled");
+
+  if (checkbox) {
+    checkbox.checked =
+      SETTINGS.animation.enabled;
+  }
 }

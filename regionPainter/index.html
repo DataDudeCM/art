@@ -59,6 +59,16 @@
           </label>
         </div>
 
+        <div class="control-item">
+          <label class="checkbox-row">
+            <input
+              type="checkbox"
+              id="animation-enabled"
+            />
+            Animate generation
+          </label>
+        </div>
+
       </section>
 
       <section class="control-group setup-group">
@@ -525,6 +535,46 @@
 
               <span
                 id="fill-attempts-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="fill-sample-mode">
+              Region Pick Mode
+            </label>
+
+            <select id="fill-sample-mode">
+              <option value="uniform">
+                Uniform
+              </option>
+
+              <option value="centerWeighted">
+                Center Weighted
+              </option>
+            </select>
+          </div>
+
+          <div
+            id="fill-center-weight-control"
+            class="control-item"
+          >
+            <label for="fill-center-weight">
+              Center Weight
+            </label>
+
+            <div class="range-row">
+              <input
+                id="fill-center-weight"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+
+              <span
+                id="fill-center-weight-value"
                 class="range-value"
               ></span>
             </div>
