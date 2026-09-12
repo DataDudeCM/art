@@ -64,6 +64,16 @@ function getChangedSettings(current, defaults) {
   return changed;
 }
 
+function getPresetSettingsSource() {
+  const settings =
+    JSON.parse(JSON.stringify(SETTINGS));
+
+  if (settings.animation) {
+    delete settings.animation.enabled;
+  }
+
+  return settings;
+}
 
 function buildPresetData(name) {
   return {
@@ -82,7 +92,7 @@ function buildPresetData(name) {
 
     settings:
       getChangedSettings(
-        SETTINGS,
+        getPresetSettingsSource(),
         DEFAULT_SETTINGS
       )
   };
@@ -170,12 +180,18 @@ function deepMerge(target, source) {
 function applyPreset(preset) {
   currentPreset = preset;
 
+  const animationEnabled =
+    SETTINGS.animation.enabled;
+
   resetSettingsToDefaults();
 
   deepMerge(
     SETTINGS,
     preset.settings || {}
   );
+
+  SETTINGS.animation.enabled =
+    animationEnabled;
 }
 
 function loadPresetFromFile(file) {
