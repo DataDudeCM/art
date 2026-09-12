@@ -72,6 +72,9 @@ function prepareBoundaryRevealFromCurrentSource() {
   const boundary =
     boundarySource.generate();
 
+  boundaryControlPoints =
+    boundary.controlPoints || [];
+
   animationState.boundaryReady = boundary;
 
   animationState.revealedBoundaryCount = 0;
@@ -270,7 +273,11 @@ function updateProgressivePaint() {
     }
 
     const regionColor =
-      randomColor(palette);
+      getOrAssignRegionColor(
+        region,
+        generationRegionColors,
+        palette
+      );
 
     paintRegion(
       region,

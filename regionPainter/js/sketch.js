@@ -186,13 +186,7 @@ function generateArtwork() {
 
   palette = resolveActivePalette();
 
-  const paletteDisplay =
-    document.getElementById("active-palette");
-
-  if (paletteDisplay) {
-    paletteDisplay.textContent =
-      `Current: ${palette?.name || "Unknown"}`;
-  }
+  updateActivePaletteDisplay();
 
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
@@ -529,6 +523,7 @@ function requestGenerate() {
       noiseSeed(generationSeed);
 
       palette = resolveActivePalette();
+      updateActivePaletteDisplay();
 
       SETTINGS.canvas.paperColor =
         getLightColor(palette);
@@ -571,5 +566,15 @@ function keyPressed() {
         presetName.trim()
       );
     }
+  }
+}
+
+function updateActivePaletteDisplay() {
+  const paletteDisplay =
+    document.getElementById("active-palette");
+
+  if (paletteDisplay) {
+    paletteDisplay.textContent =
+      `Current: ${palette?.name || "Unknown"}`;
   }
 }
