@@ -1,12 +1,22 @@
   
-function generateControlPoints(count, scale = 1.0) {
+function generateControlPoints(
+  count,
+  scale = 1.0,
+  viewport = getFullCanvasViewport()
+) {
   const points = [];
 
-  const cx = width / 2;
-  const cy = height / 2;
+  const cx =
+    viewport.x + viewport.width / 2;
 
-  const halfW = (width / 2) * scale;
-  const halfH = (height / 2) * scale;
+  const cy =
+    viewport.y + viewport.height / 2;
+
+  const halfW =
+    (viewport.width / 2) * scale;
+
+  const halfH =
+    (viewport.height / 2) * scale;
 
   for (let i = 0; i < count; i++) {
     points.push(

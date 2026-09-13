@@ -144,6 +144,15 @@ function getCanvasWidth() {
     .clientWidth;
 }
 
+function getFullCanvasViewport() {
+  return {
+    x: 0,
+    y: 0,
+    width: width,
+    height: height
+  };
+}
+
 function resolveActivePalette() {
 
   if (UI_STATE.paletteMode === "random") {
