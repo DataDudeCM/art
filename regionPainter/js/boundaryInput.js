@@ -141,9 +141,62 @@ function drawBoundaryPreview() {
     drawingPreviewLayer.endShape();
   }
 
+  drawDrawnGridPreview();
   drawingPreviewLayer.pop();
 
   renderArtwork();
+  
+}
+
+function drawDrawnGridPreview() {
+  const grid =
+    getActiveGridSettings();
+
+  if (!grid.enabled) {
+    return;
+  }
+
+  drawingPreviewLayer.push();
+
+  drawingPreviewLayer.noFill();
+
+  drawingPreviewLayer.stroke(
+    80,
+    100
+  );
+
+  drawingPreviewLayer.strokeWeight(1);
+
+  for (
+    let row = 0;
+    row < grid.rows;
+    row++
+  ) {
+    for (
+      let col = 0;
+      col < grid.cols;
+      col++
+    ) {
+      const viewport =
+        getGridViewport(
+          row,
+          col,
+          grid.rows,
+          grid.cols,
+          grid.gutter,
+          grid.outerMargin
+        );
+
+      drawingPreviewLayer.rect(
+        viewport.x,
+        viewport.y,
+        viewport.width,
+        viewport.height
+      );
+    }
+  }
+
+  drawingPreviewLayer.pop();
 }
 
 function updateBoundaryTouchAction() {

@@ -1572,7 +1572,7 @@ function enterDrawnBoundaryMode() {
       "Draw on the canvas";
   }
 
-  renderArtwork();
+  drawBoundaryPreview();
 }
 
 function setupAnimationControls() {

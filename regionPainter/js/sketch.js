@@ -211,8 +211,7 @@ function getActiveGridSettings() {
     );
 
   const enabled =
-    !!SETTINGS.grid?.enabled &&
-    (rows > 1 || cols > 1);
+    !!SETTINGS.grid?.enabled;
 
   if (!enabled) {
     return {
