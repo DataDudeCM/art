@@ -192,8 +192,19 @@ function drawVisibleBoundaryLine(g, points, closed=true) {
   g.noFill();
   g.stroke(getDarkColor(palette));
 
+  const viewportScale =
+    activeViewport
+      ? sqrt(
+          min(
+            activeViewport.width / width,
+            activeViewport.height / height
+          )
+        )
+      : 1;
+
   g.strokeWeight(
-    SETTINGS.boundary.thinBrushSize
+    SETTINGS.boundary.thinBrushSize *
+    viewportScale
   );
 
   g.strokeJoin(ROUND);
@@ -358,8 +369,19 @@ function stampBoundaryBrush(
     return;
   }
 
+  const viewportScale =
+    activeViewport
+      ? sqrt(
+          min(
+            activeViewport.width / width,
+            activeViewport.height / height
+          )
+        )
+      : 1;
+
   const baseSize =
-    SETTINGS.boundary.thinBrushSize;
+    SETTINGS.boundary.thinBrushSize *
+    viewportScale;
 
   const jitter =
     SETTINGS.boundary.sizeJitter;

@@ -5,16 +5,29 @@ let regionMaskImageData = null;
 function paintRegion(region, g, baseColor) {
   const markScale = getRegionMarkScale(region);
   const brushScale = getRegionBrushScale(region);
+  const viewportScale =
+  activeViewport
+    ? sqrt(
+        min(
+          activeViewport.width / width,
+          activeViewport.height / height
+        )
+      )
+    : 1;
 
   const marks = floor(
     SETTINGS.paint.marksPerRegion * markScale
   );
 
   const brushMin =
-    SETTINGS.paint.brushSizeMin * brushScale;
+    SETTINGS.paint.brushSizeMin *
+    brushScale *
+    viewportScale;
 
   const brushMax =
-    SETTINGS.paint.brushSizeMax * brushScale;
+    SETTINGS.paint.brushSizeMax *
+    brushScale *
+    viewportScale;
 
   const regionBrush =
     chooseRegionBrush();
@@ -68,6 +81,82 @@ function paintRegion(region, g, baseColor) {
   tempLayer.remove();
 }
 
+function paintRegionBleed(
+  region,
+  g,
+  baseColor,
+  brushMin,
+  brushMax,
+  regionBrush,
+  viewport = getFullCanvasViewport()
+) {
+  const edgePixels = findRegionEdgePixels(region);
+
+  if (edgePixels.length === 0) {
+    return;
+  }
+
+  const bleedBrush =
+    SETTINGS.paint.useSameBrushForBleed
+      ? regionBrush
+      : chooseRegionBrush();
+
+  drawClippedToViewport(
+    g,
+    viewport,
+    () => {
+      for (let i = 0; i < SETTINGS.paint.bleedMarks; i++) {
+        const p = random(edgePixels);
+
+        const angle = random(TWO_PI);
+        const viewportScale =
+          activeViewport
+            ? sqrt(
+                min(
+                  activeViewport.width / width,
+                  activeViewport.height / height
+                )
+              )
+            : 1;
+
+        const distance =
+          random(
+            SETTINGS.paint.bleedPixels *
+            viewportScale
+          );
+
+        const x = p.x + cos(angle) * distance;
+        const y = p.y + sin(angle) * distance;
+
+        const bleedT =
+          distance / max(1, SETTINGS.paint.bleedPixels);
+
+        // Smaller marks the farther they wander outward
+        const edgeScale = lerp(0.5, 0.05, bleedT);
+
+        const size = random(
+          brushMin * edgeScale,
+          brushMax * edgeScale
+        );
+
+        const alpha = random(
+          SETTINGS.paint.bleedAlphaMin,
+          SETTINGS.paint.bleedAlphaMax
+        );
+
+        stampBrush(
+          g,
+          x,
+          y,
+          size,
+          baseColor,
+          alpha,
+          bleedBrush
+        );
+      }
+    }
+  );
+}
 
 // --------------------------------------------------
 // Region scaling
@@ -236,68 +325,7 @@ function compositeRegionPaint(
   );
 }
 
-function paintRegionBleed(
-  region,
-  g,
-  baseColor,
-  brushMin,
-  brushMax,
-  regionBrush,
-  viewport = getFullCanvasViewport()
-) {
-  const edgePixels = findRegionEdgePixels(region);
 
-  if (edgePixels.length === 0) {
-    return;
-  }
-
-  const bleedBrush =
-    SETTINGS.paint.useSameBrushForBleed
-      ? regionBrush
-      : chooseRegionBrush();
-
-  drawClippedToViewport(
-    g,
-    viewport,
-    () => {
-      for (let i = 0; i < SETTINGS.paint.bleedMarks; i++) {
-        const p = random(edgePixels);
-
-        const angle = random(TWO_PI);
-        const distance = random(SETTINGS.paint.bleedPixels);
-
-        const x = p.x + cos(angle) * distance;
-        const y = p.y + sin(angle) * distance;
-
-        const bleedT =
-          distance / max(1, SETTINGS.paint.bleedPixels);
-
-        // Smaller marks the farther they wander outward
-        const edgeScale = lerp(0.5, 0.05, bleedT);
-
-        const size = random(
-          brushMin * edgeScale,
-          brushMax * edgeScale
-        );
-
-        const alpha = random(
-          SETTINGS.paint.bleedAlphaMin,
-          SETTINGS.paint.bleedAlphaMax
-        );
-
-        stampBrush(
-          g,
-          x,
-          y,
-          size,
-          baseColor,
-          alpha,
-          bleedBrush
-        );
-      }
-    }
-  );
-}
 
 function findRegionEdgePixels(region) {
   const regionSet = new Set();
