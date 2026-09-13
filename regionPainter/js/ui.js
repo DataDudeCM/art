@@ -10,6 +10,7 @@ function setupUI() {
   setupViewControls();
   setupAnimationControls();
   setupGridControls();
+  setupGridVariationControls();
 
   document
     .getElementById("generate-button")
@@ -99,6 +100,138 @@ function setupGridControls() {
           0,
           Number(value)
         );
+    }
+  );
+}
+
+function setupGridVariationControls() {
+  const enabled =
+    document.getElementById(
+      "grid-variation-enabled"
+    );
+
+  enabled.checked =
+    SETTINGS.gridVariation.enabled;
+
+  enabled.addEventListener(
+    "change",
+    event => {
+      SETTINGS.gridVariation.enabled =
+        event.target.checked;
+    }
+  );
+
+  const rowSelect =
+    document.getElementById(
+      "grid-row-parameter"
+    );
+
+  const colSelect =
+    document.getElementById(
+      "grid-col-parameter"
+    );
+
+  for (const key of getGridSweepParameterKeys()) {
+    const rowOption =
+      document.createElement("option");
+    rowOption.value = key;
+    rowOption.textContent = key;
+    rowSelect.appendChild(rowOption);
+
+    const colOption =
+      document.createElement("option");
+    colOption.value = key;
+    colOption.textContent = key;
+    colSelect.appendChild(colOption);
+  }
+
+  rowSelect.value =
+    SETTINGS.gridVariation.rowParameter;
+
+  colSelect.value =
+    SETTINGS.gridVariation.colParameter;
+
+  rowSelect.addEventListener(
+    "change",
+    event => {
+      SETTINGS.gridVariation.rowParameter =
+        event.target.value;
+    }
+  );
+
+  colSelect.addEventListener(
+    "change",
+    event => {
+      SETTINGS.gridVariation.colParameter =
+        event.target.value;
+    }
+  );
+
+  setupVariationRangeControl(
+    "grid-row-start",
+    "grid-row-start-value",
+    () => SETTINGS.gridVariation.rowStart,
+    value => {
+      SETTINGS.gridVariation.rowStart =
+        Number(value);
+    }
+  );
+
+  setupVariationRangeControl(
+    "grid-row-end",
+    "grid-row-end-value",
+    () => SETTINGS.gridVariation.rowEnd,
+    value => {
+      SETTINGS.gridVariation.rowEnd =
+        Number(value);
+    }
+  );
+
+  setupVariationRangeControl(
+    "grid-col-start",
+    "grid-col-start-value",
+    () => SETTINGS.gridVariation.colStart,
+    value => {
+      SETTINGS.gridVariation.colStart =
+        Number(value);
+    }
+  );
+
+  setupVariationRangeControl(
+    "grid-col-end",
+    "grid-col-end-value",
+    () => SETTINGS.gridVariation.colEnd,
+    value => {
+      SETTINGS.gridVariation.colEnd =
+        Number(value);
+    }
+  );
+}
+
+function setupVariationRangeControl(
+  inputId,
+  valueId,
+  getter,
+  setter
+) {
+  const input =
+    document.getElementById(inputId);
+
+  const valueEl =
+    document.getElementById(valueId);
+
+  function sync() {
+    input.value = getter();
+    valueEl.textContent = getter();
+  }
+
+  sync();
+
+  input.addEventListener(
+    "input",
+    event => {
+      setter(event.target.value);
+      sync();
     }
   );
 }
@@ -1291,7 +1424,7 @@ function syncAllControls() {
   syncTextureControls();
   syncViewControls();
   syncAnimationControls();
-  syncGridControls();
+  syncGridVariationControls();
 
   const boundarySource =
     document.getElementById("boundary-source");
@@ -1306,6 +1439,63 @@ function syncAllControls() {
   // Future:
   // syncPaintControls();
   // syncTextureControls();
+}
+
+function syncGridVariationControls() {
+  document.getElementById(
+    "grid-variation-enabled"
+  ).checked =
+    SETTINGS.gridVariation.enabled;
+
+  document.getElementById(
+    "grid-row-parameter"
+  ).value =
+    SETTINGS.gridVariation.rowParameter;
+
+  document.getElementById(
+    "grid-col-parameter"
+  ).value =
+    SETTINGS.gridVariation.colParameter;
+
+  document.getElementById(
+    "grid-row-start"
+  ).value =
+    SETTINGS.gridVariation.rowStart;
+
+  document.getElementById(
+    "grid-row-start-value"
+  ).textContent =
+    SETTINGS.gridVariation.rowStart;
+
+  document.getElementById(
+    "grid-row-end"
+  ).value =
+    SETTINGS.gridVariation.rowEnd;
+
+  document.getElementById(
+    "grid-row-end-value"
+  ).textContent =
+    SETTINGS.gridVariation.rowEnd;
+
+  document.getElementById(
+    "grid-col-start"
+  ).value =
+    SETTINGS.gridVariation.colStart;
+
+  document.getElementById(
+    "grid-col-start-value"
+  ).textContent =
+    SETTINGS.gridVariation.colStart;
+
+  document.getElementById(
+    "grid-col-end"
+  ).value =
+    SETTINGS.gridVariation.colEnd;
+
+  document.getElementById(
+    "grid-col-end-value"
+  ).textContent =
+    SETTINGS.gridVariation.colEnd;
 }
 
 function syncGridControls() {

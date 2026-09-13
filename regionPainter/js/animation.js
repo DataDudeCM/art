@@ -25,6 +25,8 @@ function createAnimationCell(
     col,
     viewport,
 
+    parameterOverrides: [],
+
     boundaryReady: null,
     boundaryFinalized: false,
 
@@ -67,14 +69,23 @@ function createAnimationState() {
           grid.outerMargin
         );
 
-      cells.push(
+      const cell =
         createAnimationCell(
           row,
           col,
           viewport,
           SETTINGS.fill.attempts
-        )
-      );
+        );
+
+      cell.parameterOverrides =
+        buildCellParameterOverrides(
+          row,
+          col,
+          grid.rows,
+          grid.cols
+        );
+
+      cells.push(cell);
     }
   }
 
@@ -126,6 +137,11 @@ function prepareBoundaryRevealForAllCells() {
     activeViewport =
       cell.viewport;
 
+    const restoreCellOverrides =
+      applyCellParameterOverrides(
+        cell.parameterOverrides
+      );
+
     const cellSeed =
       getCellSeed(
         generationSeed,
@@ -141,6 +157,8 @@ function prepareBoundaryRevealForAllCells() {
 
     const boundary =
       boundarySource.generate();
+
+    restoreCellOverrides();
 
     cell.boundaryReady =
       boundary;
@@ -445,6 +463,11 @@ function updateProgressivePaint() {
     activeViewport =
       cell.viewport;
 
+    const restoreCellOverrides =
+      applyCellParameterOverrides(
+        cell.parameterOverrides
+      );
+
     const samplePoint =
       getFillSamplePoint(
         cell.viewport
@@ -502,10 +525,17 @@ function startParticleAnimation() {
     randomSeed(cellSeed);
     noiseSeed(cellSeed);
 
+    const restoreCellOverrides =
+      applyCellParameterOverrides(
+        cell.parameterOverrides
+      );
+
     cell.particleState =
       createParticleBoundaryState(
         cell.viewport
       );
+
+    restoreCellOverrides();
 
     cell.particleTrails =
       cell.particleState.particles.map(

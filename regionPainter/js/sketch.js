@@ -30,6 +30,35 @@ let perfStats = {
 
 const SHOW_PERF_STATS = false;
 
+const GRID_SWEEP_PARAMETERS = {
+  none: null,
+
+  "boundary.scale": {
+    path: ["boundary", "scale"],
+    type: "float"
+  },
+
+  "boundary.pointCount": {
+    path: ["boundary", "pointCount"],
+    type: "int"
+  },
+
+  "fill.centerWeight": {
+    path: ["fill", "centerWeight"],
+    type: "int"
+  },
+
+  "paint.bleedPixels": {
+    path: ["paint", "bleedPixels"],
+    type: "float"
+  },
+
+  "boundary.thinBrushSize": {
+    path: ["boundary", "thinBrushSize"],
+    type: "float"
+  }
+};
+
 const UI_STATE = {
   paletteMode: "inherit", // "inherit" | "random" | "fixed"
   fixedPaletteKey: null,
@@ -232,6 +261,154 @@ function getActiveGridSettings() {
   };
 }
 
+function getGridSweepParameterKeys() {
+  return Object.keys(GRID_SWEEP_PARAMETERS);
+}
+
+function getGridAxisT(index, count) {
+  if (count <= 1) {
+    return 0;
+  }
+
+  return index / (count - 1);
+}
+
+function lerpSweepValue(start, end, t, type) {
+  const value = lerp(
+    Number(start),
+    Number(end),
+    t
+  );
+
+  if (type === "int") {
+    return round(value);
+  }
+
+  return value;
+}
+
+function getNestedSetting(path) {
+  let current = SETTINGS;
+
+  for (const key of path) {
+    current = current[key];
+  }
+
+  return current;
+}
+
+function setNestedSetting(path, value) {
+  let current = SETTINGS;
+
+  for (let i = 0; i < path.length - 1; i++) {
+    current = current[path[i]];
+  }
+
+  current[path[path.length - 1]] = value;
+}
+
+function buildCellParameterOverrides(
+  row,
+  col,
+  rows,
+  cols
+) {
+  if (!SETTINGS.gridVariation.enabled) {
+    return [];
+  }
+
+  const overrides = [];
+
+  const rowKey =
+    SETTINGS.gridVariation.rowParameter;
+
+  const colKey =
+    SETTINGS.gridVariation.colParameter;
+
+  if (
+    rowKey !== "none" &&
+    GRID_SWEEP_PARAMETERS[rowKey]
+  ) {
+    const def =
+      GRID_SWEEP_PARAMETERS[rowKey];
+
+    const rowT =
+      getGridAxisT(row, rows);
+
+    const value =
+      lerpSweepValue(
+        SETTINGS.gridVariation.rowStart,
+        SETTINGS.gridVariation.rowEnd,
+        rowT,
+        def.type
+      );
+
+    overrides.push({
+      path: def.path,
+      value
+    });
+  }
+
+  if (
+    colKey !== "none" &&
+    GRID_SWEEP_PARAMETERS[colKey]
+  ) {
+    const def =
+      GRID_SWEEP_PARAMETERS[colKey];
+
+    const colT =
+      getGridAxisT(col, cols);
+
+    const value =
+      lerpSweepValue(
+        SETTINGS.gridVariation.colStart,
+        SETTINGS.gridVariation.colEnd,
+        colT,
+        def.type
+      );
+
+    overrides.push({
+      path: def.path,
+      value
+    });
+  }
+
+  return overrides;
+}
+
+function applyCellParameterOverrides(
+  overrides
+) {
+  if (!overrides || overrides.length === 0) {
+    return () => {};
+  }
+
+  const previous = overrides.map(
+    override => ({
+      path: override.path,
+      value: getNestedSetting(
+        override.path
+      )
+    })
+  );
+
+  for (const override of overrides) {
+    setNestedSetting(
+      override.path,
+      override.value
+    );
+  }
+
+  return function restoreOverrides() {
+    for (const prior of previous) {
+      setNestedSetting(
+        prior.path,
+        prior.value
+      );
+    }
+  };
+}
+
 function getCellSeed(
   baseSeed,
   row,
@@ -319,6 +496,19 @@ function generateArtwork() {
           grid.cols,
           grid.gutter,
           grid.outerMargin
+        );
+
+      const cellOverrides =
+        buildCellParameterOverrides(
+          row,
+          col,
+          grid.rows,
+          grid.cols
+        );
+
+      const restoreCellOverrides =
+        applyCellParameterOverrides(
+          cellOverrides
         );
 
       const cellSeed =

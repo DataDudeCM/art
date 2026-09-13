@@ -29,6 +29,18 @@ const SETTINGS = {
     outerMargin: 20  // border around the whole grid
   },
 
+  gridVariation: {
+    enabled: false,
+
+    rowParameter: "none",
+    rowStart: 0.8,
+    rowEnd: 1.4,
+
+    colParameter: "none",
+    colStart: 6,
+    colEnd: 20
+  },
+
   boundary: {
     source: "chaikin", // "chaikin" | "particleChaikin" | "rectangle" | "drawn"
     pointCount: 30, // more points = more lines and potential intersections

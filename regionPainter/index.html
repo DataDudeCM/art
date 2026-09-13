@@ -222,6 +222,129 @@
       <div class="control-divider"></div>
 
       <section
+        class="control-group grid-variation-group collapsible-group"
+      >
+        <button
+          type="button"
+          class="section-toggle"
+          aria-expanded="true"
+        >
+          <span>Grid Variation</span>
+          <span class="section-arrow">▾</span>
+        </button>
+
+        <div class="section-content">
+
+          <div class="control-item">
+            <label class="checkbox-row">
+              <input
+                type="checkbox"
+                id="grid-variation-enabled"
+              />
+              Enable Grid Variation
+            </label>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-row-parameter">
+              Row Parameter
+            </label>
+            <select id="grid-row-parameter"></select>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-row-start">
+              Row Start
+            </label>
+
+            <div class="range-row">
+              <input
+                id="grid-row-start"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+              <span
+                id="grid-row-start-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-row-end">
+              Row End
+            </label>
+
+            <div class="range-row">
+              <input
+                id="grid-row-end"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+              <span
+                id="grid-row-end-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-col-parameter">
+              Column Parameter
+            </label>
+            <select id="grid-col-parameter"></select>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-col-start">
+              Column Start
+            </label>
+
+            <div class="range-row">
+              <input
+                id="grid-col-start"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+              <span
+                id="grid-col-start-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-col-end">
+              Column End
+            </label>
+
+            <div class="range-row">
+              <input
+                id="grid-col-end"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+              <span
+                id="grid-col-end-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <div class="control-divider"></div>
+
+      <section
         class="control-group texture-group collapsible-group collapsed" 
       >
         <button
