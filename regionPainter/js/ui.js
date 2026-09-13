@@ -1460,6 +1460,7 @@ function syncAllControls() {
   syncTextureControls();
   syncViewControls();
   syncAnimationControls();
+  syncGridControls();
   syncGridVariationControls();
 
   const boundarySource =

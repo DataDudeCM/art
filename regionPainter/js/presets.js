@@ -183,6 +183,18 @@ function applyPreset(preset) {
   const animationEnabled =
     SETTINGS.animation.enabled;
 
+  const currentGrid =
+    JSON.parse(
+      JSON.stringify(SETTINGS.grid)
+    );
+
+  const currentGridVariation =
+    JSON.parse(
+      JSON.stringify(
+        SETTINGS.gridVariation
+      )
+    );
+
   resetSettingsToDefaults();
 
   deepMerge(
@@ -192,6 +204,16 @@ function applyPreset(preset) {
 
   SETTINGS.animation.enabled =
     animationEnabled;
+
+  if (!preset.settings?.grid) {
+    SETTINGS.grid =
+      currentGrid;
+  }
+
+  if (!preset.settings?.gridVariation) {
+    SETTINGS.gridVariation =
+      currentGridVariation;
+  }
 }
 
 function loadPresetFromFile(file) {
