@@ -396,8 +396,6 @@ function generateBoundary() {
   boundarySmoothedPoints =
     boundary.points || [];
 
-  boundaryDetectionLayer.clear();
-  boundaryLayer.clear();
 
   for (const stroke of strokes) {
     drawDetectionBoundary(

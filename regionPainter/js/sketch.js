@@ -234,33 +234,38 @@ function generateArtwork() {
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
 
-  activeViewport =
-  getGridViewport(
-    0,
-    0,
-    2,
-    2,
-    20,
-    20
-  );
-
   const boundaryStart = performance.now();
 
-  generateBoundary();
-  boundaryDetectionLayer.loadPixels();
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 2; col++) {
+      activeViewport =
+        getGridViewport(
+          row,
+          col,
+          2,
+          2,
+          20,
+          20
+        );
+
+      generateBoundary();
+
+      boundaryDetectionLayer.loadPixels();
+
+      for (
+        let i = 0;
+        i < SETTINGS.fill.attempts;
+        i++
+      ) {
+        testRegion();
+      }
+    }
+  }
 
   const boundaryMs =
     performance.now() - boundaryStart;
 
-  const regionsStart = performance.now();
-
-  for (
-    let i = 0;
-    i < SETTINGS.fill.attempts;
-    i++
-  ) {
-    testRegion();
-  }
+  const regionsStart = boundaryStart;
 
   const regionsMs =
     performance.now() - regionsStart;
@@ -461,7 +466,8 @@ function testRegion() {
     floodFillRegion(
       boundaryDetectionLayer,
       x,
-      y
+      y,
+      activeViewport
     );
 
   perfStats.floodMs +=

@@ -1,4 +1,9 @@
-function floodFillRegion(g, startX, startY) {
+function floodFillRegion(
+  g,
+  startX,
+  startY,
+  viewport = getFullCanvasViewport()
+) {
   // Assumes g.loadPixels() has already been called
   // for the current boundary state.
   // //g.loadPixels();
@@ -9,7 +14,30 @@ function floodFillRegion(g, startX, startY) {
   const sx = floor(startX);
   const sy = floor(startY);
 
-  if (sx < 0 || sx >= w || sy < 0 || sy >= h) {
+  const minViewportX =
+    floor(viewport.x);
+
+  const maxViewportX =
+    ceil(
+      viewport.x +
+      viewport.width
+    ) - 1;
+
+  const minViewportY =
+    floor(viewport.y);
+
+  const maxViewportY =
+    ceil(
+      viewport.y +
+      viewport.height
+    ) - 1;
+
+  if (
+    sx < minViewportX ||
+    sx > maxViewportX ||
+    sy < minViewportY ||
+    sy > maxViewportY
+  ) {
     return null;
   }
 
@@ -29,7 +57,12 @@ function floodFillRegion(g, startX, startY) {
   while (stack.length > 0) {
     const [x, y] = stack.pop();
 
-    if (x < 0 || x >= w || y < 0 || y >= h) {
+    if (
+      x < minViewportX ||
+      x > maxViewportX ||
+      y < minViewportY ||
+      y > maxViewportY
+    ) {
       continue;
     }
 
@@ -62,7 +95,13 @@ function floodFillRegion(g, startX, startY) {
     return null;
   }
 
-  const maxPixels = width * height * SETTINGS.fill.maxRegionFraction;
+  const viewportPixels =
+    viewport.width *
+    viewport.height;
+
+  const maxPixels =
+    viewportPixels *
+    SETTINGS.fill.maxRegionFraction;
 
   if (pixels.length > maxPixels) {
     return null;
