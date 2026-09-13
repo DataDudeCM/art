@@ -126,6 +126,16 @@ function prepareBoundaryRevealForAllCells() {
     activeViewport =
       cell.viewport;
 
+    const cellSeed =
+      getCellSeed(
+        generationSeed,
+        cell.row,
+        cell.col
+      );
+
+    randomSeed(cellSeed);
+    noiseSeed(cellSeed);
+
     const boundarySource =
       getActiveBoundarySource();
 
@@ -481,6 +491,16 @@ function startParticleAnimation() {
   for (const cell of animationState.cells) {
     activeViewport =
       cell.viewport;
+
+    const cellSeed =
+      getCellSeed(
+        generationSeed,
+        cell.row,
+        cell.col
+      );
+
+    randomSeed(cellSeed);
+    noiseSeed(cellSeed);
 
     cell.particleState =
       createParticleBoundaryState(

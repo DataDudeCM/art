@@ -256,8 +256,12 @@ function getPaletteNames() {
 }
 
 function randomPalette() {
-  const names = getPaletteNames();
-  const name = names[Math.floor(Math.random() * names.length)];
+  const names =
+    getPaletteNames();
+
+  const name =
+    random(names);
+
   return PALETTES[name];
 }
 
@@ -267,14 +271,19 @@ function getColors(paletteOrName) {
 }
 
 function randomColor(paletteOrName) {
-  const palette = resolvePalette(paletteOrName);
+  const palette =
+    resolvePalette(paletteOrName);
 
-  if (!palette || palette.colors.length === 0) {
+  if (
+    !palette ||
+    palette.colors.length === 0
+  ) {
     return null;
   }
 
-  const index = Math.floor(Math.random() * palette.colors.length);
-  return palette.colors[index].hex;
+  return random(
+    palette.colors
+  ).hex;
 }
 
 
@@ -298,7 +307,7 @@ function getColorByRole(paletteOrName, role, fallbackToRandom = true) {
   const matches = getColorsByRole(paletteOrName, role);
 
   if (matches.length > 0) {
-    return matches[Math.floor(Math.random() * matches.length)];
+    return random(matches);
   }
 
   return fallbackToRandom
@@ -348,7 +357,7 @@ function randomPaletteByTag(tag) {
     return null;
   }
 
-  return matches[Math.floor(Math.random() * matches.length)];
+  return random(matches);
 }
 
 

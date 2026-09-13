@@ -232,6 +232,18 @@ function getActiveGridSettings() {
   };
 }
 
+function getCellSeed(
+  baseSeed,
+  row,
+  col
+) {
+  return (
+    baseSeed +
+    row * 1009 +
+    col * 9176
+  ) % 1000000000;
+}
+
 function resolveActivePalette() {
 
   if (UI_STATE.paletteMode === "random") {
@@ -308,6 +320,16 @@ function generateArtwork() {
           grid.gutter,
           grid.outerMargin
         );
+
+      const cellSeed =
+        getCellSeed(
+          generationSeed,
+          row,
+          col
+        );
+
+      randomSeed(cellSeed);
+      noiseSeed(cellSeed);
 
       generateBoundary();
 
