@@ -109,6 +109,119 @@
       <div class="control-divider"></div>
 
       <section
+        class="control-group grid-group collapsible-group"
+      >
+        <button
+          type="button"
+          class="section-toggle"
+          aria-expanded="true"
+        >
+          <span>Grid</span>
+          <span class="section-arrow">▾</span>
+        </button>
+
+        <div class="section-content">
+
+          <div class="control-item">
+            <label class="checkbox-row">
+              <input
+                type="checkbox"
+                id="grid-enabled"
+              />
+              Enable Grid
+            </label>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-rows">
+              Rows
+            </label>
+
+            <div class="range-row">
+              <input
+                id="grid-rows"
+                type="range"
+                min="1"
+                max="8"
+                step="1"
+              />
+
+              <span
+                id="grid-rows-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-cols">
+              Columns
+            </label>
+
+            <div class="range-row">
+              <input
+                id="grid-cols"
+                type="range"
+                min="1"
+                max="8"
+                step="1"
+              />
+
+              <span
+                id="grid-cols-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-gutter">
+              Cell Border / Gutter
+            </label>
+
+            <div class="range-row">
+              <input
+                id="grid-gutter"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+
+              <span
+                id="grid-gutter-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+          <div class="control-item">
+            <label for="grid-outer-margin">
+              Outer Margin
+            </label>
+
+            <div class="range-row">
+              <input
+                id="grid-outer-margin"
+                type="range"
+                min="0"
+                max="150"
+                step="1"
+              />
+
+              <span
+                id="grid-outer-margin-value"
+                class="range-value"
+              ></span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <div class="control-divider"></div>
+
+      <section
         class="control-group texture-group collapsible-group collapsed" 
       >
         <button

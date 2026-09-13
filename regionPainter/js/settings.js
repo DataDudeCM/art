@@ -19,6 +19,16 @@ const SETTINGS = {
     showStructurePoints: false
   },
 
+  grid: {
+    enabled: false,
+
+    rows: 2,
+    cols: 2,
+
+    gutter: 20,      // space between cells
+    outerMargin: 20  // border around the whole grid
+  },
+
   boundary: {
     source: "chaikin", // "chaikin" | "particleChaikin" | "rectangle" | "drawn"
     pointCount: 30, // more points = more lines and potential intersections

@@ -183,6 +183,56 @@ function getGridViewport(
   };
 }
 
+function getActiveGridSettings() {
+  const rows =
+    constrain(
+      int(SETTINGS.grid?.rows || 1),
+      1,
+      8
+    );
+
+  const cols =
+    constrain(
+      int(SETTINGS.grid?.cols || 1),
+      1,
+      8
+    );
+
+  const gutter =
+    max(
+      0,
+      Number(SETTINGS.grid?.gutter || 0)
+    );
+
+  const outerMargin =
+    max(
+      0,
+      Number(SETTINGS.grid?.outerMargin || 0)
+    );
+
+  const enabled =
+    !!SETTINGS.grid?.enabled &&
+    (rows > 1 || cols > 1);
+
+  if (!enabled) {
+    return {
+      enabled: false,
+      rows: 1,
+      cols: 1,
+      gutter: 0,
+      outerMargin: 0
+    };
+  }
+
+  return {
+    enabled: true,
+    rows,
+    cols,
+    gutter,
+    outerMargin
+  };
+}
+
 function resolveActivePalette() {
 
   if (UI_STATE.paletteMode === "random") {
@@ -206,6 +256,52 @@ function resolveActivePalette() {
   }
 
   return randomPalette();
+}
+
+function getActiveGridSettings() {
+  const rows =
+    constrain(
+      int(SETTINGS.grid.rows),
+      1,
+      8
+    );
+
+  const cols =
+    constrain(
+      int(SETTINGS.grid.cols),
+      1,
+      8
+    );
+
+  const gutter =
+    max(
+      0,
+      Number(SETTINGS.grid.gutter)
+    );
+
+  const outerMargin =
+    max(
+      0,
+      Number(SETTINGS.grid.outerMargin)
+    );
+
+  if (!SETTINGS.grid.enabled) {
+    return {
+      enabled: false,
+      rows: 1,
+      cols: 1,
+      gutter: 0,
+      outerMargin: 0
+    };
+  }
+
+  return {
+    enabled: true,
+    rows,
+    cols,
+    gutter,
+    outerMargin
+  };
 }
 
 function generateArtwork() {
@@ -234,18 +330,42 @@ function generateArtwork() {
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
 
-  const boundaryStart = performance.now();
+  const grid =
+    getActiveGridSettings();
 
-  for (let row = 0; row < 2; row++) {
-    for (let col = 0; col < 2; col++) {
+  const totalCells =
+    grid.rows * grid.cols;
+
+  const attemptsPerCell =
+    max(
+      1,
+      floor(
+        SETTINGS.fill.attempts /
+        totalCells
+      )
+    );
+
+  const boundaryStart =
+    performance.now();
+
+  for (
+    let row = 0;
+    row < grid.rows;
+    row++
+  ) {
+    for (
+      let col = 0;
+      col < grid.cols;
+      col++
+    ) {
       activeViewport =
         getGridViewport(
           row,
           col,
-          2,
-          2,
-          20,
-          20
+          grid.rows,
+          grid.cols,
+          grid.gutter,
+          grid.outerMargin
         );
 
       generateBoundary();
@@ -254,7 +374,7 @@ function generateArtwork() {
 
       for (
         let i = 0;
-        i < SETTINGS.fill.attempts;
+        i < attemptsPerCell;
         i++
       ) {
         testRegion();
@@ -594,17 +714,25 @@ function requestGenerate() {
       SETTINGS.canvas.paperColor =
         getLightColor(palette);
 
+      const grid =
+        getActiveGridSettings();
+
       activeViewport =
         getGridViewport(
           0,
           0,
-          2,
-          2,
-          20,
-          20
+          grid.rows,
+          grid.cols,
+          grid.gutter,
+          grid.outerMargin
         );
 
-      if (SETTINGS.animation.enabled) {
+      const canAnimate =
+        SETTINGS.animation.enabled &&
+        grid.rows === 1 &&
+        grid.cols === 1;
+
+      if (canAnimate) {
         startGenerationAnimation();
       } else {
         generateArtwork();

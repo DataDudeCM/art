@@ -9,6 +9,7 @@ function setupUI() {
   setupSeedControls();
   setupViewControls();
   setupAnimationControls();
+  setupGridControls();
 
   document
     .getElementById("generate-button")
@@ -30,6 +31,77 @@ function setupUI() {
   });
 }
 
+function setupGridControls() {
+  const enabled =
+    document.getElementById(
+      "grid-enabled"
+    );
+
+  enabled.checked =
+    SETTINGS.grid.enabled;
+
+  enabled.addEventListener(
+    "change",
+    event => {
+      SETTINGS.grid.enabled =
+        event.target.checked;
+    }
+  );
+
+  setupRangeControl(
+    "grid-rows",
+    "grid-rows-value",
+    () => SETTINGS.grid.rows,
+    value => {
+      SETTINGS.grid.rows =
+        constrain(
+          int(value),
+          1,
+          8
+        );
+    }
+  );
+
+  setupRangeControl(
+    "grid-cols",
+    "grid-cols-value",
+    () => SETTINGS.grid.cols,
+    value => {
+      SETTINGS.grid.cols =
+        constrain(
+          int(value),
+          1,
+          8
+        );
+    }
+  );
+
+  setupRangeControl(
+    "grid-gutter",
+    "grid-gutter-value",
+    () => SETTINGS.grid.gutter,
+    value => {
+      SETTINGS.grid.gutter =
+        max(
+          0,
+          Number(value)
+        );
+    }
+  );
+
+  setupRangeControl(
+    "grid-outer-margin",
+    "grid-outer-margin-value",
+    () => SETTINGS.grid.outerMargin,
+    value => {
+      SETTINGS.grid.outerMargin =
+        max(
+          0,
+          Number(value)
+        );
+    }
+  );
+}
 
 function setupPresetControl() {
   const select =
@@ -1219,6 +1291,8 @@ function syncAllControls() {
   syncTextureControls();
   syncViewControls();
   syncAnimationControls();
+  syncGridControls();
+
   const boundarySource =
     document.getElementById("boundary-source");
 
@@ -1232,6 +1306,37 @@ function syncAllControls() {
   // Future:
   // syncPaintControls();
   // syncTextureControls();
+}
+
+function syncGridControls() {
+  document.getElementById(
+    "grid-enabled"
+  ).checked =
+    SETTINGS.grid.enabled;
+
+  syncRangeControl(
+    "grid-rows",
+    "grid-rows-value",
+    SETTINGS.grid.rows
+  );
+
+  syncRangeControl(
+    "grid-cols",
+    "grid-cols-value",
+    SETTINGS.grid.cols
+  );
+
+  syncRangeControl(
+    "grid-gutter",
+    "grid-gutter-value",
+    SETTINGS.grid.gutter
+  );
+
+  syncRangeControl(
+    "grid-outer-margin",
+    "grid-outer-margin-value",
+    SETTINGS.grid.outerMargin
+  );
 }
 
 function syncBoundaryControls() {
