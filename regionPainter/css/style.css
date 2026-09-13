@@ -1,3 +1,10 @@
+:root {
+  --ui-dark: #272727;
+  --ui-warm: #fed766;
+  --ui-cool: #009fb7;
+  --ui-neutral: #696773;
+  --ui-light: #eff1f3;
+}
 
 html,
 body {
@@ -6,8 +13,19 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: Arial, sans-serif;
-  background: #ddd6c8;
+
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: var(--ui-dark);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 #app {
@@ -27,20 +45,36 @@ body {
   display: block;
 }
 
+/* --------------------------------------------------
+   Control panel
+   -------------------------------------------------- */
+
 #controls {
   width: 260px;
-  box-sizing: border-box;
   padding: 22px;
-  background: #f2eee6;
-  border-left: 1px solid #c8c1b5;
+
+  background: var(--ui-dark);
+  color: var(--ui-light);
+
+  border-left:
+    1px solid var(--ui-neutral);
+
   overflow-y: auto;
 }
 
 #controls h1 {
   margin: 0 0 24px;
+
+  color: var(--ui-warm);
+
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
+
+/* --------------------------------------------------
+   Groups
+   -------------------------------------------------- */
 
 .setup-group {
   margin-bottom: 18px;
@@ -52,11 +86,13 @@ body {
 
 .control-group h2 {
   margin: 0 0 9px;
+
+  color: var(--ui-neutral);
+
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #5f5a52;
+  letter-spacing: 0.06em;
 }
 
 .control-item {
@@ -70,6 +106,9 @@ body {
 .control-item > label {
   display: block;
   margin-bottom: 3px;
+
+  color: var(--ui-light);
+
   font-size: 11px;
   font-weight: 600;
 }
@@ -77,50 +116,135 @@ body {
 .control-divider {
   height: 1px;
   margin: 12px 0 14px;
-  background: #c8c1b5;
+
+  background: var(--ui-neutral);
 }
+
+/* --------------------------------------------------
+   Inputs
+   -------------------------------------------------- */
 
 select,
-button {
+input[type="number"] {
   width: 100%;
-  box-sizing: border-box;
+
   padding: 6px 8px;
+
+  color: var(--ui-light);
+  background: var(--ui-dark);
+
+  border:
+    1px solid var(--ui-neutral);
+
+  border-radius: 3px;
+
   font-size: 12px;
+
+  outline: none;
 }
 
-button {
-  cursor: pointer;
-  margin-bottom: 12px;
+select:focus,
+input[type="number"]:focus {
+  border-color: var(--ui-warm);
 }
+
+/* --------------------------------------------------
+   Buttons
+   -------------------------------------------------- */
+
+button {
+  width: 100%;
+
+  padding: 6px 8px;
+  margin-bottom: 12px;
+
+  color: var(--ui-light);
+  background: transparent;
+
+  border:
+    1px solid var(--ui-cool);
+
+  border-radius: 3px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+button:hover {
+  color: var(--ui-dark);
+  background: var(--ui-cool);
+}
+
+#generate-button {
+  color: var(--ui-dark);
+  background: var(--ui-warm);
+
+  border-color: var(--ui-warm);
+
+  font-weight: 700;
+}
+
+#generate-button:hover {
+  background: var(--ui-cool);
+  border-color: var(--ui-cool);
+}
+
+/* --------------------------------------------------
+   Checkboxes
+   -------------------------------------------------- */
 
 .checkbox-row {
   display: flex !important;
   align-items: center;
   gap: 8px;
+
+  color: var(--ui-light);
+
+  font-size: 11px;
   font-weight: normal !important;
 }
 
 .checkbox-row input {
   margin: 0;
+
+  accent-color: var(--ui-warm);
 }
+
+/* --------------------------------------------------
+   Status
+   -------------------------------------------------- */
+
 .status {
   margin: 10px 0 12px;
   padding: 8px 10px;
-  border-radius: 6px;
+
+  border:
+    1px solid var(--ui-neutral);
+
+  border-radius: 4px;
+
   font-size: 13px;
-  border: 1px solid #c8c1b5;
 }
 
 .status.idle {
-  background: #f7f3ec;
-  color: #5f5a52;
+  color: var(--ui-neutral);
+  background: transparent;
 }
 
 .status.generating {
-  background: #e9efe8;
-  color: #2f4a34;
+  color: var(--ui-warm);
+  background: transparent;
+
+  border-color: var(--ui-warm);
+
   font-weight: 600;
 }
+
+/* --------------------------------------------------
+   Sliders
+   -------------------------------------------------- */
 
 .range-row {
   display: flex;
@@ -131,46 +255,67 @@ button {
 .range-row input[type="range"] {
   flex: 1;
   min-width: 0;
+
+  accent-color: var(--ui-warm);
+
+  cursor: pointer;
 }
 
 .range-value {
   width: 34px;
+
+  color: var(--ui-warm);
+
   text-align: right;
+
   font-size: 10px;
-  color: #5f5a52;
-  font-variant-numeric: tabular-nums;
+
+  font-variant-numeric:
+    tabular-nums;
 }
+
+/* --------------------------------------------------
+   Notes
+   -------------------------------------------------- */
 
 .control-note {
   margin-top: 3px;
+
+  color: var(--ui-neutral);
+
   font-size: 10px;
-  color: #8a8378;
 }
 
-.checkbox-row {
-  display: flex !important;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: normal !important;
-}
+/* --------------------------------------------------
+   Boundary / brush groups
+   -------------------------------------------------- */
 
 .boundary-group .control-item,
 .brush-group .control-item {
   margin-bottom: 8px;
 }
 
+/* --------------------------------------------------
+   Preset actions
+   -------------------------------------------------- */
+
 .preset-actions {
   display: flex;
   gap: 8px;
+
   margin-bottom: 12px;
 }
 
 .preset-actions button {
   flex: 1;
+
   width: auto;
   margin-bottom: 0;
 }
+
+/* --------------------------------------------------
+   Collapsible sections
+   -------------------------------------------------- */
 
 .section-toggle {
   display: flex;
@@ -178,29 +323,33 @@ button {
   justify-content: space-between;
 
   width: 100%;
+
   padding: 5px 0;
   margin: 0 0 8px;
 
-  border: 0;
+  color: var(--ui-neutral);
   background: transparent;
 
-  color: #5f5a52;
+  border: 0;
 
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 
   cursor: pointer;
 }
 
 .section-toggle:hover {
-  color: #2f2d29;
+  color: var(--ui-warm);
+  background: transparent;
 }
 
 .section-arrow {
   font-size: 20px;
-  transition: transform 0.15s ease;
+
+  transition:
+    transform 0.15s ease;
 }
 
 .collapsible-group.collapsed
@@ -210,13 +359,19 @@ button {
 
 .collapsible-group.collapsed
 .section-arrow {
-  transform: rotate(-90deg);
+  transform:
+    rotate(-90deg);
 }
 
 .collapsible-group.collapsed
 .section-toggle {
   margin-bottom: 0;
 }
+
+/* --------------------------------------------------
+   Seed row
+   -------------------------------------------------- */
+
 .seed-row {
   display: flex;
   gap: 8px;
