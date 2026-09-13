@@ -51,7 +51,8 @@ function paintRegion(region, g, baseColor) {
   compositeRegionPaint(
     tempLayer,
     region,
-    g
+    g,
+    activeViewport
   );
 
   paintRegionBleed(
@@ -60,7 +61,8 @@ function paintRegion(region, g, baseColor) {
     baseColor,
     brushMin,
     brushMax,
-    regionBrush
+    regionBrush,
+    activeViewport
   );
 
   tempLayer.remove();
@@ -129,12 +131,31 @@ function ensureRegionMaskCanvas() {
 function compositeRegionPaint(
   tempLayer,
   region,
-  targetLayer
+  targetLayer,
+  viewport = getFullCanvasViewport()
 ) {
   ensureRegionMaskCanvas();
 
   const maskPixels =
     regionMaskImageData.data;
+
+  const minViewportX =
+    floor(viewport.x);
+
+  const maxViewportX =
+    ceil(
+      viewport.x +
+      viewport.width
+    ) - 1;
+
+  const minViewportY =
+    floor(viewport.y);
+
+  const maxViewportY =
+    ceil(
+      viewport.y +
+      viewport.height
+    ) - 1;
 
   // Reset previous region mask.
   maskPixels.fill(0);
@@ -159,10 +180,10 @@ function compositeRegionPaint(
         const y = p.y + oy;
 
         if (
-          x < 0 ||
-          x >= width ||
-          y < 0 ||
-          y >= height
+          x < minViewportX ||
+          x > maxViewportX ||
+          y < minViewportY ||
+          y > maxViewportY
         ) {
           continue;
         }
@@ -202,10 +223,16 @@ function compositeRegionPaint(
 
   // Composite the already-clipped canvas
   // directly onto the final paint layer.
-  targetLayer.image(
-    tempLayer,
-    0,
-    0
+  drawClippedToViewport(
+    targetLayer,
+    viewport,
+    () => {
+      targetLayer.image(
+        tempLayer,
+        0,
+        0
+      );
+    }
   );
 }
 
@@ -215,7 +242,8 @@ function paintRegionBleed(
   baseColor,
   brushMin,
   brushMax,
-  regionBrush
+  regionBrush,
+  viewport = getFullCanvasViewport()
 ) {
   const edgePixels = findRegionEdgePixels(region);
 
@@ -228,41 +256,47 @@ function paintRegionBleed(
       ? regionBrush
       : chooseRegionBrush();
 
-  for (let i = 0; i < SETTINGS.paint.bleedMarks; i++) {
-    const p = random(edgePixels);
+  drawClippedToViewport(
+    g,
+    viewport,
+    () => {
+      for (let i = 0; i < SETTINGS.paint.bleedMarks; i++) {
+        const p = random(edgePixels);
 
-    const angle = random(TWO_PI);
-    const distance = random(SETTINGS.paint.bleedPixels);
+        const angle = random(TWO_PI);
+        const distance = random(SETTINGS.paint.bleedPixels);
 
-    const x = p.x + cos(angle) * distance;
-    const y = p.y + sin(angle) * distance;
+        const x = p.x + cos(angle) * distance;
+        const y = p.y + sin(angle) * distance;
 
-    const bleedT =
-      distance / max(1, SETTINGS.paint.bleedPixels);
+        const bleedT =
+          distance / max(1, SETTINGS.paint.bleedPixels);
 
-    // Smaller marks the farther they wander outward
-    const edgeScale = lerp(0.5, 0.05, bleedT);
+        // Smaller marks the farther they wander outward
+        const edgeScale = lerp(0.5, 0.05, bleedT);
 
-    const size = random(
-      brushMin * edgeScale,
-      brushMax * edgeScale
-    );
+        const size = random(
+          brushMin * edgeScale,
+          brushMax * edgeScale
+        );
 
-    const alpha = random(
-      SETTINGS.paint.bleedAlphaMin,
-      SETTINGS.paint.bleedAlphaMax
-    );
+        const alpha = random(
+          SETTINGS.paint.bleedAlphaMin,
+          SETTINGS.paint.bleedAlphaMax
+        );
 
-    stampBrush(
-      g,
-      x,
-      y,
-      size,
-      baseColor,
-      alpha,
-      bleedBrush
-    );
-  }
+        stampBrush(
+          g,
+          x,
+          y,
+          size,
+          baseColor,
+          alpha,
+          bleedBrush
+        );
+      }
+    }
+  );
 }
 
 function findRegionEdgePixels(region) {

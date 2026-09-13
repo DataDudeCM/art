@@ -73,7 +73,7 @@ const SETTINGS = {
   },
 
   animation: {
-    enabled: true,
+    enabled: false,
 
     mode: "progressive",
 

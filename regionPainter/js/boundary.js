@@ -89,6 +89,33 @@ function chaikin(points, iterations = 1) {
   return result;
 }
 
+function drawClippedToViewport(
+  g,
+  viewport,
+  drawFn
+) {
+  const clipViewport =
+    viewport || getFullCanvasViewport();
+
+  g.push();
+
+  const ctx = g.drawingContext;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(
+    clipViewport.x,
+    clipViewport.y,
+    clipViewport.width,
+    clipViewport.height
+  );
+  ctx.clip();
+
+  drawFn();
+
+  ctx.restore();
+  g.pop();
+}
+
 function drawDetectionBoundary(g, points, closed=true) {
 
   g.push();
@@ -398,16 +425,28 @@ function generateBoundary() {
 
 
   for (const stroke of strokes) {
-    drawDetectionBoundary(
+    drawClippedToViewport(
       boundaryDetectionLayer,
-      stroke.points,
-      stroke.closed
+      activeViewport,
+      () => {
+        drawDetectionBoundary(
+          boundaryDetectionLayer,
+          stroke.points,
+          stroke.closed
+        );
+      }
     );
 
-    drawVisibleBoundary(
+    drawClippedToViewport(
       boundaryLayer,
-      stroke.points,
-      stroke.closed
+      activeViewport,
+      () => {
+        drawVisibleBoundary(
+          boundaryLayer,
+          stroke.points,
+          stroke.closed
+        );
+      }
     );
   }
 
