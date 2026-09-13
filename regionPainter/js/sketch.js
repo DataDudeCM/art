@@ -648,6 +648,14 @@ function renderArtwork() {
       0
     );
   }
+
+  if (
+    SETTINGS.view.showStructureLines ||
+    SETTINGS.view.showStructurePoints
+  ) {
+    drawStructureOverlay();
+  }
+
   drawGridCellOutlines();
 }
 
@@ -768,11 +776,8 @@ function drawStructureOverlay() {
   ) {
     const {
       viewport,
-      controlPoints,
-      smoothedPoints
+      controlPoints
     } = cellData;
-
-    push();
 
     drawingContext.save();
 
@@ -787,7 +792,7 @@ function drawStructureOverlay() {
 
     if (
       SETTINGS.view.showStructureLines &&
-      smoothedPoints.length
+      controlPoints.length
     ) {
       noFill();
       stroke(20, 75);
@@ -796,7 +801,7 @@ function drawStructureOverlay() {
       beginShape();
 
       for (
-        const p of smoothedPoints
+        const p of controlPoints
       ) {
         vertex(
           p.x,
@@ -811,8 +816,9 @@ function drawStructureOverlay() {
       SETTINGS.view.showStructurePoints &&
       controlPoints.length
     ) {
-      noStroke();
-      fill(20, 110);
+      stroke(0,180);
+      strokeWeight(1);
+      fill(255, 180);
 
       for (
         const p of controlPoints
@@ -820,16 +826,21 @@ function drawStructureOverlay() {
         circle(
           p.x,
           p.y,
-          4
+          5
         );
       }
     }
 
     drawingContext.restore();
 
-    pop();
+    // Explicitly reset p5 style state
+    // before processing the next cell.
+    stroke(0);
+    strokeWeight(1);
+    noFill();
   }
 }
+
 function drawTextureOverlay() {
   if (!uploadedTextureImage) {
     return;
