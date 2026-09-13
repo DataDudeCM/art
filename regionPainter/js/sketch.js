@@ -258,52 +258,6 @@ function resolveActivePalette() {
   return randomPalette();
 }
 
-function getActiveGridSettings() {
-  const rows =
-    constrain(
-      int(SETTINGS.grid.rows),
-      1,
-      8
-    );
-
-  const cols =
-    constrain(
-      int(SETTINGS.grid.cols),
-      1,
-      8
-    );
-
-  const gutter =
-    max(
-      0,
-      Number(SETTINGS.grid.gutter)
-    );
-
-  const outerMargin =
-    max(
-      0,
-      Number(SETTINGS.grid.outerMargin)
-    );
-
-  if (!SETTINGS.grid.enabled) {
-    return {
-      enabled: false,
-      rows: 1,
-      cols: 1,
-      gutter: 0,
-      outerMargin: 0
-    };
-  }
-
-  return {
-    enabled: true,
-    rows,
-    cols,
-    gutter,
-    outerMargin
-  };
-}
-
 function generateArtwork() {
   const totalStart = performance.now();
 

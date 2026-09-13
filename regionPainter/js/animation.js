@@ -49,7 +49,9 @@ function startGenerationAnimation() {
       millis();
 
     animationState.particleState =
-      createParticleBoundaryState();
+      createParticleBoundaryState(
+        activeViewport
+      );
 
     animationState.particleTrails =
       animationState.particleState.particles.map(

@@ -63,7 +63,9 @@ function createParticleChaikinBoundarySource() {
 
     generate() {
       const controlPoints =
-        generateParticleControlPoints();
+        generateParticleControlPoints(
+          activeViewport
+        );
 
       return buildChaikinBoundaryFromControlPoints(
         controlPoints
@@ -72,7 +74,9 @@ function createParticleChaikinBoundarySource() {
   };
 }
 
-function generateParticleControlPoints() {
+function generateParticleControlPoints(
+  viewport = getFullCanvasViewport()
+) {
   const targetCount =
     max(4, SETTINGS.boundary.pointCount);
 
@@ -81,7 +85,8 @@ function generateParticleControlPoints() {
 
   const bounds =
     getParticleBounds(
-      SETTINGS.boundary.scale
+      SETTINGS.boundary.scale,
+      viewport
     );
 
   const particles = [];
@@ -188,20 +193,24 @@ function generateParticleControlPoints() {
   if (points.length < 4) {
     return generateControlPoints(
       targetCount,
-      SETTINGS.boundary.scale
+      SETTINGS.boundary.scale,
+      viewport
     );
   }
 
   return points;
 }
 
-function createParticleBoundaryState() {
+function createParticleBoundaryState(
+  viewport = getFullCanvasViewport()
+) {
   const particleCount =
     max(1, SETTINGS.particle.count);
 
   const bounds =
     getParticleBounds(
-      SETTINGS.boundary.scale
+      SETTINGS.boundary.scale,
+      viewport
     );
 
   return {
@@ -480,8 +489,14 @@ function updateBoundaryParticle(
       );
 
   particle.vel.add(steering);
-  if (SETTINGS.particle.motionMode === "attractor") {
-    applyAttractorForce(particle);
+  if (
+    SETTINGS.particle.motionMode ===
+    "attractor"
+  ) {
+    applyAttractorForce(
+      particle,
+      activeViewport
+    );
   }
 
   const speed =
@@ -527,11 +542,17 @@ function updateBoundaryParticle(
     0.77;
 }
 
-function applyAttractorForce(particle) {
+function applyAttractorForce(
+  particle,
+  viewport = getFullCanvasViewport()
+) {
   const attractor =
     createVector(
-      width / 2,
-      height / 2
+      viewport.x +
+        viewport.width / 2,
+
+      viewport.y +
+        viewport.height / 2
     );
 
   const force =
@@ -553,12 +574,25 @@ function applyAttractorForce(particle) {
   particle.vel.add(force);
 }
 
-function getParticleBounds(scale = 1.0) {
-  const cx = width / 2;
-  const cy = height / 2;
+function getParticleBounds(
+  scale = 1.0,
+  viewport = getFullCanvasViewport()
+) {
+  const cx =
+    viewport.x +
+    viewport.width / 2;
 
-  const halfW = (width / 2) * scale;
-  const halfH = (height / 2) * scale;
+  const cy =
+    viewport.y +
+    viewport.height / 2;
+
+  const halfW =
+    (viewport.width / 2) *
+    scale;
+
+  const halfH =
+    (viewport.height / 2) *
+    scale;
 
   return {
     minX: cx - halfW,
@@ -665,23 +699,59 @@ function createRectangleBoundarySource() {
     type: "rectangle",
 
     generate() {
-      const rectWidth = width * 0.35;
-      const rectHeight = height * 0.35;
+      const viewport =
+        activeViewport ||
+        getFullCanvasViewport();
 
-      const rectX = (width - rectWidth) / 2;
-      const rectY = (height - rectHeight) / 2;
+      const rectWidth =
+        viewport.width *
+        0.35 *
+        SETTINGS.boundary.scale;
+
+      const rectHeight =
+        viewport.height *
+        0.35 *
+        SETTINGS.boundary.scale;
+
+      const centerX =
+        viewport.x +
+        viewport.width / 2;
+
+      const centerY =
+        viewport.y +
+        viewport.height / 2;
+
+      const rectX =
+        centerX -
+        rectWidth / 2;
+
+      const rectY =
+        centerY -
+        rectHeight / 2;
 
       const points = [
-        { x: rectX, y: rectY },
-        { x: rectX + rectWidth, y: rectY },
-        { x: rectX + rectWidth, y: rectY + rectHeight },
-        { x: rectX, y: rectY + rectHeight }
+        {
+          x: rectX,
+          y: rectY
+        },
+        {
+          x: rectX + rectWidth,
+          y: rectY
+        },
+        {
+          x: rectX + rectWidth,
+          y: rectY + rectHeight
+        },
+        {
+          x: rectX,
+          y: rectY + rectHeight
+        }
       ];
 
       return {
         type: "path",
         controlPoints: [],
-        points: points,
+        points,
         closed: true
       };
     }
