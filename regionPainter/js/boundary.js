@@ -134,6 +134,7 @@ function drawVisibleBoundary(g, points, closed = true) {
   }
 
   const boundaryColor =
+    generationBoundaryColor ||
     getDarkColor(palette);
 
   stampBoundaryPath(

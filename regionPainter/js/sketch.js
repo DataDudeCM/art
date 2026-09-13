@@ -18,6 +18,7 @@ let currentPreset = null;
 let generationSeed = 12345;
 
 let generationRegionColors = new Map();
+let generationBoundaryColor = null;
 
 let perfStats = {
   floodMs: 0,
@@ -185,6 +186,9 @@ function generateArtwork() {
   paintLayer.clear();
 
   palette = resolveActivePalette();
+
+  generationBoundaryColor =
+    getDarkColor(palette);
 
   updateActivePaletteDisplay();
 
@@ -525,6 +529,9 @@ function requestGenerate() {
       noiseSeed(generationSeed);
 
       palette = resolveActivePalette();
+
+      generationBoundaryColor =
+        getDarkColor(palette);
       updateActivePaletteDisplay();
 
       SETTINGS.canvas.paperColor =

@@ -1,0 +1,35 @@
+{
+  "presetVersion": 1,
+  "presetName": "StainedGlass",
+  "updatedAt": "2026-09-12T02:32:56.369Z",
+  "paletteKey": "arcaneBlue",
+  "paletteName": "Arcane Blue",
+  "settings": {
+    "canvas": {
+      "paperColor": "#29366f"
+    },
+    "boundary": {
+      "pointCount": 20,
+      "subdivisions": 1,
+      "scale": 2.25,
+      "forcedBrush": "Watercolor 6.png",
+      "thinBrushSize": 34,
+      "midSizeMultiplier": 1,
+      "brushAlpha": 179,
+      "sizeJitter": 0.025
+    },
+    "fill": {
+      "attempts": 142,
+      "centerWeight": 79
+    },
+    "paint": {
+      "marksPerRegion": 284,
+      "fillStrength": 14,
+      "opacityVariation": 33,
+      "forcedFillBrush": "Watercolor 2.png",
+      "brushSizeMin": 38,
+      "alphaMin": 1,
+      "alphaMax": 9
+    }
+  }
+}

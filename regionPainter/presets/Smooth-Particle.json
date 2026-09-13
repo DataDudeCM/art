@@ -1,0 +1,46 @@
+{
+  "presetVersion": 1,
+  "presetName": "Smooth Particle",
+  "updatedAt": "2026-09-13T00:17:37.365Z",
+  "paletteKey": "dustyNeutral",
+  "paletteName": "Dusty Neutral",
+  "settings": {
+    "canvas": {
+      "paperColor": "#eef0f2"
+    },
+    "boundary": {
+      "source": "particleChaikin",
+      "scale": 1.75,
+      "forcedBrush": "Acrylic Basic.png",
+      "thinBrushSize": 5,
+      "midSizeMultiplier": 2.9,
+      "brushAlpha": 85,
+      "sizeJitter": 0.02
+    },
+    "particle": {
+      "count": 6,
+      "samplingMode": "headingChange",
+      "headingChangeThreshold": 0.4188790204786391,
+      "maxSpeed": 14,
+      "attractorStrength": 0.09
+    },
+    "fill": {
+      "attempts": 99,
+      "centerWeight": 78,
+      "colorMode": "randomPerHit"
+    },
+    "paint": {
+      "marksPerRegion": 271,
+      "maskExpansionPixels": 1,
+      "fillStrength": 56,
+      "opacityVariation": 25,
+      "bleedStrength": 40,
+      "forcedFillBrush": "Guache.png",
+      "brushSizeMax": 236,
+      "alphaMin": 8,
+      "alphaMax": 15,
+      "bleedAlphaMin": 2,
+      "bleedAlphaMax": 8
+    }
+  }
+}

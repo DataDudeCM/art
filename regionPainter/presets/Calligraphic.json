@@ -1,0 +1,48 @@
+{
+  "presetVersion": 1,
+  "presetName": "Calligraphic",
+  "updatedAt": "2026-09-13T00:24:12.378Z",
+  "paletteKey": "oceanDepths",
+  "paletteName": "Ocean Depths",
+  "settings": {
+    "canvas": {
+      "paperColor": "#b3cde0"
+    },
+    "boundary": {
+      "source": "particleChaikin",
+      "subdivisions": 5,
+      "scale": 1.75,
+      "forcedBrush": "Acrylic Basic.png",
+      "thinBrushSize": 16,
+      "midSizeMultiplier": 2.9,
+      "brushAlpha": 20,
+      "sizeJitter": 0.02
+    },
+    "particle": {
+      "count": 4,
+      "samplingMode": "headingChange",
+      "motionMode": "attractor",
+      "headingChangeThreshold": 0.4188790204786391,
+      "maxSpeed": 14,
+      "attractorStrength": 0.09
+    },
+    "fill": {
+      "attempts": 69,
+      "centerWeight": 78,
+      "colorMode": "randomPerHit"
+    },
+    "paint": {
+      "marksPerRegion": 271,
+      "maskExpansionPixels": 1,
+      "fillStrength": 56,
+      "opacityVariation": 25,
+      "bleedStrength": 40,
+      "forcedFillBrush": "Random.png",
+      "brushSizeMax": 236,
+      "alphaMin": 8,
+      "alphaMax": 15,
+      "bleedAlphaMin": 2,
+      "bleedAlphaMax": 8
+    }
+  }
+}

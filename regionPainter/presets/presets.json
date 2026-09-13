@@ -1,6 +1,12 @@
 {
   "presets": [
     "Procedural-1.json",
+    "Broken-Glass.json",
+    "Calligraphic.json",
+    "Chaikin-Charcoal-Smudge.json",
+    "Chaikin-Crisp.json",
+    "Pastel-Wash.json",
+    "StainedGlass.json",
     "Image-1.json",
     "PastelWash.json",
     "Jellyfish.json",

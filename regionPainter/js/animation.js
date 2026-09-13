@@ -326,9 +326,16 @@ function updateAnimation() {
 
     case ANIMATION_PHASE.BOUNDARY:
       updateBoundaryReveal();
-      renderPartialBoundary(
-        animationState.boundaryReady
-      );
+
+      if (
+        animationState.phase ===
+        ANIMATION_PHASE.BOUNDARY
+      ) {
+        renderPartialBoundary(
+          animationState.boundaryReady
+        );
+      }
+
       break;
 
     case ANIMATION_PHASE.PAINT_PREP:

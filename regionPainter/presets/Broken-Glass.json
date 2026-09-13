@@ -1,0 +1,46 @@
+{
+  "presetVersion": 1,
+  "presetName": "Broken Glass",
+  "updatedAt": "2026-09-13T00:39:14.706Z",
+  "paletteKey": "dustyNeutral",
+  "paletteName": "Dusty Neutral",
+  "settings": {
+    "canvas": {
+      "paperColor": "#eef0f2"
+    },
+    "boundary": {
+      "subdivisions": 1,
+      "scale": 1.75,
+      "forcedBrush": "Watercolor 1.png",
+      "thinBrushSize": 5,
+      "midSizeMultiplier": 1,
+      "brushAlpha": 74,
+      "sizeJitter": 0.02
+    },
+    "particle": {
+      "count": 4,
+      "samplingMode": "headingChange",
+      "headingChangeThreshold": 0.4188790204786391,
+      "maxSpeed": 13.5,
+      "attractorStrength": 0.09
+    },
+    "fill": {
+      "attempts": 97,
+      "centerWeight": 78,
+      "colorMode": "randomPerHit"
+    },
+    "paint": {
+      "marksPerRegion": 63,
+      "maskExpansionPixels": 1,
+      "fillStrength": 45,
+      "opacityVariation": 73,
+      "bleedStrength": 40,
+      "forcedFillBrush": "Random.png",
+      "brushSizeMax": 361,
+      "alphaMin": 1,
+      "alphaMax": 21,
+      "bleedAlphaMin": 2,
+      "bleedAlphaMax": 8
+    }
+  }
+}

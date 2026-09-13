@@ -1,0 +1,35 @@
+{
+  "presetVersion": 1,
+  "presetName": "Chaikin - Crisp",
+  "updatedAt": "2026-09-12T23:52:42.338Z",
+  "paletteKey": "oceanDepths",
+  "paletteName": "Ocean Depths",
+  "settings": {
+    "canvas": {
+      "paperColor": "#b3cde0"
+    },
+    "boundary": {
+      "pointCount": 25,
+      "scale": 1.5,
+      "forcedBrush": "Acrylic Basic.png",
+      "thinBrushSize": 10,
+      "midSizeMultiplier": 2.9,
+      "sizeJitter": 0.02
+    },
+    "fill": {
+      "attempts": 70
+    },
+    "paint": {
+      "marksPerRegion": 386,
+      "maskExpansionPixels": 1,
+      "fillStrength": 32,
+      "bleedStrength": 40,
+      "forcedFillBrush": "Watercolor 1.png",
+      "brushSizeMax": 164,
+      "alphaMin": 2,
+      "alphaMax": 12,
+      "bleedAlphaMin": 2,
+      "bleedAlphaMax": 8
+    }
+  }
+}
