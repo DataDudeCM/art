@@ -9,85 +9,155 @@ const ANIMATION_PHASE = {
 
 let animationState = null;
 
-function createAnimationState() {
+
+// --------------------------------------------------
+// State creation
+// --------------------------------------------------
+
+function createAnimationCell(
+  row,
+  col,
+  viewport,
+  attemptsPerCell
+) {
   return {
-    phase: ANIMATION_PHASE.IDLE,
-
-    particleState: null,
-
-    collectedControlPoints: [],
-    revealedBoundaryCount: 0,
-    lastBoundaryRevealCount: 0,
-    particleStartMs: 0,
-    paintAttemptsRemaining: 0,
+    row,
+    col,
+    viewport,
 
     boundaryReady: null,
-    paintQueue: [],
+    boundaryFinalized: false,
 
+    revealedBoundaryCount: 0,
+    lastBoundaryRevealCount: 0,
+
+    particleState: null,
     particleTrails: [],
     sampledPoints: [],
 
-    pauseUntilMs: 0
+    paintAttemptsRemaining:
+      attemptsPerCell
   };
 }
 
-//set correct starting phase and initialize state for that phase
+
+function createAnimationState() {
+  const grid =
+    getActiveGridSettings();
+
+  const cells = [];
+
+  for (
+    let row = 0;
+    row < grid.rows;
+    row++
+  ) {
+    for (
+      let col = 0;
+      col < grid.cols;
+      col++
+    ) {
+      const viewport =
+        getGridViewport(
+          row,
+          col,
+          grid.rows,
+          grid.cols,
+          grid.gutter,
+          grid.outerMargin
+        );
+
+      cells.push(
+        createAnimationCell(
+          row,
+          col,
+          viewport,
+          SETTINGS.fill.attempts
+        )
+      );
+    }
+  }
+
+  return {
+    phase: ANIMATION_PHASE.IDLE,
+
+    cells,
+
+    particleStartMs: 0,
+    pauseUntilMs: 0,
+
+    nextPaintCellIndex: 0
+  };
+}
+
+
+// --------------------------------------------------
+// Start
+// --------------------------------------------------
+
 function startGenerationAnimation() {
-  animationState = createAnimationState();
+  animationState =
+    createAnimationState();
 
   boundaryDetectionLayer.clear();
   boundaryLayer.clear();
   paintLayer.clear();
 
-  generationRegionColors = new Map();
+  generationRegionColors =
+    new Map();
 
-  if (SETTINGS.boundary.source === "particleChaikin") {
-    animationState.phase =
-      ANIMATION_PHASE.PARTICLE;
-
-    animationState.particleStartMs =
-      millis();
-
-    animationState.particleState =
-      createParticleBoundaryState(
-        activeViewport
-      );
-
-    animationState.particleTrails =
-      animationState.particleState.particles.map(
-        particle => [
-          {
-            x: particle.pos.x,
-            y: particle.pos.y
-          }
-        ]
-      );
+  if (
+    SETTINGS.boundary.source ===
+    "particleChaikin"
+  ) {
+    startParticleAnimation();
   } else {
-    prepareBoundaryRevealFromCurrentSource();
+    prepareBoundaryRevealForAllCells();
   }
 }
 
-function prepareBoundaryRevealFromCurrentSource() {
-  const boundarySource =
-    getActiveBoundarySource();
 
-  const boundary =
-    boundarySource.generate();
+// --------------------------------------------------
+// Non-particle boundary preparation
+// --------------------------------------------------
 
-  boundaryControlPoints =
-    boundary.controlPoints || [];
+function prepareBoundaryRevealForAllCells() {
+  for (const cell of animationState.cells) {
+    activeViewport =
+      cell.viewport;
 
-  animationState.boundaryReady = boundary;
+    const boundarySource =
+      getActiveBoundarySource();
 
-  animationState.revealedBoundaryCount = 0;
-  animationState.lastBoundaryRevealCount = 0;
+    const boundary =
+      boundarySource.generate();
 
-  boundaryLayer.clear();
+    cell.boundaryReady =
+      boundary;
 
-  // Drawn boundaries are multi-stroke and do not use
-  // the single-path animated reveal.
-  if (boundary.strokes) {
-    finalizeBoundaryForDetection(boundary);
+    cell.revealedBoundaryCount = 0;
+    cell.lastBoundaryRevealCount = 0;
+    cell.boundaryFinalized = false;
+
+    // Multi-stroke sources such as drawn boundaries
+    // don't currently use progressive path reveal.
+    if (boundary.strokes) {
+      finalizeBoundaryForCell(
+        boundary,
+        cell.viewport
+      );
+
+      cell.boundaryFinalized = true;
+    }
+  }
+
+  const allFinalized =
+    animationState.cells.every(
+      cell => cell.boundaryFinalized
+    );
+
+  if (allFinalized) {
+    boundaryDetectionLayer.loadPixels();
 
     animationState.pauseUntilMs =
       millis() +
@@ -103,57 +173,83 @@ function prepareBoundaryRevealFromCurrentSource() {
     ANIMATION_PHASE.BOUNDARY;
 }
 
-function finishParticlePhase() {
-  const controlPoints =
-    finalizeParticleBoundaryPoints(
-      animationState.particleState
-    );
 
-  const boundary =
-    buildChaikinBoundaryFromControlPoints(
-      controlPoints
-    );
-
-  animationState.collectedControlPoints =
-    controlPoints.map(p => p.copy());
-
-  animationState.boundaryReady = boundary;
-
-  animationState.revealedBoundaryCount = 0;
-  animationState.lastBoundaryRevealCount = 0;
-
-  boundaryLayer.clear();
-
-  animationState.phase =
-    ANIMATION_PHASE.BOUNDARY;
-}
+// --------------------------------------------------
+// Boundary reveal
+// --------------------------------------------------
 
 function updateBoundaryReveal() {
-  const boundary =
-    animationState.boundaryReady;
-
-  if (
-    !boundary ||
-    !boundary.points ||
-    boundary.points.length === 0
-  ) {
-    return;
-  }
-
-  const total =
-    boundary.points.length;
-
-  animationState.revealedBoundaryCount =
-    min(
-      total,
-      animationState.revealedBoundaryCount +
-        SETTINGS.animation.boundaryRevealPointsPerFrame
+  const cellCount =
+    max(
+      1,
+      animationState.cells.length
     );
 
-  if (
-    animationState.revealedBoundaryCount >= total
-  ) {
-    finalizeBoundaryForDetection(boundary);
+  // Keep boundary-reveal workload roughly stable
+  // as the grid gets larger.
+  const pointsPerCell =
+    max(
+      1,
+      floor(
+        SETTINGS.animation
+          .boundaryRevealPointsPerFrame /
+        cellCount
+      )
+    );
+
+  for (const cell of animationState.cells) {
+    if (cell.boundaryFinalized) {
+      continue;
+    }
+
+    const boundary =
+      cell.boundaryReady;
+
+    if (
+      !boundary ||
+      !boundary.points ||
+      boundary.points.length === 0
+    ) {
+      cell.boundaryFinalized = true;
+      continue;
+    }
+
+    const total =
+      boundary.points.length;
+
+    cell.revealedBoundaryCount =
+      min(
+        total,
+        cell.revealedBoundaryCount +
+          pointsPerCell
+      );
+
+    renderPartialBoundaryForCell(
+      cell
+    );
+
+    if (
+      cell.revealedBoundaryCount >=
+      total
+    ) {
+      finalizeBoundaryForCell(
+        boundary,
+        cell.viewport
+      );
+
+      cell.boundaryFinalized = true;
+    }
+  }
+
+  const allComplete =
+    animationState.cells.every(
+      cell => cell.boundaryFinalized
+    );
+
+  if (allComplete) {
+    // All cell boundaries now exist in the
+    // shared detection layer.
+    boundaryDetectionLayer.loadPixels();
 
     animationState.pauseUntilMs =
       millis() +
@@ -164,7 +260,13 @@ function updateBoundaryReveal() {
   }
 }
 
-function renderPartialBoundary(boundary) {
+
+function renderPartialBoundaryForCell(
+  cell
+) {
+  const boundary =
+    cell.boundaryReady;
+
   if (!boundary) {
     return;
   }
@@ -172,11 +274,11 @@ function renderPartialBoundary(boundary) {
   const from =
     max(
       0,
-      animationState.lastBoundaryRevealCount - 1
+      cell.lastBoundaryRevealCount - 1
     );
 
   const to =
-    animationState.revealedBoundaryCount;
+    cell.revealedBoundaryCount;
 
   if (to - from < 2) {
     return;
@@ -188,113 +290,162 @@ function renderPartialBoundary(boundary) {
       to
     );
 
-  drawVisibleBoundary(
+  activeViewport =
+    cell.viewport;
+
+  drawClippedToViewport(
     boundaryLayer,
-    newPoints,
-    false
+    cell.viewport,
+    () => {
+      drawVisibleBoundary(
+        boundaryLayer,
+        newPoints,
+        false
+      );
+    }
   );
 
-  animationState.lastBoundaryRevealCount =
-    animationState.revealedBoundaryCount;
+  cell.lastBoundaryRevealCount =
+    cell.revealedBoundaryCount;
 }
 
-function finalizeBoundaryForDetection(boundary) {
+
+// --------------------------------------------------
+// Final boundary rendering
+// --------------------------------------------------
+
+function finalizeBoundaryForCell(
+  boundary,
+  viewport
+) {
+  activeViewport =
+    viewport;
+
+  // These remain useful for the existing
+  // structure/debug display.
   boundaryControlPoints =
     boundary.controlPoints || [];
 
   boundarySmoothedPoints =
     boundary.points || [];
 
-  boundaryDetectionLayer.clear();
-  boundaryLayer.clear();
-
   const strokes =
     boundary.strokes || [
       {
-        points: boundary.points || [],
-        closed: boundary.closed ?? true
+        points:
+          boundary.points || [],
+
+        closed:
+          boundary.closed ?? true
       }
     ];
 
   for (const stroke of strokes) {
-    drawDetectionBoundary(
+    drawClippedToViewport(
       boundaryDetectionLayer,
-      stroke.points,
-      stroke.closed
+      viewport,
+      () => {
+        drawDetectionBoundary(
+          boundaryDetectionLayer,
+          stroke.points,
+          stroke.closed
+        );
+      }
     );
 
-    drawVisibleBoundary(
+    drawClippedToViewport(
       boundaryLayer,
-      stroke.points,
-      stroke.closed
+      viewport,
+      () => {
+        drawVisibleBoundary(
+          boundaryLayer,
+          stroke.points,
+          stroke.closed
+        );
+      }
     );
   }
-
-  boundaryDetectionLayer.loadPixels();
 }
 
-function buildPaintQueue() {
-  const queue = [];
 
-  for (let i = 0; i < SETTINGS.fill.attempts; i++) {
-    const samplePoint =
-      getFillSamplePoint();
+// --------------------------------------------------
+// Painting
+// --------------------------------------------------
 
-    const x = samplePoint.x;
-    const y = samplePoint.y;
+function getNextPaintCell() {
+  const cells =
+    animationState.cells;
 
-    const region =
-      floodFillRegion(
-        boundaryDetectionLayer,
-        x,
-        y
-      );
-
-    if (!region) continue;
-
-    const regionColor =
-      getRegionPaintColor(
-        region,
-        palette
-      );
-
-    queue.push({
-      region,
-      color: regionColor
-    });
+  if (!cells.length) {
+    return null;
   }
 
-  return queue;
-}
+  for (
+    let offset = 0;
+    offset < cells.length;
+    offset++
+  ) {
+    const index =
+      (
+        animationState.nextPaintCellIndex +
+        offset
+      ) %
+      cells.length;
 
-function updateProgressivePaint() {
-  const count =
-    SETTINGS.animation.paintEventsPerFrame;
-
-  for (let i = 0; i < count; i++) {
+    const cell =
+      cells[index];
 
     if (
-      animationState.paintAttemptsRemaining <= 0
+      cell.paintAttemptsRemaining > 0
     ) {
+      animationState.nextPaintCellIndex =
+        (index + 1) %
+        cells.length;
+
+      return cell;
+    }
+  }
+
+  return null;
+}
+
+
+function updateProgressivePaint() {
+  const eventCount =
+    SETTINGS.animation
+      .paintEventsPerFrame;
+
+  for (
+    let i = 0;
+    i < eventCount;
+    i++
+  ) {
+    const cell =
+      getNextPaintCell();
+
+    if (!cell) {
       animationState.phase =
         ANIMATION_PHASE.COMPLETE;
 
       return;
     }
 
-    animationState.paintAttemptsRemaining--;
+    cell.paintAttemptsRemaining--;
+
+    activeViewport =
+      cell.viewport;
 
     const samplePoint =
-      getFillSamplePoint();
-
-    const x = samplePoint.x;
-    const y = samplePoint.y;
+      getFillSamplePoint(
+        cell.viewport
+      );
 
     const region =
       floodFillRegion(
         boundaryDetectionLayer,
-        x,
-        y
+        samplePoint.x,
+        samplePoint.y,
+        cell.viewport
       );
 
     if (!region) {
@@ -315,6 +466,205 @@ function updateProgressivePaint() {
   }
 }
 
+
+// --------------------------------------------------
+// Particle animation
+// --------------------------------------------------
+
+function startParticleAnimation() {
+  animationState.phase =
+    ANIMATION_PHASE.PARTICLE;
+
+  animationState.particleStartMs =
+    millis();
+
+  for (const cell of animationState.cells) {
+    activeViewport =
+      cell.viewport;
+
+    cell.particleState =
+      createParticleBoundaryState(
+        cell.viewport
+      );
+
+    cell.particleTrails =
+      cell.particleState.particles.map(
+        particle => [
+          {
+            x: particle.pos.x,
+            y: particle.pos.y
+          }
+        ]
+      );
+
+    cell.sampledPoints = [];
+  }
+}
+
+
+function updateParticlePhase() {
+  let allDone = true;
+
+  for (const cell of animationState.cells) {
+    activeViewport =
+      cell.viewport;
+
+    const state =
+      cell.particleState;
+
+    if (!state) {
+      continue;
+    }
+
+    for (
+      let step = 0;
+      step <
+        SETTINGS.animation
+          .particleStepsPerFrame;
+      step++
+    ) {
+      let samples = [];
+
+      if (!state.done) {
+        samples =
+          stepParticleBoundaryState(
+            state
+          );
+      } else {
+        moveParticleBoundaryState(
+          state
+        );
+      }
+
+      updateParticleTrails(
+        cell
+      );
+
+      for (const sample of samples) {
+        cell.sampledPoints.push({
+          x: sample.point.x,
+          y: sample.point.y
+        });
+      }
+    }
+
+    if (!state.done) {
+      allDone = false;
+    }
+  }
+
+  const elapsed =
+    millis() -
+    animationState.particleStartMs;
+
+  if (
+    allDone &&
+    elapsed >=
+      SETTINGS.animation
+        .particleMinDurationMs
+  ) {
+    finishParticlePhaseForAllCells();
+  }
+}
+
+
+function updateParticleTrails(
+  cell
+) {
+  const state =
+    cell.particleState;
+
+  const bounds =
+    state.bounds;
+
+  const boundsWidth =
+    bounds.maxX -
+    bounds.minX;
+
+  const boundsHeight =
+    bounds.maxY -
+    bounds.minY;
+
+  for (
+    let i = 0;
+    i < state.particles.length;
+    i++
+  ) {
+    const particle =
+      state.particles[i];
+
+    const trail =
+      cell.particleTrails[i];
+
+    const previous =
+      trail[
+        trail.length - 1
+      ];
+
+    const current = {
+      x: particle.pos.x,
+      y: particle.pos.y
+    };
+
+    if (previous) {
+      const dx =
+        abs(
+          current.x -
+          previous.x
+        );
+
+      const dy =
+        abs(
+          current.y -
+          previous.y
+        );
+
+      const wrapped =
+        dx > boundsWidth * 0.5 ||
+        dy > boundsHeight * 0.5;
+
+      if (wrapped) {
+        trail.push(null);
+      }
+    }
+
+    trail.push(current);
+  }
+}
+
+
+function finishParticlePhaseForAllCells() {
+  for (const cell of animationState.cells) {
+    activeViewport =
+      cell.viewport;
+
+    const controlPoints =
+      finalizeParticleBoundaryPoints(
+        cell.particleState
+      );
+
+    const boundary =
+      buildChaikinBoundaryFromControlPoints(
+        controlPoints
+      );
+
+    cell.boundaryReady =
+      boundary;
+
+    cell.revealedBoundaryCount = 0;
+    cell.lastBoundaryRevealCount = 0;
+    cell.boundaryFinalized = false;
+  }
+
+  animationState.phase =
+    ANIMATION_PHASE.BOUNDARY;
+}
+
+
+// --------------------------------------------------
+// Main animation update
+// --------------------------------------------------
+
 function updateAnimation() {
   if (!animationState) {
     return;
@@ -328,23 +678,13 @@ function updateAnimation() {
 
     case ANIMATION_PHASE.BOUNDARY:
       updateBoundaryReveal();
-
-      if (
-        animationState.phase ===
-        ANIMATION_PHASE.BOUNDARY
-      ) {
-        renderPartialBoundary(
-          animationState.boundaryReady
-        );
-      }
-
       break;
 
     case ANIMATION_PHASE.PAINT_PREP:
-      if (millis() >= animationState.pauseUntilMs) {
-        animationState.paintAttemptsRemaining =
-          SETTINGS.fill.attempts;
-
+      if (
+        millis() >=
+        animationState.pauseUntilMs
+      ) {
         animationState.phase =
           ANIMATION_PHASE.PAINT;
       }
@@ -361,100 +701,33 @@ function updateAnimation() {
   }
 }
 
-function updateParticlePhase() {
-  const state =
-    animationState.particleState;
 
-  if (!state) {
+// --------------------------------------------------
+// Particle overlay
+// --------------------------------------------------
+
+function renderAnimationOverlay() {
+  if (
+    !animationState ||
+    animationState.phase !==
+      ANIMATION_PHASE.PARTICLE
+  ) {
     return;
   }
 
-  for (
-    let step = 0;
-    step < SETTINGS.animation.particleStepsPerFrame;
-    step++
-  ) {
-    let samples = [];
-
-    if (!state.done) {
-      samples =
-        stepParticleBoundaryState(state);
-    } else {
-      moveParticleBoundaryState(state);
-    }
-
-    for (
-      let i = 0;
-      i < state.particles.length;
-      i++
-    ) {
-      const particle =
-        state.particles[i];
-
-      const trail =
-        animationState.particleTrails[i];
-
-      const previous =
-        trail[trail.length - 1];
-
-      const current = {
-        x: particle.pos.x,
-        y: particle.pos.y
-      };
-
-      if (previous) {
-        const dx =
-          abs(current.x - previous.x);
-
-        const dy =
-          abs(current.y - previous.y);
-
-        const wrapped =
-          dx > width * 0.5 ||
-          dy > height * 0.5;
-
-        if (wrapped) {
-          trail.push(null);
-        }
-      }
-
-      trail.push(current);
-    }
-
-    for (const sample of samples) {
-      animationState.sampledPoints.push({
-        x: sample.point.x,
-        y: sample.point.y
-      });
-    }
-  }
-
-  if (state.done) {
-    const elapsed =
-      millis() - animationState.particleStartMs;
-
-    if (
-      elapsed >=
-      SETTINGS.animation.particleMinDurationMs
-    ) {
-      finishParticlePhase();
-    }
+  for (const cell of animationState.cells) {
+    renderParticleCellOverlay(
+      cell
+    );
   }
 }
 
-function renderAnimationOverlay() {
-  if (!animationState) {
-    return;
-  }
 
-  if (
-    animationState.phase !== ANIMATION_PHASE.PARTICLE
-  ) {
-    return;
-  }
-
+function renderParticleCellOverlay(
+  cell
+) {
   const state =
-    animationState.particleState;
+    cell.particleState;
 
   if (!state) {
     return;
@@ -462,19 +735,39 @@ function renderAnimationOverlay() {
 
   push();
 
+  const ctx =
+    drawingContext;
+
+  ctx.save();
+  ctx.beginPath();
+
+  ctx.rect(
+    cell.viewport.x,
+    cell.viewport.y,
+    cell.viewport.width,
+    cell.viewport.height
+  );
+
+  ctx.clip();
+
   // Trails
-  if (SETTINGS.animation.showParticleTrail) {
+  if (
+    SETTINGS.animation
+      .showParticleTrail
+  ) {
     noFill();
 
     stroke(
       30,
-      SETTINGS.animation.trailAlpha
+      SETTINGS.animation
+        .trailAlpha
     );
 
     strokeWeight(1);
 
     for (
-      const trail of animationState.particleTrails
+      const trail of
+        cell.particleTrails
     ) {
       if (trail.length < 2) {
         continue;
@@ -497,7 +790,10 @@ function renderAnimationOverlay() {
           drawing = true;
         }
 
-        vertex(p.x, p.y);
+        vertex(
+          p.x,
+          p.y
+        );
       }
 
       if (drawing) {
@@ -506,30 +802,36 @@ function renderAnimationOverlay() {
     }
   }
 
-  // Deposited control points
+  // Sampled control points
   noStroke();
   fill(20, 180);
 
   for (
-    const p of animationState.sampledPoints
+    const p of cell.sampledPoints
   ) {
     circle(
       p.x,
       p.y,
-      SETTINGS.animation.sampleDotSize
+      SETTINGS.animation
+        .sampleDotSize
     );
   }
 
   // Current particles
   fill(20);
 
-  for (const particle of state.particles) {
+  for (
+    const particle of
+      state.particles
+  ) {
     circle(
       particle.pos.x,
       particle.pos.y,
       8
     );
   }
+
+  ctx.restore();
 
   pop();
 }

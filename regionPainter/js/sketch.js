@@ -287,18 +287,6 @@ function generateArtwork() {
   const grid =
     getActiveGridSettings();
 
-  const totalCells =
-    grid.rows * grid.cols;
-
-  const attemptsPerCell =
-    max(
-      1,
-      floor(
-        SETTINGS.fill.attempts /
-        totalCells
-      )
-    );
-
   const boundaryStart =
     performance.now();
 
@@ -328,7 +316,7 @@ function generateArtwork() {
 
       for (
         let i = 0;
-        i < attemptsPerCell;
+        i < SETTINGS.fill.attempts;
         i++
       ) {
         testRegion();
@@ -681,12 +669,7 @@ function requestGenerate() {
           grid.outerMargin
         );
 
-      const canAnimate =
-        SETTINGS.animation.enabled &&
-        grid.rows === 1 &&
-        grid.cols === 1;
-
-      if (canAnimate) {
+      if (SETTINGS.animation.enabled) {
         startGenerationAnimation();
       } else {
         generateArtwork();

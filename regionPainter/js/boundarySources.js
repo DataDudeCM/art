@@ -214,6 +214,7 @@ function createParticleBoundaryState(
     );
 
   return {
+    viewport,
     bounds,
 
     particles: Array.from(
@@ -438,7 +439,9 @@ function finalizeParticleBoundaryPoints(state) {
   if (points.length < 4) {
     return generateControlPoints(
       targetCount,
-      SETTINGS.boundary.scale
+      SETTINGS.boundary.scale,
+      state.viewport ||
+        getFullCanvasViewport()
     );
   }
 
