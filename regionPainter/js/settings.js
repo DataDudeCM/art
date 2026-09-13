@@ -3,6 +3,8 @@ const SETTINGS = {
   canvas: {
     paperColor: null,
 
+    backgroundMode: "palette", // "palette" | "white" | "black"
+
     autoRegenerate: true,
     regenerateSeconds: 2
   },
@@ -25,8 +27,11 @@ const SETTINGS = {
     rows: 2,
     cols: 2,
 
-    gutter: 20,      // space between cells
-    outerMargin: 20  // border around the whole grid
+    gutter: 20,
+    outerMargin: 20,
+
+    outlineMode: "none", // "none" | "white" | "black"
+    outlineWeight: 1
   },
 
   gridVariation: {

@@ -102,6 +102,42 @@ function setupGridControls() {
         );
     }
   );
+
+  const backgroundMode =
+    document.getElementById(
+      "canvas-background-mode"
+    );
+
+  backgroundMode.value =
+    SETTINGS.canvas.backgroundMode;
+
+  backgroundMode.addEventListener(
+    "change",
+    event => {
+      SETTINGS.canvas.backgroundMode =
+        event.target.value;
+
+      renderArtwork();
+    }
+  );
+
+  const outlineMode =
+    document.getElementById(
+      "grid-outline-mode"
+    );
+
+  outlineMode.value =
+    SETTINGS.grid.outlineMode;
+
+  outlineMode.addEventListener(
+    "change",
+    event => {
+      SETTINGS.grid.outlineMode =
+        event.target.value;
+
+      renderArtwork();
+    }
+  );
 }
 
 function setupGridVariationControls() {
@@ -1503,6 +1539,16 @@ function syncGridControls() {
     "grid-enabled"
   ).checked =
     SETTINGS.grid.enabled;
+    
+  document.getElementById(
+    "canvas-background-mode"
+  ).value =
+    SETTINGS.canvas.backgroundMode;
+
+  document.getElementById(
+    "grid-outline-mode"
+  ).value =
+    SETTINGS.grid.outlineMode;
 
   syncRangeControl(
     "grid-rows",

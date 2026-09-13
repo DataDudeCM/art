@@ -107,6 +107,7 @@ function createAnimationState() {
 // --------------------------------------------------
 
 function startGenerationAnimation() {
+  gridStructureData = [];
   animationState =
     createAnimationState();
 
@@ -356,6 +357,16 @@ function finalizeBoundaryForCell(
 
   boundarySmoothedPoints =
     boundary.points || [];
+
+  gridStructureData.push({
+    viewport,
+    controlPoints: [
+      ...boundaryControlPoints
+    ],
+    smoothedPoints: [
+      ...boundarySmoothedPoints
+    ]
+  });
 
   const strokes =
     boundary.strokes || [

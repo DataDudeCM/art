@@ -8,6 +8,8 @@ let drawingPreviewLayer;
 let boundaryControlPoints = [];
 let boundarySmoothedPoints = [];
 
+let gridStructureData = [];
+
 let brushManifest;
 let brushImages = [];
 let brushNames = [];
@@ -21,6 +23,8 @@ let generationRegionColors = new Map();
 let generationBoundaryColor = null;
 
 let activeViewport = null;
+
+
 
 let perfStats = {
   floodMs: 0,
@@ -462,6 +466,8 @@ function generateArtwork() {
   boundaryLayer.clear();
   paintLayer.clear();
 
+  gridStructureData = [];
+
   palette = resolveActivePalette();
 
   generationBoundaryColor =
@@ -523,6 +529,16 @@ function generateArtwork() {
 
       generateBoundary();
 
+      gridStructureData.push({
+        viewport: activeViewport,
+        controlPoints: [
+          ...boundaryControlPoints
+        ],
+        smoothedPoints: [
+          ...boundarySmoothedPoints
+        ]
+      });
+
       boundaryDetectionLayer.loadPixels();
 
       for (
@@ -582,10 +598,22 @@ function generateArtwork() {
 }
 
 function renderArtwork() {
-  const paperColor =
+  let backgroundColor =
     SETTINGS.canvas.paperColor || "#f2eee6";
 
-  background(paperColor);
+  if (
+    SETTINGS.canvas.backgroundMode === "white"
+  ) {
+    backgroundColor = "#ffffff";
+  } else if (
+    SETTINGS.canvas.backgroundMode === "black"
+  ) {
+    backgroundColor = "#000000";
+  }
+
+  background(backgroundColor);
+
+  drawGridCellBackgrounds();
 
   if (SETTINGS.view.showPaint) {
     image(paintLayer, 0, 0);
@@ -620,41 +648,184 @@ function renderArtwork() {
       0
     );
   }
+  drawGridCellOutlines();
 }
 
-function drawStructureOverlay() {
-  if (!boundaryControlPoints.length) {
+function drawGridCellOutlines() {
+  const grid =
+    getActiveGridSettings();
+
+  if (
+    !grid.enabled ||
+    SETTINGS.grid.outlineMode === "none"
+  ) {
     return;
   }
 
+  const outlineColor =
+    SETTINGS.grid.outlineMode === "white"
+      ? "#ffffff"
+      : "#000000";
+
   push();
 
-  if (SETTINGS.view.showStructureLines) {
-    noFill();
-    stroke(20, 75);
-    strokeWeight(1);
+  noFill();
+  stroke(outlineColor);
+  strokeWeight(
+    SETTINGS.grid.outlineWeight
+  );
 
-    beginShape();
+  for (
+    let row = 0;
+    row < grid.rows;
+    row++
+  ) {
+    for (
+      let col = 0;
+      col < grid.cols;
+      col++
+    ) {
+      const viewport =
+        getGridViewport(
+          row,
+          col,
+          grid.rows,
+          grid.cols,
+          grid.gutter,
+          grid.outerMargin
+        );
 
-    for (const p of boundaryControlPoints) {
-      vertex(p.x, p.y);
-    }
-
-    endShape(CLOSE);
-  }
-
-  if (SETTINGS.view.showStructurePoints) {
-    noStroke();
-    fill(20, 110);
-
-    for (const p of boundaryControlPoints) {
-      circle(p.x, p.y, 4);
+      rect(
+        viewport.x,
+        viewport.y,
+        viewport.width,
+        viewport.height
+      );
     }
   }
 
   pop();
 }
 
+function drawGridCellBackgrounds() {
+  const grid =
+    getActiveGridSettings();
+
+  if (!grid.enabled) {
+    return;
+  }
+
+  const cellColor =
+    SETTINGS.canvas.paperColor ||
+    "#f2eee6";
+
+  push();
+
+  noStroke();
+  fill(cellColor);
+
+  for (
+    let row = 0;
+    row < grid.rows;
+    row++
+  ) {
+    for (
+      let col = 0;
+      col < grid.cols;
+      col++
+    ) {
+      const viewport =
+        getGridViewport(
+          row,
+          col,
+          grid.rows,
+          grid.cols,
+          grid.gutter,
+          grid.outerMargin
+        );
+
+      rect(
+        viewport.x,
+        viewport.y,
+        viewport.width,
+        viewport.height
+      );
+    }
+  }
+
+  pop();
+}
+
+function drawStructureOverlay() {
+  if (
+    gridStructureData.length === 0
+  ) {
+    return;
+  }
+
+  push();
+
+  for (
+    const cellData of gridStructureData
+  ) {
+    const {
+      viewport,
+      controlPoints,
+      smoothedPoints
+    } = cellData;
+
+    drawingContext.save();
+    drawingContext.beginPath();
+    drawingContext.rect(
+      viewport.x,
+      viewport.y,
+      viewport.width,
+      viewport.height
+    );
+    drawingContext.clip();
+
+    if (
+      SETTINGS.view.showStructureLines &&
+      smoothedPoints.length
+    ) {
+      noFill();
+      stroke(20, 75);
+      strokeWeight(1);
+
+      beginShape();
+
+      for (
+        const p of smoothedPoints
+      ) {
+        vertex(p.x, p.y);
+      }
+
+      endShape(CLOSE);
+    }
+
+    if (
+      SETTINGS.view.showStructurePoints &&
+      controlPoints.length
+    ) {
+      noStroke();
+      fill(20, 110);
+
+      for (
+        const p of controlPoints
+      ) {
+        circle(
+          p.x,
+          p.y,
+          4
+        );
+      }
+    }
+
+    drawingContext.restore();
+  }
+
+  pop();
+}
 function drawTextureOverlay() {
   if (!uploadedTextureImage) {
     return;
