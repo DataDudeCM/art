@@ -20,6 +20,8 @@ let generationSeed = 12345;
 let generationRegionColors = new Map();
 let generationBoundaryColor = null;
 
+let activeViewport = null;
+
 let perfStats = {
   floodMs: 0,
   paintMs: 0,
@@ -153,6 +155,34 @@ function getFullCanvasViewport() {
   };
 }
 
+function getGridViewport(
+  row,
+  col,
+  rows,
+  cols,
+  gap = 0,
+  margin = 0
+) {
+  const innerWidth =
+    width - margin * 2 - gap * (cols - 1);
+
+  const innerHeight =
+    height - margin * 2 - gap * (rows - 1);
+
+  const cellWidth =
+    innerWidth / cols;
+
+  const cellHeight =
+    innerHeight / rows;
+
+  return {
+    x: margin + col * (cellWidth + gap),
+    y: margin + row * (cellHeight + gap),
+    width: cellWidth,
+    height: cellHeight
+  };
+}
+
 function resolveActivePalette() {
 
   if (UI_STATE.paletteMode === "random") {
@@ -203,6 +233,16 @@ function generateArtwork() {
 
   SETTINGS.canvas.paperColor =
     getLightColor(palette);
+
+  activeViewport =
+  getGridViewport(
+    0,
+    0,
+    2,
+    2,
+    20,
+    20
+  );
 
   const boundaryStart = performance.now();
 
@@ -407,7 +447,9 @@ function drawTextureOverlay() {
 
 function testRegion() {
   const samplePoint =
-    getFillSamplePoint();
+    getFillSamplePoint(
+      activeViewport
+    );
 
   const x = samplePoint.x;
   const y = samplePoint.y;
@@ -545,6 +587,16 @@ function requestGenerate() {
 
       SETTINGS.canvas.paperColor =
         getLightColor(palette);
+
+      activeViewport =
+        getGridViewport(
+          0,
+          0,
+          2,
+          2,
+          20,
+          20
+        );
 
       if (SETTINGS.animation.enabled) {
         startGenerationAnimation();

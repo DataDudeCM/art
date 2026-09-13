@@ -4,6 +4,9 @@ function generateControlPoints(
   scale = 1.0,
   viewport = getFullCanvasViewport()
 ) {
+  viewport =
+    viewport || getFullCanvasViewport();
+
   const points = [];
 
   const cx =

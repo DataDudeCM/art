@@ -33,11 +33,19 @@ function getOrAssignRegionColor(region, colorMap, palette) {
   return colorMap.get(key);
 }
 
-function getFillSamplePoint() {
+function getFillSamplePoint(
+  viewport = getFullCanvasViewport()
+) {
   if (SETTINGS.fill.sampleMode !== "centerWeighted") {
     return {
-      x: random(width),
-      y: random(height)
+      x: random(
+        viewport.x,
+        viewport.x + viewport.width
+      ),
+      y: random(
+        viewport.y,
+        viewport.y + viewport.height
+      )
     };
   }
 
@@ -49,7 +57,10 @@ function getFillSamplePoint() {
     );
 
   const baseSigma =
-    min(width, height);
+    min(
+      viewport.width,
+      viewport.height
+    );
 
   const sigma = lerp(
     baseSigma * 0.35,
@@ -57,16 +68,35 @@ function getFillSamplePoint() {
     strength
   );
 
+  const centerX =
+    viewport.x +
+    viewport.width / 2;
+
+  const centerY =
+    viewport.y +
+    viewport.height / 2;
+
   return {
     x: constrain(
-      randomGaussian(width / 2, sigma),
-      0,
-      width - 1
+      randomGaussian(
+        centerX,
+        sigma
+      ),
+      viewport.x,
+      viewport.x +
+        viewport.width -
+        1
     ),
+
     y: constrain(
-      randomGaussian(height / 2, sigma),
-      0,
-      height - 1
+      randomGaussian(
+        centerY,
+        sigma
+      ),
+      viewport.y,
+      viewport.y +
+        viewport.height -
+        1
     )
   };
 }

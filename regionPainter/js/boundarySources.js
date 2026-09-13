@@ -46,7 +46,8 @@ function createChaikinBoundarySource() {
       const controlPoints =
         generateControlPoints(
           SETTINGS.boundary.pointCount,
-          SETTINGS.boundary.scale
+          SETTINGS.boundary.scale,
+          activeViewport
         );
 
       return buildChaikinBoundaryFromControlPoints(
