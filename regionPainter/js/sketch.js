@@ -763,8 +763,6 @@ function drawStructureOverlay() {
     return;
   }
 
-  push();
-
   for (
     const cellData of gridStructureData
   ) {
@@ -774,7 +772,10 @@ function drawStructureOverlay() {
       smoothedPoints
     } = cellData;
 
+    push();
+
     drawingContext.save();
+
     drawingContext.beginPath();
     drawingContext.rect(
       viewport.x,
@@ -797,7 +798,10 @@ function drawStructureOverlay() {
       for (
         const p of smoothedPoints
       ) {
-        vertex(p.x, p.y);
+        vertex(
+          p.x,
+          p.y
+        );
       }
 
       endShape(CLOSE);
@@ -822,9 +826,9 @@ function drawStructureOverlay() {
     }
 
     drawingContext.restore();
-  }
 
-  pop();
+    pop();
+  }
 }
 function drawTextureOverlay() {
   if (!uploadedTextureImage) {
