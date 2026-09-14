@@ -517,32 +517,28 @@ new p5(sk => {
 
   // ─── Export ───────────────────────────────────────────────────────────────
   window.exportArt = () => {
-    if (!storedPieces.length) { ST('generate first'); return; }
+    if (!storedPieces.length) {
+      ST('generate first');
+      return;
+    }
+
     ST('preparing export...');
-    // link.click() is blocked in sandboxed iframes — open in new tab instead
-    // User can then right-click > Save Image As, or browser auto-downloads
-    const cvs = gfx.drawingContext.canvas;
-    const dataUrl = cvs.toDataURL('image/png');
-    const win = window.open('', '_blank');
-    if (win) {
-      const sz = gfx.width;
-      win.document.write(
-        '<html><head><title>texture-collider-' + Date.now() + '</title>' +
-        '<style>body{margin:0;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:monospace;}' +
-        'img{max-width:100vmin;max-height:100vmin;}' +
-        'p{color:#888;font-size:12px;margin:10px 0 0;}' +
-        'a{color:#c8871a;text-decoration:none;}' +
-        '</style></head><body>' +
-        '<img src="' + dataUrl + '">' +
-        '<p>Right-click the image and choose <strong style="color:#ccc">Save Image As</strong> &nbsp;|&nbsp; ' +
-        sz + ' &times; ' + sz + 'px &nbsp;&mdash;&nbsp; ' +
-        '<a href="' + dataUrl + '" download="texture-collider-' + Date.now() + '.png">or click here to download</a></p>' +
-        '</body></html>'
-      );
-      win.document.close();
-      ST('opened in new tab - save from there');
-    } else {
-      ST('pop-up blocked - allow pop-ups and try again');
+
+    try {
+      const cvs = gfx.drawingContext.canvas;
+
+      const link = document.createElement('a');
+      link.download = 'texture-collider-' + Date.now() + '.png';
+      link.href = cvs.toDataURL('image/png');
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      ST('✓ image exported');
+    } catch (err) {
+      console.error('Export error:', err);
+      ST('export failed');
     }
   };
 

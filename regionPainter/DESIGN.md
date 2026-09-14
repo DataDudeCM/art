@@ -1,298 +1,229 @@
-# regionPainter — Design / Architecture v0.3
+# regionPainter — Design / Architecture v1.0
 
 ## Project Status
 
-`regionPainter` has moved beyond proof-of-concept and is now a usable generative painting instrument.
+`regionPainter` is now a functioning boundary-driven generative painting instrument.
 
-The current system successfully combines:
+The current system includes:
 
-- generated self-intersecting boundary geometry;
-- raster flood-fill region discovery;
-- repeated probabilistic region selection;
-- translucent image-brush painting;
-- separate edge bleed;
+- Chaikin-generated boundaries;
+- particle-fed Chaikin boundaries;
+- rectangle boundaries;
+- direct drawn / stylus boundaries;
+- hidden raster boundary detection;
 - brush-rendered visible boundaries;
-- shared repository palettes and brush assets;
-- a control-panel UI;
+- flood-fill region discovery;
+- repeated probabilistic region selection;
+- fixed-per-region or random-per-hit color behavior;
+- translucent image-brush painting;
+- region-size-responsive mark and brush scaling;
+- separate edge bleed;
+- center-weighted or uniform region sampling;
+- progressive generation animation;
+- particle-boundary animation;
+- grid composition mode;
+- grid parameter variation;
 - preset save/load;
-- user-selected texture overlays loaded from the local file picker;
-- texture opacity, blend mode, and scale controls;
+- shared palette and brush systems;
+- user-selected surface textures;
 - PNG export.
 
-The current visual results are strong enough that future work should protect the loose, emergent character of the system rather than adding complexity for its own sake.
+The project has moved beyond proving the core technique.
+
+Future development should focus on extending the artistic possibilities of discovered regions without weakening the accidental, layered, and painterly character that makes the current system interesting.
 
 ---
 
 # Project Intent
 
-`regionPainter` is a p5.js painting engine that discovers enclosed regions from one or more boundary sources and selectively paints those regions using layered rendering behavior.
+`regionPainter` is a p5.js generative painting instrument built around the discovery of enclosed space.
 
-The fundamental idea is:
+Its fundamental process is:
 
 ```text
-boundary geometry
-      +
+boundary source
+    ->
+hidden detection boundary
+    ->
 region discovery
-      +
-probabilistic selection
-      +
-painterly rendering
-      +
-surface treatment
+    ->
+probabilistic region hits
+    ->
+artistic event
+    ->
+layered composition
 ```
 
-The engine should not need to know the regions in advance. The boundary defines barriers; flood fill discovers what exists between those barriers.
+The engine does not need to define all regions in advance.
 
-Watercolor-like rendering is currently the primary visual language, but the architecture remains broader than watercolor.
+A boundary establishes barriers. Flood fill discovers the spaces between them. Repeated random hits determine which discovered spaces receive attention.
+
+The current primary artistic event is translucent painting, but the architecture should allow other rare events to occur within regions.
 
 ---
 
 # Core Design Principles
 
-1. **Boundary generation and painting remain independent.**
-2. **The computational boundary and the visible artistic boundary are separate representations.**
-3. **Flood fill discovers geometry; it does not render artwork.**
-4. **Painters consume detected regions and decide how those regions look.**
-5. **Repeated region selection remains intentional.** Repeated hits create natural visual hierarchy.
-6. **Low-opacity layering is a primary mechanism for value and pigment buildup.**
-7. **The system should preserve negative space rather than attempting to fill every region.**
-8. **`SETTINGS` remains the canonical tunable state.** UI and presets read/write it.
-9. **Shared repository palette and brush systems remain sources of truth.**
-10. **Texture overlays are finishing/compositing behavior, not region-painting logic.**
-11. **Local user-selected texture images are runtime assets and should not be treated as portable preset data.**
-12. **New boundary geometry must participate in both the hidden detection representation and, when desired, the visible boundary renderer.**
-13. **Animation should animate artistic state rather than blindly rerunning expensive flood fill every frame.**
-14. **Performance improvements should preserve generation semantics and visual character.**
-15. **Technical sophistication is not a reason to change a visual behavior that is already producing stronger artwork.**
+1. **Boundary generation and region rendering remain independent.**
+2. **The computational boundary and visible boundary are separate representations.**
+3. **Flood fill discovers regions; it does not decide how they are rendered.**
+4. **Repeated region hits are intentional and should remain possible.**
+5. **Low-opacity layering is a primary mechanism for hierarchy and depth.**
+6. **Negative space is important.** The system should not attempt to fill every region.
+7. **Randomness should create variation without making every decision equally arbitrary.**
+8. **`SETTINGS` remains the canonical tunable state.**
+9. **Shared repository palettes and brushes remain sources of truth.**
+10. **A successful region hit is an artistic event, not an automatic instruction to paint.**
+11. **New behaviors should reuse existing region masks and compositing infrastructure whenever possible.**
+12. **Performance changes should preserve the visual behavior of the instrument.**
+13. **Technical sophistication alone is not a reason to add a feature.**
+14. **The system should remain easy to experiment with.** New subsystems should start small and earn complexity through use.
 
 ---
 
 # High-Level Architecture
 
 ```text
-Boundary Sources
+Boundary Source
     |
-    |-- Generated organic path (current Chaikin source)
-    |-- Geometric primitives [next exploration]
-    |     |-- rectangles / squares
-    |     |-- circles / ellipses
-    |     |-- polygons
-    |     `-- open divider lines
-    |-- Uploaded drawing / image [future]
-    `-- Other procedural sources [future]
+    |-- Chaikin
+    |-- Particle Chaikin
+    |-- Rectangle
+    `-- Drawn / Stylus
             |
             v
-Boundary Geometry Collection
-    |                    |
-    |                    |
-    v                    v
-Detection Renderer    Visible Boundary Renderer
-    |                    |
-    v                    v
-Boundary Mask         Artistic ink/brush layer
-    |
-    v
-Region Detection
-    |
-    v
-Region Selection
-    |
-    v
-Region Painter
-    |
-    v
-Paint Layer
-    |
-    +----------+
-               v
-        Final Compositor
-        |-- paper/background
-        |-- paint
-        |-- visible boundary
-        |-- user texture overlay
-        `-- export
+Boundary Geometry
+      |             |
+      |             |
+      v             v
+Detection        Visible
+Renderer         Boundary Renderer
+      |             |
+      v             v
+Boundary Mask    Brush / Line Layer
+      |
+      v
+Region Discovery
+      |
+      v
+Region Hit
+      |
+      v
+Artistic Event Selection
+      |
+      |-- Paint [default]
+      `-- Artifact [rare]
+              |
+              v
+      Region-clipped rendering
+              |
+              v
+        Final Composition
+              |
+              |-- paper / background
+              |-- paint + artifacts
+              |-- visible boundary
+              |-- texture overlay
+              `-- export
 ```
 
-This separation is increasingly important. Chaikin is a boundary *source*, not the definition of the boundary system.
+This introduces one important conceptual shift:
 
-## Point-Generated Boundary Sources
+> A successful region hit no longer necessarily means "paint this region."
 
-Dynamic Point Source
-    |
-    |-- one or more particles
-    |-- sampled over time
-    |
-    v
-Point Collection
-    |
-    |-- total point count
-    |-- sampling interval
-    |
-    v
-Point Ordering
-    |
-    |-- round robin
-    |-- sequential
-    |-- random particle
-    |
-    v
-Chaikin Processing
-    |
-    v
-Boundary Path
-    |
-    v
-Existing Region Painter Pipeline
+Instead, it means:
+
+> Something may happen in this region.
+
+Painting remains the overwhelmingly dominant event.
 
 ---
 
-# Current Working State
+# Boundary System
 
-## Boundary
+## Current Sources
 
-The current generated boundary pipeline is:
+### Chaikin
+
+Random control points are softened and subdivided into a closed organic path.
 
 ```text
-random control points
+random points
     ->
-optional control-point softening
+softening
     ->
 Chaikin subdivision
     ->
-closed self-intersecting point path
+closed path
 ```
 
-The same path is then used in two different ways:
+The generated path is used for both hidden detection and visible boundary rendering.
 
-```text
-smoothedPoints
-    |-- hidden raster detection line
-    `-- visible line or brush-stamped boundary
-```
+### Particle Chaikin
 
-This is the correct architecture and should be preserved.
+One or more moving particles generate sampled control points.
 
-The visible brush renderer already supports:
+Current particle behavior includes:
 
-- image or simple-line mode;
-- forced or random brush choice;
-- base brush size;
-- thickening through the middle of original segments;
-- spacing;
-- opacity;
-- size jitter;
-- rotation jitter.
+- multiple particles;
+- interval or heading-change sampling;
+- round-robin, sequential, or random-particle point ordering;
+- noise movement;
+- optional attractor influence;
+- wrapping behavior;
+- animated particle visualization.
+
+The collected points feed the same Chaikin boundary pipeline used by the standard generated source.
+
+### Rectangle
+
+A rigid enclosed rectangular boundary source.
+
+This provides a simple geometric contrast to the organic sources and confirms that the engine is not fundamentally dependent on Chaikin.
+
+### Drawn / Stylus
+
+Pointer or stylus input creates one or more strokes directly on the canvas.
+
+Captured stroke data includes:
+
+- x/y location;
+- time;
+- pressure;
+- pointer type.
+
+The same strokes feed both:
+
+- hidden boundary detection;
+- visible boundary rendering.
+
+This is currently the preferred path for intentionally hand-designed boundary structures.
 
 ---
 
-# New Direction — Boundary Vocabulary
+# Detection vs Visible Boundary
 
-## Core Idea
+This distinction remains central.
 
-The engine does **not** fundamentally depend on Chaikin.
+The hidden detection renderer exists only to create reliable barriers for region discovery.
 
-Flood fill only cares about the final raster detection mask. Any geometry that produces continuous boundary pixels can participate.
-
-This means `regionPainter` can evolve from a single generated curve into a **boundary vocabulary**.
-
-Initial vocabulary candidates:
+The visible renderer exists only for the finished artwork.
 
 ```text
-organic path      current Chaikin path
-square / rect     rigid enclosed geometry
-circle / ellipse  enclosed curved geometry
-polygon           triangle / quad / irregular closed form
-open divider      line that splits a region when it connects boundaries
+same boundary geometry
+       |
+       |-- thin continuous detection line
+       |
+       `-- artistic brush / line rendering
 ```
 
-## Why This Is Artistically Promising
-
-The current organic path has a flowing, accidental quality. Introducing a small number of rigid geometric forms could create useful tension:
-
-```text
-organic vs geometric
-soft vs rigid
-accident vs order
-flow vs interruption
-```
-
-The goal should not be to turn the canvas into a geometry sampler. A few strategically generated primitives may be more effective than many.
-
-A likely first experiment:
-
-- keep the existing Chaikin path;
-- add `0–4` rectangles/squares;
-- allow some to be fully enclosed inside existing regions;
-- allow some to intersect the organic path;
-- render them through the same detection + visible-boundary separation.
-
-## Closed vs Open Geometry
-
-A closed square creates a region by itself.
-
-An open line only creates a new region if it connects existing barriers strongly enough to divide an existing connected area.
-
-All detection geometry must remain continuous at raster resolution; tiny gaps can cause flood-fill leakage.
-
----
-
-# Proposed Boundary Geometry Model
-
-A future refactor can represent boundary components explicitly:
-
-```js
-{
-  type: "path",        // path | rect | ellipse | polygon | line
-  points: [...],
-  detection: {
-    enabled: true,
-    weight: 1
-  },
-  visible: {
-    enabled: true,
-    mode: "brush"
-  }
-}
-```
-
-For a rectangle:
-
-```js
-{
-  type: "rect",
-  x,
-  y,
-  width,
-  height,
-  rotation,
-  detection: { enabled: true },
-  visible: { enabled: true }
-}
-```
-
-The important architectural shift is:
-
-```text
-create geometry
-    ->
-render geometry to detection mask
-    ->
-render same geometry artistically
-```
-
-rather than:
-
-```text
-Chaikin function owns the entire boundary system
-```
-
-This refactor is desirable before the boundary vocabulary grows much further.
+The visible boundary does not need to visually match the exact detection line.
 
 ---
 
 # Region Detection
 
-The current flood-fill implementation uses 4-neighbor connectivity:
+The current flood-fill system uses 4-neighbor connectivity:
 
 ```text
 up
@@ -301,7 +232,7 @@ down
 left
 ```
 
-A valid detected region contains:
+A detected region contains:
 
 ```js
 {
@@ -316,493 +247,677 @@ A valid detected region contains:
 }
 ```
 
-Regions are rejected when:
+A region is rejected when:
 
-- the seed falls on a boundary pixel;
-- the region is below `minRegionPixels`;
-- the region exceeds `maxRegionFraction` and is assumed to be the exterior/background.
+- the sample lands on a boundary;
+- it is smaller than `minRegionPixels`;
+- it exceeds `maxRegionFraction` and is treated as exterior/background.
 
-Repeated selection remains desirable:
+Repeated hits remain valid and desirable.
 
 ```text
-one hit      -> faint
-several hits -> richer
-many hits    -> visual emphasis
+first hit       -> faint attention
+later hits      -> richer accumulation
+many hits       -> visual emphasis
 ```
 
-Do not add a default "paint each region only once" rule.
+The same region may therefore be selected many times during one generation.
 
 ---
 
-# Region Painter
+# Region Identity
 
-The current image-brush painter is now a major part of the successful visual character.
+Regions already have a stable generation-time key derived from their geometry:
 
-Current behavior includes:
-
-- region-size-responsive mark count;
-- region-size-responsive brush scale;
-- one brush per region or random brush per stamp;
-- palette tinting;
-- random rotation;
-- aspect variation;
-- low opacity;
-- exact region clipping;
-- separate finite edge-bleed marks.
-
-The separation remains:
-
-```text
-interior paint -> exact mask
-bleed          -> deliberately allowed beyond mask
+```js
+getRegionKey(region)
 ```
 
-This should remain intact.
+This currently supports fixed-per-region color behavior.
+
+The same mechanism should be reused for future region state, including artifact placement.
+
+Do not introduce a second competing region-identity system unless necessary.
 
 ---
 
-# Surface Texture Overlay
+# Region Painting
 
-The texture system now uses a **user-selected local image** rather than procedurally simulated texture.
+The current painter:
 
-Workflow:
+- chooses a region brush;
+- scales mark count based on region size;
+- scales brush size based on region size;
+- stamps translucent marks inside a temporary graphics layer;
+- clips that layer to the exact region mask;
+- composites it onto the paint layer;
+- adds a separate finite amount of edge bleed.
+
+The core clipping pipeline is:
 
 ```text
-Choose Texture
+temporary content
     ->
-Windows/browser file picker
+region mask
     ->
-load selected image into memory
+destination-in
     ->
-fit as cover without aspect distortion
-    ->
-apply blend mode + opacity + scale
-    ->
-composite over final artwork
+paint layer
 ```
 
-Current texture controls:
+This clipping system should become a reusable rendering primitive for media other than paint.
+
+A likely future cleanup is to rename:
+
+```js
+compositeRegionPaint(...)
+```
+
+to something more general such as:
+
+```js
+compositeToRegion(...)
+```
+
+once non-paint content is using the same mechanism.
+
+---
+
+# Color Behavior
+
+Current region color behavior supports:
+
+```text
+fixedPerRegion
+randomPerHit
+```
+
+`fixedPerRegion` uses the region key so repeated hits accumulate with a stable color.
+
+`randomPerHit` allows repeated hits to vary across the palette.
+
+This behavior should remain independent of artifact selection.
+
+---
+
+# Surface Texture
+
+User-selected texture images remain a final compositing behavior.
+
+Current controls include:
 
 - opacity;
 - blend mode;
-- scale/zoom.
+- scale.
 
-Texture scale begins at `1.0`, representing the densest full-canvas cover without exposing empty edges. Values above `1.0` zoom into the texture and produce coarser visible grain/structure.
+Texture images are runtime assets and are not assumed to be portable inside preset files.
 
-The selected texture file itself is a runtime asset. Presets may store texture *settings*, but should not assume they can reopen an arbitrary local file later.
-
-Possible future additions only if actual use demonstrates a need:
-
-- rotation;
-- X/Y offset;
-- apply to artwork only;
-- stacked texture overlays.
-
-These are intentionally deferred.
+Texture should remain separate from region painting and artifact logic.
 
 ---
 
-# Presets and UI
+# Grid Composition
 
-The control panel now supports:
+The system supports optional multi-cell composition.
 
-- preset selection;
-- Save / Load preset file workflow;
-- palette selection;
-- boundary visibility and mode;
-- boundary generation controls;
-- boundary brush controls;
-- texture selection and compositing controls;
-- generation controls.
+Each cell receives:
 
-`SETTINGS` remains canonical.
+- its own viewport;
+- a deterministic seed derived from the main generation seed;
+- its own boundary generation;
+- its own repeated region hits.
 
-Preset application should follow:
+Grid variation may sweep selected parameters across rows or columns.
 
-```text
-load preset
-    ->
-reset SETTINGS to defaults
-    ->
-merge saved settings
-    ->
-restore palette identity
-    ->
-sync UI
-    ->
-generate artwork
-```
-
-Local texture images remain outside portable preset state.
+The grid system should remain an orchestration layer rather than introducing separate painting logic.
 
 ---
 
-# Animation — Planned Direction
+# Animation
 
-Animation remains a desirable next-stage capability, but it should be designed around the existing expensive generation pipeline.
+Animation is implemented as progressive artistic state rather than continuous full regeneration.
 
-## Important Rule
+Current behavior includes:
 
-Do **not** begin by regenerating the complete boundary, flood fill, masks, and brush painting at 30–60 FPS.
+- progressive boundary reveal;
+- animated particle motion for particle boundaries;
+- progressive region painting;
+- grid-aware animation.
 
-Instead separate:
+The guiding rule remains:
+
+> Animate artistic events, not expensive full recomputation at frame rate.
+
+Any new region event, including artifacts, should eventually be compatible with progressive animation.
+
+The first artifact implementation does not need special animation behavior beyond appearing when its region hit is processed.
+
+---
+
+# New Feature — Region Artifacts
+
+## Intent
+
+The next feature should allow rare non-paint events to occur when a valid region is hit.
+
+The first artifact type will be **text scrap images**.
+
+Examples could include:
+
+- scanned handwriting;
+- typed fragments;
+- asemic writing;
+- old labels;
+- isolated words;
+- numbers;
+- symbols;
+- printed scraps.
+
+The purpose is not to turn `regionPainter` into a collage generator.
+
+Artifacts should remain rare enough to feel discovered.
+
+---
+
+## Core Behavior
+
+Every successful region hit normally paints.
+
+With a very low probability, a hit may instead place an artifact.
 
 ```text
-expensive generation
-        from
-lightweight presentation over time
+successful region hit
+        |
+        v
+artifact already exists in region?
+        |
+        |-- yes -> paint normally
+        |
+        `-- no
+             |
+             v
+        random artifact roll
+             |
+             |-- fail -> paint normally
+             |
+             `-- pass -> place one artifact
 ```
 
-## Animation Mode A — Progressive Painting
+Important rules:
 
-This is the preferred first animation experiment.
+1. Painting remains the default event.
+2. Artifact chance should be low.
+3. A region may receive at most one artifact.
+4. Artifact insertion replaces painting for that specific hit.
+5. Later hits on the same region paint normally.
+6. Later paint may partially obscure or bury the artifact.
+7. Artifact placement should remain stable for the rest of the generation.
+8. Turning artifacts off must preserve current Region Painter behavior.
 
-Generation creates a sequence of painting events:
+This should create natural states such as:
+
+```text
+artifact remains clear
+
+artifact receives one later paint layer
+
+artifact becomes partially obscured
+
+artifact becomes almost lost beneath repeated paint
+```
+
+That history is desirable.
+
+---
+
+# Artifact Assets
+
+Initial structure:
+
+```text
+assets/
+  artifacts/
+    text/
+      scraps.json
+      scrap01.png
+      scrap02.png
+      scrap03.png
+```
+
+Example manifest:
+
+```json
+{
+  "artifacts": [
+    {
+      "file": "scrap01.png",
+      "weight": 1
+    },
+    {
+      "file": "scrap02.png",
+      "weight": 1
+    }
+  ]
+}
+```
+
+The first manifest should remain deliberately small.
+
+Do not initially add unnecessary per-image metadata such as:
+
+- mood;
+- semantic category;
+- preferred palette;
+- custom rotation limits;
+- individual scale ranges;
+- composition roles.
+
+Those can be added only if real use demonstrates a need.
+
+---
+
+# Artifact Runtime State
+
+Use the existing region key.
 
 ```js
-[
-  { region, color, brush, marks, ... },
-  { region, color, brush, marks, ... },
-  ...
-]
+generationRegionArtifacts = new Map();
 ```
 
-Rather than painting all selected regions immediately, process a few events or marks per frame.
+Possible stored state:
 
-Possible visual behavior:
+```js
+{
+  artifactName,
+  x,
+  y,
+  scale,
+  rotation,
+  opacity
+}
+```
 
-- boundary appears first;
-- regions slowly receive transparent pigment;
-- repeated hits gradually deepen existing forms;
-- edge bleed follows each paint event;
-- texture remains a static finishing layer.
+Once assigned, that artifact state should not change during the generation.
 
-Benefits:
+The region map prevents a second artifact from being placed in the same region.
 
-- preserves the current artwork-generating logic;
-- lets viewers watch composition emerge;
-- avoids rerunning flood fill continuously;
-- produces a natural "painting itself" behavior.
+---
 
-## Animation Mode B — Region Reveal
+# Artifact Placement
 
-A simpler variant:
+The first version should:
 
-- precompute the complete artwork plan;
-- paint one region every N frames;
-- optionally ease opacity during each reveal.
+- reject regions below an artifact-size threshold;
+- choose one random scrap from the manifest;
+- choose a random rotation;
+- choose an appropriate scale based partly on region bounds;
+- place the artifact near the region center with limited positional variation;
+- render it onto a temporary graphics layer;
+- clip it using the existing region-mask compositor;
+- composite it onto the artwork layer.
 
-This is lower-risk than mark-by-mark animation.
+The clipping mechanism should reuse:
 
-## Animation Mode C — Slowly Evolving Boundary
+```js
+compositeRegionPaint(...)
+```
 
-Later, the control points could drift or morph slowly.
+or a generalized equivalent.
 
-However, changing the boundary changes the region topology, which means the detection map and region relationships must be rebuilt.
+The artifact should not need any knowledge of flood fill beyond receiving the detected region object.
 
-Therefore boundary morphing should likely happen:
+---
 
-- at low frequency;
-- as discrete transitions between states;
-- or through interpolation between separately generated compositions.
+# Artifact Probability
 
-It should **not** be the first animation implementation.
+Artifact selection should happen at the **region hit** level.
 
-## Animation Controls — Possible Future UI
+Conceptually:
+
+```js
+if (
+  artifactEnabled &&
+  !generationRegionArtifacts.has(regionKey) &&
+  region.pixelCount >= minArtifactRegionPixels &&
+  random() < artifactChance
+) {
+  placeArtifact(region);
+} else {
+  paintRegion(region);
+}
+```
+
+The artifact roll should occur only after a valid region has been discovered.
+
+Do not roll artifact probability for invalid seeds or rejected regions.
+
+---
+
+# Initial Artifact Settings
+
+Proposed first settings:
+
+```js
+artifact: {
+  enabled: false,
+
+  chance: 0.02,
+
+  minRegionPixels: 2500,
+
+  scaleMin: 0.5,
+  scaleMax: 1.4,
+
+  rotationMin: -Math.PI,
+  rotationMax: Math.PI,
+
+  alphaMin: 140,
+  alphaMax: 230
+}
+```
+
+Exact values should be tuned visually.
+
+The first UI should remain small:
 
 ```text
-Animate [toggle]
-Mode [Progressive Paint | Region Reveal | Evolve]
-Speed [slider]
-Pause / Resume
-Restart Animation
+Artifacts
+[ ] Enable Text Scraps
+
+Chance
+[ slider ]
+
+Minimum Region Size
+[ slider ]
+```
+
+Scale, rotation, and alpha can remain settings-only until actual use shows they need live controls.
+
+---
+
+# Artifact Module
+
+Keep artifact logic separate from the painter.
+
+Suggested module:
+
+```text
+js/artifacts.js
+```
+
+Responsibilities:
+
+```text
+load artifact manifest
+load artifact images
+choose artifact
+determine eligibility
+place artifact
+store artifact state
+render artifact into temporary layer
+clip artifact into region
+```
+
+The painter should continue to know how to paint.
+
+The artifact system should know how to insert artifacts.
+
+The region-hit logic decides which event occurs.
+
+---
+
+# Region Hit Model
+
+The region-hit stage becomes an explicit part of the architecture.
+
+Current behavior is effectively:
+
+```text
+valid region
+    ->
+paint
+```
+
+The updated behavior becomes:
+
+```text
+valid region
+    ->
+resolve region event
+        |
+        |-- paint
+        `-- artifact
+```
+
+This is intentionally small now, but it creates a useful architectural seam for later experimentation.
+
+Do not build a large event framework yet.
+
+The first implementation only needs two outcomes:
+
+```text
+paint
+artifact
 ```
 
 ---
 
-# Performance Roadmap
+# Why Artifacts Fit Region Painter
 
-Performance is now one of the most valuable technical areas because it will directly determine how usable animation and richer boundary systems can become.
+The feature uses the existing system rather than bypassing it.
 
-The goal is not abstract optimization. The goal is faster iteration and enough headroom for animation.
+Artifacts still depend on:
 
-## Priority 1 — Stop Loading Boundary Pixels for Every Flood Fill
+- discovered regions;
+- random hits;
+- region masks;
+- repeated selection;
+- layering over time.
 
-The current flood-fill function calls `boundaryDetectionLayer.loadPixels()` for each seed attempt.
+They therefore feel like a mutation of Region Painter's existing logic rather than a separate collage subsystem.
 
-The boundary does not change during one generation.
-
-Better pattern:
-
-```text
-generate boundary
-    ->
-load boundary pixels once
-    ->
-perform all region queries
-```
-
-This is a low-risk optimization.
-
-## Priority 2 — Cache / Label Regions Once Per Boundary
-
-Currently each seed attempt performs a full flood fill with a newly allocated `visited` array.
-
-A stronger optimization is **connected-component labeling**:
+The intended visual behavior is:
 
 ```text
-boundary mask
+region discovered
     ->
-scan once
+rare fragment appears
     ->
-assign a region ID to every non-boundary pixel
+later pigment accumulates
     ->
-cache valid Region objects
+fragment becomes embedded in the painting
 ```
 
-Then a random seed becomes:
-
-```js
-regionId = regionMap[y * width + x];
-region = cachedRegions[regionId];
-```
-
-This can preserve current selection semantics:
-
-- seed points remain uniformly random;
-- large regions remain more likely to be hit because they contain more pixels;
-- repeated hits remain allowed;
-- invalid exterior/small regions remain rejected.
-
-This is likely the single biggest flood-fill performance improvement available without changing the artwork logic.
-
-## Priority 3 — Stop Creating Full-Canvas Temporary Paint Buffers Per Region
-
-`paintRegion()` currently creates a new graphics buffer at full canvas size for each painted region.
-
-It then creates a full-canvas mask image and copies/masks a full-canvas paint image.
-
-This is expensive in allocation, pixel work, and garbage collection.
-
-Better approach:
-
-```text
-region bounds
-    ->
-small local graphics buffer
-    ->
-small local mask
-    ->
-composite only that bounding rectangle
-```
-
-Add a small padding margin large enough for brush extent.
-
-This should substantially reduce memory churn.
-
-## Priority 4 — Cache Edge Pixels With the Region
-
-`findRegionEdgePixels()` currently rebuilds a `Set` from all region pixels whenever that region is painted.
-
-If regions become cached, calculate edge pixels once:
-
-```js
-region.edgePixels = [...];
-```
-
-Repeated hits can reuse the result.
-
-## Priority 5 — Reuse Buffers Where Practical
-
-Avoid repeated `createGraphics()`, `createImage()`, and `.get()` calls inside tight generation loops when a reusable buffer can safely be cleared and reused.
-
-Potential reusable resources:
-
-- temporary paint buffer;
-- region mask buffer;
-- typed visited/region-ID arrays.
-
-## Priority 6 — Resample Visible Boundary Geometry
-
-Chaikin subdivision can create very large point arrays.
-
-The visible brush renderer does not need every computational point.
-
-Use arc-length resampling or simplification for artistic boundary stamping:
-
-```text
-high-resolution path for reliable detection
-        +
-resampled path for visible brush rendering
-```
-
-This maintains reliable flood-fill barriers without paying unnecessary brush-stamp cost.
-
-## Priority 7 — Preview vs Export Quality
-
-If needed later, introduce two quality modes:
-
-```text
-Preview
-- fewer paint marks
-- lower-cost boundary stamping
-- responsive UI / animation
-
-Final / Export
-- full mark count
-- full brush quality
-- final texture composite
-```
-
-Do not add this until profiling shows it is necessary.
+Artifacts should feel found rather than deliberately placed.
 
 ---
 
-# Performance Measurement
+# Deferred Boundary Import
 
-Before major optimization, add lightweight timing around major phases:
+Uploaded raster, SVG, or externally prepared boundary sources are deferred.
 
-```text
-boundary generation
-boundary rasterization
-region discovery
-region painting
-boundary brush rendering
-final composite
-```
+Current drawn/stylus input already provides a direct way to create intentional handmade boundary structures.
 
-Use `performance.now()` and report totals to the console or optional debug UI.
+If future use shows a strong need to import external boundary geometry, revisit that separately.
 
-The important metric is not only total generation time. Track which phase dominates so optimization effort goes to the real bottleneck.
+Do not build image tracing, thresholding, SVG import, or raster-to-vector conversion into the current roadmap.
+
+---
+
+# Future Artistic Directions
+
+These remain promising but are not the next implementation priority.
+
+## Region Personality / Analysis
+
+Analyze region geometry such as:
+
+- size;
+- compactness;
+- aspect ratio;
+- adjacency;
+- isolation;
+- position;
+- irregularity.
+
+Use those measurements to influence which regions receive attention or how they are rendered.
+
+## Overlooked Region Selection
+
+Bias attention toward unusual or easily ignored regions rather than purely random selection.
+
+## Region-to-Region Influence
+
+Allow painting one region to affect the probability or style of neighboring regions.
+
+## Recursive Regions
+
+Occasionally create secondary structure or micro-compositions inside selected regions.
+
+These should remain experiments, not commitments.
+
+---
+
+# Performance
+
+Performance work should continue where it materially improves artistic iteration.
+
+Current high-value opportunities include:
+
+- connected-component caching;
+- cached edge pixels;
+- reduced full-canvas temporary allocations;
+- reusable buffers;
+- lower-cost visible-boundary resampling.
+
+However, optimization should not delay the artifact experiment unless artifact rendering exposes a real bottleneck.
 
 ---
 
 # Known Cleanup / Technical Debt
 
-As the texture system moved from a generated `textureLayer` to direct uploaded-image compositing, old temporary-layer code should be removed wherever it remains.
+Continue removing abandoned implementation paths once replacements are proven.
 
-General cleanup principle:
+Keep naming aligned with actual behavior.
 
-> Remove abandoned implementation paths once the replacement is proven, especially when they allocate full-canvas graphics resources.
+In particular, if the artifact feature proves useful, review painter-specific names that now describe shared compositing behavior.
 
-Also continue keeping UI naming and comments aligned with actual behavior as the project evolves.
+Examples:
+
+```text
+compositeRegionPaint
+```
+
+may eventually become:
+
+```text
+compositeToRegion
+```
+
+Do not rename purely for theoretical cleanliness before the artifact feature is working.
 
 ---
 
-# Future Boundary Sources
+# Immediate Roadmap
 
-## Uploaded Drawing
+## Milestone 1 — Text Artifact System
 
-The earlier hybrid direction remains valid:
+Implement the first rare artifact event.
 
-```text
-uploaded drawing
-    ->
-grayscale / threshold
-    ->
-optional line thickening / gap closing
-    ->
-detection mask
-    ->
-same region pipeline
-```
+Scope:
 
-This should eventually let handmade doodles and scanned linework become region structures.
+- add artifact manifest;
+- preload scrap images;
+- add artifact settings;
+- add generation artifact state;
+- use `getRegionKey()` to prevent duplicates;
+- add low-probability artifact substitution;
+- clip the artifact to the region;
+- allow later paint hits to cover it;
+- add minimal UI controls;
+- keep seeded generation reproducible.
 
-## Combined Boundary Sources
+Definition of done:
 
-The most interesting long-term direction may be combining sources:
-
-```text
-Chaikin organic path
-    +
-rigid rectangles
-    +
-user drawing
-    +
-procedural dividers
-```
-
-All can contribute to the same authoritative detection mask.
-
-This turns the boundary system into a compositional instrument rather than one specific algorithm.
+- text scraps appear rarely;
+- no region receives more than one;
+- later region hits continue painting;
+- artifacts are clipped cleanly;
+- artifacts remain stable within a seeded generation;
+- artifacts work in normal generation;
+- artifacts work in progressive animation;
+- turning artifacts off reproduces normal Region Painter behavior.
 
 ---
 
-# Suggested Next Milestones
+## Milestone 2 — Evaluate Artifact Behavior
 
-## Milestone 1 — Use the Current Instrument
+Generate a meaningful body of work before expanding the system.
 
-Generate a meaningful body of work before changing its core behavior.
+Evaluate:
 
-Observe:
+- ideal probability;
+- useful minimum region size;
+- whether scraps need positioning bias;
+- whether transparency should vary;
+- whether scraps are too legible;
+- whether later paint obscures them at the right rate;
+- whether the artifact should occasionally extend beyond the region or remain strictly clipped.
 
-- which settings repeatedly produce strong work;
-- which controls are rarely useful;
-- where generation feels slow;
-- whether repeated visual motifs emerge.
+Only then decide whether additional artifact types are worthwhile.
 
-## Milestone 2 — Performance Profiling + Low-Risk Wins
+---
 
-- add phase timing;
-- load boundary pixels once per generation;
-- remove obsolete texture-layer allocation;
-- identify dominant bottlenecks.
+## Milestone 3 — Generalize Only If Earned
 
-## Milestone 3 — Region Cache / Connected Components
+If text scraps produce strong work, the artifact mechanism may later support:
 
-- build region-ID map once per boundary;
-- cache region pixels, bounds, edge pixels;
-- preserve random-seed probability and repeated-hit semantics;
-- compare output against current system to verify no aesthetic change.
+- image fragments;
+- scanned symbols;
+- handwriting;
+- diagrams;
+- photo fragments;
+- generated marks.
 
-## Milestone 4 — Boundary Vocabulary v1
+Do not generalize before the text-scrap experiment proves useful.
 
-- introduce boundary geometry collection;
-- retain Chaikin as the primary source;
-- add squares/rectangles first;
-- route each component to both detection and visible rendering;
-- evaluate whether rigid geometry improves the artwork.
+---
 
-## Milestone 5 — Progressive Animation
+## Milestone 4 — Region Intelligence Experiments
 
-- precompute region/painting events;
-- reveal them over time;
-- keep texture overlay independent;
-- add pause/resume and speed.
+After the artifact feature has been evaluated, revisit geometry-aware selection.
 
-## Milestone 6 — Bounding-Box Paint Buffers
+Possible experiments:
 
-- replace full-canvas per-region temporary layers and masks;
-- benchmark generation speed and memory behavior.
+- region personality;
+- overlooked-region scoring;
+- region-to-region influence;
+- recursive regions.
 
-## Milestone 7 — Additional Boundary Sources
-
-Only after the first geometry experiment proves useful:
-
-- circles;
-- polygons;
-- dividers;
-- uploaded drawings.
+These should build on actual artistic results rather than become a parallel architecture project.
 
 ---
 
 # Long-Term Direction
 
-`regionPainter` is best understood as a **boundary-driven generative painting instrument**.
+`regionPainter` should remain a boundary-driven generative painting instrument whose compositions emerge from repeated attention to discovered spaces.
 
-Its strongest identity currently comes from:
+Its core identity is becoming:
 
 ```text
-unexpected enclosed space
+boundary structure
+        +
+discovered regions
         +
 probabilistic attention
         +
-repeated translucent pigment
+layered paint
         +
-expressive brush line
+rare interruptions
         +
-physical surface texture
+surface character
 ```
 
-The project should continue expanding what can create a boundary, how the painting can unfold over time, and how efficiently the system can generate — without losing the accidents and asymmetries that made the current work successful.
+The next stage should not focus mainly on adding more ways to create boundaries.
+
+The stronger opportunity is to expand what can happen when a region is discovered.
