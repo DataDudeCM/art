@@ -1,13 +1,21 @@
 let regionMaskCanvas = null;
 let regionMaskContext = null;
 let regionMaskImageData = null;
-let regionPaintTempLayer = null;
+let regionMaskWidth = 0;
+let regionMaskHeight = 0;
 
-function ensureRegionPaintTempLayer() {
+let regionPaintTempLayer = null;
+let regionPaintTempWidth = 0;
+let regionPaintTempHeight = 0;
+
+function ensureRegionPaintTempLayer(
+  bufferWidth,
+  bufferHeight
+) {
   if (
     regionPaintTempLayer &&
-    regionPaintTempLayer.width === width &&
-    regionPaintTempLayer.height === height
+    regionPaintTempWidth === bufferWidth &&
+    regionPaintTempHeight === bufferHeight
   ) {
     return;
   }
@@ -17,7 +25,10 @@ function ensureRegionPaintTempLayer() {
   }
 
   regionPaintTempLayer =
-    createGraphics(width, height);
+    createGraphics(bufferWidth, bufferHeight);
+
+  regionPaintTempWidth = bufferWidth;
+  regionPaintTempHeight = bufferHeight;
 }
 
 function paintRegion(region, g, baseColor) {
@@ -59,8 +70,14 @@ function paintRegion(region, g, baseColor) {
     b: blue(regionCol)
   };
 
-  // Paint freely onto a temporary layer.
-  ensureRegionPaintTempLayer();
+  const workRect =
+    getRegionWorkRect(region, viewport);
+
+  ensureRegionPaintTempLayer(
+    workRect.width,
+    workRect.height
+  );
+
   regionPaintTempLayer.clear();
 
   const brushStampStart =
@@ -79,10 +96,16 @@ function paintRegion(region, g, baseColor) {
       SETTINGS.paint.alphaMax
     );
 
+    const localX =
+      p.x - workRect.x;
+
+    const localY =
+      p.y - workRect.y;
+
     stampBrush(
       regionPaintTempLayer,
-      p.x,
-      p.y,
+      localX,
+      localY,
       size,
       regionRGB,
       alpha,
@@ -236,11 +259,14 @@ function getRegionBrushScale(region) {
 // Region mask / clipping
 // --------------------------------------------------
 
-function ensureRegionMaskCanvas() {
+function ensureRegionMaskCanvas(
+  bufferWidth,
+  bufferHeight
+) {
   if (
     regionMaskCanvas &&
-    regionMaskCanvas.width === width &&
-    regionMaskCanvas.height === height
+    regionMaskWidth === bufferWidth &&
+    regionMaskHeight === bufferHeight
   ) {
     return;
   }
@@ -248,17 +274,83 @@ function ensureRegionMaskCanvas() {
   regionMaskCanvas =
     document.createElement("canvas");
 
-  regionMaskCanvas.width = width;
-  regionMaskCanvas.height = height;
+  regionMaskCanvas.width = bufferWidth;
+  regionMaskCanvas.height = bufferHeight;
 
   regionMaskContext =
-    regionMaskCanvas.getContext("2d");
+    regionMaskCanvas.getContext("2d", {
+      willReadFrequently: true
+    });
 
   regionMaskImageData =
     regionMaskContext.createImageData(
-      width,
-      height
+      bufferWidth,
+      bufferHeight
     );
+
+  regionMaskWidth = bufferWidth;
+  regionMaskHeight = bufferHeight;
+}
+
+function getRegionWorkRect(
+  region,
+  viewport = getFullCanvasViewport()
+) {
+  const minViewportX =
+    floor(viewport.x);
+
+  const maxViewportX =
+    ceil(
+      viewport.x + viewport.width
+    ) - 1;
+
+  const minViewportY =
+    floor(viewport.y);
+
+  const maxViewportY =
+    ceil(
+      viewport.y + viewport.height
+    ) - 1;
+
+  const maskExpand =
+    SETTINGS.paint.maskExpansionPixels || 0;
+
+  const brushPad =
+    ceil(SETTINGS.paint.maxBrushSize || 0);
+
+  const pad =
+    max(maskExpand, brushPad);
+
+  const minX =
+    max(
+      minViewportX,
+      region.bounds.minX - pad
+    );
+
+  const maxX =
+    min(
+      maxViewportX,
+      region.bounds.maxX + pad
+    );
+
+  const minY =
+    max(
+      minViewportY,
+      region.bounds.minY - pad
+    );
+
+  const maxY =
+    min(
+      maxViewportY,
+      region.bounds.maxY + pad
+    );
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1
+  };
 }
 
 function compositeRegionPaint(
