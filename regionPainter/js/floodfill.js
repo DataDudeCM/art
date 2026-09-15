@@ -1,6 +1,8 @@
 let regionCacheLookup = null;
 let regionCacheRegions = [null];
 
+const REJECTED_REGION_ID = 0xFFFFFFFF;
+
 function resetRegionCache() {
   regionCacheLookup =
     new Uint32Array(width * height);
@@ -68,6 +70,13 @@ function floodFillRegion(
 
   const cachedRegionId =
     regionCacheLookup[startIndex];
+
+  if (
+    cachedRegionId ===
+    REJECTED_REGION_ID
+  ) {
+    return null;
+  }
 
   if (cachedRegionId !== 0) {
     return regionCacheRegions[
@@ -163,6 +172,14 @@ function floodFillRegion(
     SETTINGS.fill.maxRegionFraction;
 
   if (pixels.length > maxPixels) {
+    for (const p of pixels) {
+      const index =
+        p.y * w + p.x;
+
+      regionCacheLookup[index] =
+        REJECTED_REGION_ID;
+    }
+
     return null;
   }
 
