@@ -115,8 +115,8 @@ function startGenerationAnimation() {
   boundaryLayer.clear();
   paintLayer.clear();
 
-  generationRegionColors =
-    new Map();
+  generationRegionColors = new Map();
+  generationRegionArtifacts = new Map();
 
   if (
     SETTINGS.boundary.source ===

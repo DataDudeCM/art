@@ -512,6 +512,7 @@ function generateArtwork() {
   noiseSeed(generationSeed);
 
   generationRegionColors = new Map();
+  generationRegionArtifacts = new Map();
 
   boundaryDetectionLayer.clear();
   boundaryLayer.clear();
