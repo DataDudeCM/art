@@ -475,7 +475,7 @@ That history is desirable.
 Initial structure:
 
 ```text
-assets/
+../common/
   artifacts/
     text/
       scraps.json
@@ -490,11 +490,11 @@ Example manifest:
 {
   "artifacts": [
     {
-      "file": "scrap01.png",
+      "file": "scrap-1.png",
       "weight": 1
     },
     {
-      "file": "scrap02.png",
+      "file": "scrap-2.png",
       "weight": 1
     }
   ]
