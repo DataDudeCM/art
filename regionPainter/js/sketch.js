@@ -37,6 +37,10 @@ let perfStats = {
   paintMs: 0,
   renderMs: 0,
   successfulRegions: 0,
+  brushStampMs: 0,
+  compositeMs: 0,
+  edgeDetectMs: 0,
+  bleedMs: 0,
   attempts: 0
 };
 
@@ -499,6 +503,10 @@ function generateArtwork() {
   perfStats.renderMs = 0;
   perfStats.attempts = 0;
   perfStats.successfulRegions = 0;
+  perfStats.brushStampMs = 0;
+  perfStats.compositeMs = 0;
+  perfStats.edgeDetectMs = 0;
+  perfStats.bleedMs = 0;
 
   randomSeed(generationSeed);
   noiseSeed(generationSeed);
@@ -647,6 +655,22 @@ function generateArtwork() {
         ms: Math.round(
           perfStats.paintMs
         )
+      },
+
+      "  Brush stamping": {
+        ms: Math.round(perfStats.brushStampMs)
+      },
+
+      "  Region composite": {
+        ms: Math.round(perfStats.compositeMs)
+      },
+
+      "  Edge detection": {
+        ms: Math.round(perfStats.edgeDetectMs)
+      },
+
+      "  Bleed": {
+        ms: Math.round(perfStats.bleedMs)
       },
 
       "Final render": {

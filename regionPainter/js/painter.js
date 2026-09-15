@@ -54,6 +54,9 @@ function paintRegion(region, g, baseColor) {
   ensureRegionPaintTempLayer();
   regionPaintTempLayer.clear();
 
+  const brushStampStart =
+    performance.now();
+
   for (let i = 0; i < marks; i++) {
     const p = random(region.pixels);
 
@@ -68,7 +71,7 @@ function paintRegion(region, g, baseColor) {
     );
 
     stampBrush(
-      tempLayer,
+      regionPaintTempLayer,
       p.x,
       p.y,
       size,
@@ -78,13 +81,21 @@ function paintRegion(region, g, baseColor) {
     );
   }
 
-  // Clip all of that paint to the detected flood-fill region.
+  perfStats.brushStampMs +=
+    performance.now() - brushStampStart;
+
+  const compositeStart =
+    performance.now();
+
   compositeRegionPaint(
-    tempLayer,
+    regionPaintTempLayer,
     region,
     g,
     activeViewport
   );
+
+  perfStats.compositeMs +=
+    performance.now() - compositeStart;
 
   paintRegionBleed(
     region,
@@ -96,7 +107,6 @@ function paintRegion(region, g, baseColor) {
     activeViewport
   );
 
-  tempLayer.remove();
 }
 
 function paintRegionBleed(
@@ -108,7 +118,14 @@ function paintRegionBleed(
   regionBrush,
   viewport = getFullCanvasViewport()
 ) {
-  const edgePixels = findRegionEdgePixels(region);
+  const edgeStart =
+    performance.now();
+
+  const edgePixels =
+    findRegionEdgePixels(region);
+
+  perfStats.edgeDetectMs +=
+    performance.now() - edgeStart;
 
   if (edgePixels.length === 0) {
     return;
@@ -118,6 +135,9 @@ function paintRegionBleed(
     SETTINGS.paint.useSameBrushForBleed
       ? regionBrush
       : chooseRegionBrush();
+
+  const bleedStart =
+    performance.now();
 
   drawClippedToViewport(
     g,
@@ -174,6 +194,9 @@ function paintRegionBleed(
       }
     }
   );
+
+  perfStats.bleedMs +=
+    performance.now() - bleedStart;
 }
 
 // --------------------------------------------------
