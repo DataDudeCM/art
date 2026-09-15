@@ -146,7 +146,7 @@ function setup() {
     );
 
   canvas.parent("canvas-container");
-  applyCanvasZoom(canvas);
+  applyCanvasZoom(canvas.elt);
 
   boundaryDetectionLayer =
     createGraphics(width, height);
@@ -209,14 +209,14 @@ function draw() {
     }
 }
 
-function applyCanvasZoom(canvas) {
+function applyCanvasZoom(canvasElement) {
   const zoom =
     SETTINGS.view.zoom || 1;
 
-  canvas.elt.style.width =
+  canvasElement.style.width =
     `${width * zoom}px`;
 
-  canvas.elt.style.height =
+  canvasElement.style.height =
     `${height * zoom}px`;
 }
 
@@ -1099,27 +1099,16 @@ function testRegion() {
 }
 
 function windowResized() {
-  resizeCanvas(
-    getCanvasWidth(),
-    windowHeight
-  );
+  const canvasElement =
+    document.querySelector(
+      "#canvas-container canvas"
+    );
 
-  renderArtwork();
-
-  boundaryDetectionLayer =
-    createGraphics(width, height);
-
-  boundaryLayer =
-    createGraphics(width, height);
-
-  paintLayer =
-    createGraphics(width, height);
-
-  drawingPreviewLayer =
-    createGraphics(width, height);
+  if (canvasElement) {
+    applyCanvasZoom(canvasElement);
+  }
 
   lastGenerationTime = millis();
-
 }
 
 function getTimestamp() {

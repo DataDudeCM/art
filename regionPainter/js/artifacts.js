@@ -118,20 +118,48 @@ function drawTextArtifact(
   state,
   targetLayer
 ) {
-  const img = artifactImages.get(state.file);
+  const img =
+    artifactImages.get(state.file);
 
   if (!img) {
     return;
   }
 
-  const tempLayer = createGraphics(width, height);
+  const viewport =
+    activeViewport ||
+    getFullCanvasViewport();
+
+  const workRect =
+    getRegionWorkRect(
+      region,
+      viewport
+    );
+
+  const tempLayer =
+    createGraphics(
+      workRect.width,
+      workRect.height
+    );
+
   tempLayer.clear();
 
   tempLayer.push();
+
   tempLayer.imageMode(CENTER);
-  tempLayer.translate(state.x, state.y);
-  tempLayer.rotate(state.rotation);
-  tempLayer.tint(255, state.alpha);
+
+  tempLayer.translate(
+    state.x - workRect.x,
+    state.y - workRect.y
+  );
+
+  tempLayer.rotate(
+    state.rotation
+  );
+
+  tempLayer.tint(
+    255,
+    state.alpha
+  );
 
   tempLayer.image(
     img,
@@ -142,13 +170,15 @@ function drawTextArtifact(
   );
 
   tempLayer.noTint();
+
   tempLayer.pop();
 
   compositeRegionPaint(
     tempLayer,
     region,
     targetLayer,
-    activeViewport
+    viewport,
+    workRect
   );
 
   tempLayer.remove();

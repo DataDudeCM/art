@@ -71,7 +71,10 @@ function paintRegion(region, g, baseColor) {
   };
 
   const workRect =
-    getRegionWorkRect(region, viewport);
+    getRegionWorkRect(
+      region,
+      activeViewport || getFullCanvasViewport()
+    );
 
   ensureRegionPaintTempLayer(
     workRect.width,
@@ -123,7 +126,8 @@ function paintRegion(region, g, baseColor) {
     regionPaintTempLayer,
     region,
     g,
-    activeViewport
+    activeViewport || getFullCanvasViewport(),
+    workRect
   );
 
   perfStats.compositeMs +=
@@ -316,7 +320,9 @@ function getRegionWorkRect(
     SETTINGS.paint.maskExpansionPixels || 0;
 
   const brushPad =
-    ceil(SETTINGS.paint.maxBrushSize || 0);
+    ceil(
+      SETTINGS.paint.brushSizeMax || 0
+    );
 
   const pad =
     max(maskExpand, brushPad);
@@ -357,30 +363,16 @@ function compositeRegionPaint(
   tempLayer,
   region,
   targetLayer,
-  viewport = getFullCanvasViewport()
+  viewport = getFullCanvasViewport(),
+  workRect
 ) {
-  ensureRegionMaskCanvas();
+  ensureRegionMaskCanvas(
+    workRect.width,
+    workRect.height
+  );
 
   const maskPixels =
     regionMaskImageData.data;
-
-  const minViewportX =
-    floor(viewport.x);
-
-  const maxViewportX =
-    ceil(
-      viewport.x +
-      viewport.width
-    ) - 1;
-
-  const minViewportY =
-    floor(viewport.y);
-
-  const maxViewportY =
-    ceil(
-      viewport.y +
-      viewport.height
-    ) - 1;
 
   maskPixels.fill(0);
 
@@ -388,6 +380,12 @@ function compositeRegionPaint(
     SETTINGS.paint.maskExpansionPixels || 0;
 
   for (const p of region.pixels) {
+    const localBaseX =
+      p.x - workRect.x;
+
+    const localBaseY =
+      p.y - workRect.y;
+
     for (
       let oy = -expand;
       oy <= expand;
@@ -398,20 +396,26 @@ function compositeRegionPaint(
         ox <= expand;
         ox++
       ) {
-        const x = p.x + ox;
-        const y = p.y + oy;
+        const x =
+          localBaseX + ox;
+
+        const y =
+          localBaseY + oy;
 
         if (
-          x < minViewportX ||
-          x > maxViewportX ||
-          y < minViewportY ||
-          y > maxViewportY
+          x < 0 ||
+          x >= workRect.width ||
+          y < 0 ||
+          y >= workRect.height
         ) {
           continue;
         }
 
         const index =
-          4 * (y * width + x);
+          4 * (
+            y * workRect.width +
+            x
+          );
 
         maskPixels[index + 3] = 255;
       }
@@ -446,8 +450,8 @@ function compositeRegionPaint(
     () => {
       targetLayer.image(
         tempLayer,
-        0,
-        0
+        workRect.x,
+        workRect.y
       );
     }
   );
