@@ -368,6 +368,11 @@ function setupTextureControls() {
       "texture-blend-mode"
     );
 
+  const textureScope =
+    document.getElementById(
+      "texture-scope"
+    );
+
   chooseButton.addEventListener(
     "click",
     () => {
@@ -392,11 +397,24 @@ function setupTextureControls() {
 
   blendMode.value =
     SETTINGS.texture.blendMode;
-
-  blendMode.addEventListener(
+  
+    blendMode.addEventListener(
     "change",
     event => {
       SETTINGS.texture.blendMode =
+        event.target.value;
+
+      renderArtwork();
+    }
+  );
+
+  textureScope.value =
+    SETTINGS.texture.scope;
+
+  textureScope.addEventListener(
+    "change",
+    event => {
+      SETTINGS.texture.scope =
         event.target.value;
 
       renderArtwork();

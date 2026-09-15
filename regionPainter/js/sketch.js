@@ -1068,16 +1068,85 @@ function drawTextureOverlay() {
     return;
   }
 
+  const grid =
+    getActiveGridSettings();
+
+  if (
+    SETTINGS.texture.scope === "fullCanvas" ||
+    !grid.enabled
+  ) {
+    drawTextureInViewport(
+      getFullCanvasViewport()
+    );
+
+    return;
+  }
+
+  for (
+    let row = 0;
+    row < grid.rows;
+    row++
+  ) {
+    for (
+      let col = 0;
+      col < grid.cols;
+      col++
+    ) {
+      const viewport =
+        getGridViewport(
+          row,
+          col,
+          grid.rows,
+          grid.cols,
+          grid.gutter,
+          grid.outerMargin
+        );
+
+      drawTextureInViewport(
+        viewport
+      );
+    }
+  }
+}
+
+function drawTextureInViewport(
+  viewport
+) {
+  const img =
+    uploadedTextureImage;
+
+  if (!img) {
+    return;
+  }
+
   push();
 
-  if (SETTINGS.texture.blendMode === "multiply") {
+  drawingContext.save();
+
+  drawingContext.beginPath();
+
+  drawingContext.rect(
+    viewport.x,
+    viewport.y,
+    viewport.width,
+    viewport.height
+  );
+
+  drawingContext.clip();
+
+  if (
+    SETTINGS.texture.blendMode ===
+    "multiply"
+  ) {
     blendMode(MULTIPLY);
   } else if (
-    SETTINGS.texture.blendMode === "overlay"
+    SETTINGS.texture.blendMode ===
+    "overlay"
   ) {
     blendMode(OVERLAY);
   } else if (
-    SETTINGS.texture.blendMode === "screen"
+    SETTINGS.texture.blendMode ===
+    "screen"
   ) {
     blendMode(SCREEN);
   } else {
@@ -1089,44 +1158,61 @@ function drawTextureOverlay() {
     SETTINGS.texture.opacity
   );
 
-  const img =
-    uploadedTextureImage;
-
-  // Cover canvas without distorting texture.
-  const canvasRatio =
-    width / height;
-
   const imageRatio =
     img.width / img.height;
+
+  const viewportRatio =
+    viewport.width /
+    viewport.height;
 
   let drawW;
   let drawH;
 
-  if (imageRatio > canvasRatio) {
-    drawH = height;
-    drawW =
-      height * imageRatio;
-  } else {
-    drawW = width;
+  if (
+    imageRatio >
+    viewportRatio
+  ) {
     drawH =
-      width / imageRatio;
+      viewport.height;
+
+    drawW =
+      viewport.height *
+      imageRatio;
+  } else {
+    drawW =
+      viewport.width;
+
+    drawH =
+      viewport.width /
+      imageRatio;
   }
 
-  drawW *= SETTINGS.texture.scale;
-  drawH *= SETTINGS.texture.scale;
+  drawW *=
+    SETTINGS.texture.scale;
+
+  drawH *=
+    SETTINGS.texture.scale;
 
   imageMode(CENTER);
 
   image(
     img,
-    width / 2,
-    height / 2,
+
+    viewport.x +
+      viewport.width / 2,
+
+    viewport.y +
+      viewport.height / 2,
+
     drawW,
     drawH
   );
 
   noTint();
+
   imageMode(CORNER);
+
+  drawingContext.restore();
 
   pop();
 }
