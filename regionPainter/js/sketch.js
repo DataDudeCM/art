@@ -141,11 +141,12 @@ function setup() {
 
   const canvas =
     createCanvas(
-      getCanvasWidth(),
-      windowHeight
+      SETTINGS.canvas.width,
+      SETTINGS.canvas.height
     );
 
   canvas.parent("canvas-container");
+  applyCanvasZoom(canvas);
 
   boundaryDetectionLayer =
     createGraphics(width, height);
@@ -206,6 +207,17 @@ function draw() {
 
       requestGenerate();
     }
+}
+
+function applyCanvasZoom(canvas) {
+  const zoom =
+    SETTINGS.view.zoom || 1;
+
+  canvas.elt.style.width =
+    `${width * zoom}px`;
+
+  canvas.elt.style.height =
+    `${height * zoom}px`;
 }
 
 function syncSeedDisplay() {

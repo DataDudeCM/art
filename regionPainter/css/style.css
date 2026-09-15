@@ -38,7 +38,14 @@ body {
   flex: 1;
   min-width: 0;
   height: 100vh;
-  overflow: hidden;
+
+  overflow: auto;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  padding: 20px;
 }
 
 #canvas-container canvas {

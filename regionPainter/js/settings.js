@@ -1,6 +1,9 @@
 const SETTINGS = {
 
   canvas: {
+    width: 3000,
+    height: 4000,
+
     paperColor: null,
 
     backgroundMode: "palette", // "palette" | "white" | "black"
@@ -16,6 +19,8 @@ const SETTINGS = {
   },
 
   view: {
+    zoom: 0.25,
+
     showPaint: true,
     showStructureLines: false,
     showStructurePoints: false
