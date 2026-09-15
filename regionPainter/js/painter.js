@@ -290,60 +290,11 @@ function compositeRegionPaint(
       viewport.height
     ) - 1;
 
-    // Clear only the part of the mask we are about to reuse.
-    for (
-      let y = maskMinY;
-      y <= maskMaxY;
-      y++
-    ) {
-      const start =
-        4 * (y * width + maskMinX);
-
-      const end =
-        4 * (y * width + maskMaxX + 1);
-
-      maskPixels.fill(
-        0,
-        start,
-        end
-      );
-    }
+  maskPixels.fill(0);
 
   const expand =
     SETTINGS.paint.maskExpansionPixels || 0;
 
-  const maskMinX =
-    max(
-      minViewportX,
-      region.bounds.minX - expand
-    );
-
-  const maskMaxX =
-    min(
-      maxViewportX,
-      region.bounds.maxX + expand
-    );
-
-  const maskMinY =
-    max(
-      minViewportY,
-      region.bounds.minY - expand
-    );
-
-  const maskMaxY =
-    min(
-      maxViewportY,
-      region.bounds.maxY + expand
-    );
-
-  const maskWidth =
-    maskMaxX - maskMinX + 1;
-
-  const maskHeight =
-    maskMaxY - maskMinY + 1;
-
-  // Build the mask directly in memory.
-  // Only alpha matters for destination-in.
   for (const p of region.pixels) {
     for (
       let oy = -expand;
@@ -375,19 +326,12 @@ function compositeRegionPaint(
     }
   }
 
-  // Write the mask to its reusable canvas.
   regionMaskContext.putImageData(
     regionMaskImageData,
     0,
-    0,
-    maskMinX,
-    maskMinY,
-    maskWidth,
-    maskHeight
+    0
   );
 
-  // Clip the existing brush paint in-place.
-  // This avoids tempLayer.get() and p5.Image.mask().
   const ctx =
     tempLayer.drawingContext;
 
@@ -398,38 +342,20 @@ function compositeRegionPaint(
 
   ctx.drawImage(
     regionMaskCanvas,
-
-    maskMinX,
-    maskMinY,
-    maskWidth,
-    maskHeight,
-
-    maskMinX,
-    maskMinY,
-    maskWidth,
-    maskHeight
+    0,
+    0
   );
 
   ctx.restore();
 
-  // Composite the already-clipped canvas
-  // directly onto the final paint layer.
   drawClippedToViewport(
     targetLayer,
     viewport,
     () => {
-      targetLayer.drawingContext.drawImage(
-        tempLayer.canvas,
-
-        maskMinX,
-        maskMinY,
-        maskWidth,
-        maskHeight,
-
-        maskMinX,
-        maskMinY,
-        maskWidth,
-        maskHeight
+      targetLayer.image(
+        tempLayer,
+        0,
+        0
       );
     }
   );
