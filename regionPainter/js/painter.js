@@ -290,11 +290,57 @@ function compositeRegionPaint(
       viewport.height
     ) - 1;
 
-  // Reset previous region mask.
-  maskPixels.fill(0);
+    // Clear only the part of the mask we are about to reuse.
+    for (
+      let y = maskMinY;
+      y <= maskMaxY;
+      y++
+    ) {
+      const start =
+        4 * (y * width + maskMinX);
+
+      const end =
+        4 * (y * width + maskMaxX + 1);
+
+      maskPixels.fill(
+        0,
+        start,
+        end
+      );
+    }
 
   const expand =
     SETTINGS.paint.maskExpansionPixels || 0;
+
+  const maskMinX =
+    max(
+      minViewportX,
+      region.bounds.minX - expand
+    );
+
+  const maskMaxX =
+    min(
+      maxViewportX,
+      region.bounds.maxX + expand
+    );
+
+  const maskMinY =
+    max(
+      minViewportY,
+      region.bounds.minY - expand
+    );
+
+  const maskMaxY =
+    min(
+      maxViewportY,
+      region.bounds.maxY + expand
+    );
+
+  const maskWidth =
+    maskMaxX - maskMinX + 1;
+
+  const maskHeight =
+    maskMaxY - maskMinY + 1;
 
   // Build the mask directly in memory.
   // Only alpha matters for destination-in.
@@ -333,7 +379,11 @@ function compositeRegionPaint(
   regionMaskContext.putImageData(
     regionMaskImageData,
     0,
-    0
+    0,
+    maskMinX,
+    maskMinY,
+    maskWidth,
+    maskHeight
   );
 
   // Clip the existing brush paint in-place.
@@ -348,8 +398,16 @@ function compositeRegionPaint(
 
   ctx.drawImage(
     regionMaskCanvas,
-    0,
-    0
+
+    maskMinX,
+    maskMinY,
+    maskWidth,
+    maskHeight,
+
+    maskMinX,
+    maskMinY,
+    maskWidth,
+    maskHeight
   );
 
   ctx.restore();
@@ -360,10 +418,18 @@ function compositeRegionPaint(
     targetLayer,
     viewport,
     () => {
-      targetLayer.image(
-        tempLayer,
-        0,
-        0
+      targetLayer.drawingContext.drawImage(
+        tempLayer.canvas,
+
+        maskMinX,
+        maskMinY,
+        maskWidth,
+        maskHeight,
+
+        maskMinX,
+        maskMinY,
+        maskWidth,
+        maskHeight
       );
     }
   );
