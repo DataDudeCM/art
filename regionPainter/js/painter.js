@@ -496,7 +496,7 @@ function stampImageBrush(g, x, y, size, c, alpha, brushInfo) {
   g.tint(
     c.r,
     c.g,
-    c.b,``
+    c.b,
     alpha
   );
 
