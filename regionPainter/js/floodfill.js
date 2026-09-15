@@ -72,11 +72,15 @@ function floodFillRegion(
       continue;
     }
 
+    // 1 = visited but not part of this region
     visited[index] = 1;
 
     if (isBoundaryPixel(g, x, y)) {
       continue;
     }
+
+    // 2 = confirmed member of this region
+    visited[index] = 2;
 
     pixels.push({ x, y });
 
@@ -107,8 +111,49 @@ function floodFillRegion(
     return null;
   }
 
+  const edgePixels = [];
+
+  for (const p of pixels) {
+    const x = p.x;
+    const y = p.y;
+
+    const left =
+      x > minViewportX
+        ? y * w + (x - 1)
+        : -1;
+
+    const right =
+      x < maxViewportX
+        ? y * w + (x + 1)
+        : -1;
+
+    const up =
+      y > minViewportY
+        ? (y - 1) * w + x
+        : -1;
+
+    const down =
+      y < maxViewportY
+        ? (y + 1) * w + x
+        : -1;
+
+    if (
+      left === -1 ||
+      right === -1 ||
+      up === -1 ||
+      down === -1 ||
+      visited[left] !== 2 ||
+      visited[right] !== 2 ||
+      visited[up] !== 2 ||
+      visited[down] !== 2
+    ) {
+      edgePixels.push(p);
+    }
+  }
+
   return {
     pixels,
+    edgePixels,
     pixelCount: pixels.length,
 
     bounds: {

@@ -118,14 +118,8 @@ function paintRegionBleed(
   regionBrush,
   viewport = getFullCanvasViewport()
 ) {
-  const edgeStart =
-    performance.now();
-
   const edgePixels =
-    findRegionEdgePixels(region);
-
-  perfStats.edgeDetectMs +=
-    performance.now() - edgeStart;
+    region.edgePixels || [];
 
   if (edgePixels.length === 0) {
     return;
