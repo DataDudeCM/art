@@ -81,7 +81,25 @@ const SETTINGS = {
     cornerSoftness: 0.20, // .2 - .1 is jaggy, higher number = softer
     softeningPasses: 1, // 1 default
 
-    visible: true, // is the line visible or notss
+    visible: true,
+
+    // Optional geometric interruptions added
+    // to whatever boundary source is active.
+    primitivesEnabled: false,
+
+    // Probability that each primitive attempt succeeds.
+    primitiveChance: 0.25,
+
+    // Keep count fixed for the first version.
+    primitiveAttempts: 6,
+
+    // Primitive diameter/size relative to
+    // the smaller active viewport dimension.
+    primitiveMinScale: 0.18,
+    primitiveMaxScale: 0.55,
+
+    // Visible boundary rendering
+    brushMode: "image",
 
     // Visible boundary rendering
     brushMode: "image",      // "image" or "line"

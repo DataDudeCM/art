@@ -431,13 +431,23 @@ function generateBoundary() {
   const boundary =
     boundarySource.generate();
 
-  const strokes =
+  const sourceStrokes =
     boundary.strokes || [
       {
         points: boundary.points || [],
         closed: boundary.closed ?? true
       }
     ];
+
+  const primitiveStrokes =
+    generatePrimitiveBoundaryStrokes(
+      activeViewport
+    );
+
+  const strokes = [
+    ...sourceStrokes,
+    ...primitiveStrokes
+  ];
 
   boundaryControlPoints =
     boundary.controlPoints || [];
@@ -473,4 +483,201 @@ function generateBoundary() {
   }
 
   return boundary;
+}
+
+function generatePrimitiveBoundaryStrokes(
+  viewport = getFullCanvasViewport()
+) {
+  if (!SETTINGS.boundary.primitivesEnabled) {
+    return [];
+  }
+
+  const strokes = [];
+
+  const attempts =
+    SETTINGS.boundary.primitiveAttempts;
+
+  const chance =
+    SETTINGS.boundary.primitiveChance;
+
+  for (let i = 0; i < attempts; i++) {
+    if (random() > chance) {
+      continue;
+    }
+
+    strokes.push(
+      generateRandomPrimitiveStroke(
+        viewport
+      )
+    );
+  }
+
+  return strokes;
+}
+
+
+function generateRandomPrimitiveStroke(
+  viewport
+) {
+  const type =
+    random([
+      "circle",
+      "square",
+      "triangle"
+    ]);
+
+  const minDimension =
+    min(
+      viewport.width,
+      viewport.height
+    );
+
+  const size =
+    random(
+      minDimension *
+        SETTINGS.boundary.primitiveMinScale,
+
+      minDimension *
+        SETTINGS.boundary.primitiveMaxScale
+    );
+
+  const x =
+    random(
+      viewport.x,
+      viewport.x + viewport.width
+    );
+
+  const y =
+    random(
+      viewport.y,
+      viewport.y + viewport.height
+    );
+
+  switch (type) {
+    case "square":
+      return createSquarePrimitiveStroke(
+        x,
+        y,
+        size
+      );
+
+    case "triangle":
+      return createTrianglePrimitiveStroke(
+        x,
+        y,
+        size
+      );
+
+    case "circle":
+    default:
+      return createCirclePrimitiveStroke(
+        x,
+        y,
+        size
+      );
+  }
+}
+
+
+function createCirclePrimitiveStroke(
+  cx,
+  cy,
+  diameter
+) {
+  const points = [];
+
+  const radius =
+    diameter / 2;
+
+  const segmentCount = 40;
+
+  for (
+    let i = 0;
+    i < segmentCount;
+    i++
+  ) {
+    const angle =
+      map(
+        i,
+        0,
+        segmentCount,
+        0,
+        TWO_PI
+      );
+
+    points.push({
+      x:
+        cx +
+        cos(angle) * radius,
+
+      y:
+        cy +
+        sin(angle) * radius
+    });
+  }
+
+  return {
+    points,
+    closed: true
+  };
+}
+
+
+function createSquarePrimitiveStroke(
+  cx,
+  cy,
+  size
+) {
+  const half =
+    size / 2;
+
+  return {
+    points: [
+      {
+        x: cx - half,
+        y: cy - half
+      },
+      {
+        x: cx + half,
+        y: cy - half
+      },
+      {
+        x: cx + half,
+        y: cy + half
+      },
+      {
+        x: cx - half,
+        y: cy + half
+      }
+    ],
+    closed: true
+  };
+}
+
+
+function createTrianglePrimitiveStroke(
+  cx,
+  cy,
+  size
+) {
+  const half =
+    size / 2;
+
+  return {
+    points: [
+      {
+        x: cx,
+        y: cy - half
+      },
+      {
+        x: cx + half,
+        y: cy + half
+      },
+      {
+        x: cx - half,
+        y: cy + half
+      }
+    ],
+    closed: true
+  };
 }

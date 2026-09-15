@@ -629,6 +629,7 @@ function setupBoundaryControls() {
   setupParticleFeedMode();
   setupParticleSamplingMode();
   setupParticleMotionMode();
+  setupPrimitiveBoundaryControls();
 
   setupRangeControl(
     "boundary-brush-size",
@@ -751,6 +752,61 @@ function setupBoundaryControls() {
         Number(value);
     }
   );
+}
+
+function setupPrimitiveBoundaryControls() {
+  const enabled =
+    document.getElementById(
+      "boundary-primitives-enabled"
+    );
+
+  enabled.checked =
+    SETTINGS.boundary.primitivesEnabled;
+
+  enabled.addEventListener(
+    "change",
+    event => {
+      SETTINGS.boundary.primitivesEnabled =
+        event.target.checked;
+
+      updatePrimitiveBoundaryControls();
+    }
+  );
+
+  setupRangeControl(
+    "boundary-primitive-chance",
+    "boundary-primitive-chance-value",
+
+    () =>
+      Math.round(
+        SETTINGS.boundary.primitiveChance *
+        100
+      ),
+
+    value => {
+      SETTINGS.boundary.primitiveChance =
+        Number(value) / 100;
+    }
+  );
+
+  updatePrimitiveBoundaryControls();
+}
+
+
+function updatePrimitiveBoundaryControls() {
+  const control =
+    document.getElementById(
+      "boundary-primitive-chance-control"
+    );
+
+  if (!control) {
+    return;
+  }
+
+  control.style.display =
+    SETTINGS.boundary.primitivesEnabled
+      ? ""
+      : "none";
 }
 
 function setupParticleMotionMode() {
@@ -1787,6 +1843,22 @@ function syncBoundaryControls() {
     "boundary-brush-select"
   ).value =
     SETTINGS.boundary.forcedBrush || "";
+
+  document.getElementById(
+    "boundary-primitives-enabled"
+  ).checked =
+    SETTINGS.boundary.primitivesEnabled;
+
+  syncRangeControl(
+    "boundary-primitive-chance",
+    "boundary-primitive-chance-value",
+    Math.round(
+      SETTINGS.boundary.primitiveChance *
+      100
+    )
+  );
+
+  updatePrimitiveBoundaryControls();
 
   updateBoundaryBrushEnabledState();
 }
