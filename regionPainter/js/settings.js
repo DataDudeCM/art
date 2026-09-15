@@ -8,7 +8,7 @@ const SETTINGS = {
 
     backgroundMode: "palette", // "palette" | "white" | "black"
 
-    autoRegenerate: true,
+    autoRegenerate: false,
     regenerateSeconds: 2
   },
 
