@@ -1,6 +1,24 @@
 let regionMaskCanvas = null;
 let regionMaskContext = null;
 let regionMaskImageData = null;
+let regionPaintTempLayer = null;
+
+function ensureRegionPaintTempLayer() {
+  if (
+    regionPaintTempLayer &&
+    regionPaintTempLayer.width === width &&
+    regionPaintTempLayer.height === height
+  ) {
+    return;
+  }
+
+  if (regionPaintTempLayer) {
+    regionPaintTempLayer.remove();
+  }
+
+  regionPaintTempLayer =
+    createGraphics(width, height);
+}
 
 function paintRegion(region, g, baseColor) {
   const markScale = getRegionMarkScale(region);
@@ -33,8 +51,8 @@ function paintRegion(region, g, baseColor) {
     chooseRegionBrush();
 
   // Paint freely onto a temporary layer.
-  const tempLayer = createGraphics(width, height);
-  tempLayer.clear();
+  ensureRegionPaintTempLayer();
+  regionPaintTempLayer.clear();
 
   for (let i = 0; i < marks; i++) {
     const p = random(region.pixels);

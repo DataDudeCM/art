@@ -31,14 +31,16 @@ let artifactImages = new Map();
 let generationRegionArtifacts = new Map();
 
 
-
 let perfStats = {
+  boundaryMs: 0,
   floodMs: 0,
   paintMs: 0,
-  successfulRegions: 0
+  renderMs: 0,
+  successfulRegions: 0,
+  attempts: 0
 };
 
-const SHOW_PERF_STATS = false;
+const SHOW_PERF_STATS = true;
 
 const GRID_SWEEP_PARAMETERS = {
   none: null,
@@ -491,8 +493,11 @@ function resolveActivePalette() {
 function generateArtwork() {
   const totalStart = performance.now();
 
+  perfStats.boundaryMs = 0;
   perfStats.floodMs = 0;
   perfStats.paintMs = 0;
+  perfStats.renderMs = 0;
+  perfStats.attempts = 0;
   perfStats.successfulRegions = 0;
 
   randomSeed(generationSeed);
@@ -518,9 +523,6 @@ function generateArtwork() {
 
   const grid =
     getActiveGridSettings();
-
-  const boundaryStart =
-    performance.now();
 
   for (
     let row = 0;
@@ -565,7 +567,13 @@ function generateArtwork() {
       randomSeed(cellSeed);
       noiseSeed(cellSeed);
 
+      const boundaryStart =
+        performance.now();
+
       generateBoundary();
+
+      perfStats.boundaryMs +=
+        performance.now() - boundaryStart;
 
       gridStructureData.push({
         viewport: activeViewport,
@@ -589,48 +597,102 @@ function generateArtwork() {
     }
   }
 
-  const boundaryMs =
-    performance.now() - boundaryStart;
-
-  const regionsStart = boundaryStart;
-
-  const regionsMs =
-    performance.now() - regionsStart;
-
-  const renderStart = performance.now();
+  const renderStart =
+    performance.now();
 
   renderArtwork();
 
-  const renderMs =
+  perfStats.renderMs =
     performance.now() - renderStart;
 
   const totalMs =
     performance.now() - totalStart;
 
   if (SHOW_PERF_STATS) {
+    const measuredMs =
+      perfStats.boundaryMs +
+      perfStats.floodMs +
+      perfStats.paintMs +
+      perfStats.renderMs;
+
+    const otherMs =
+      totalMs - measuredMs;
+
+    const avgFloodMs =
+      perfStats.attempts > 0
+        ? perfStats.floodMs /
+          perfStats.attempts
+        : 0;
+
+    const avgPaintMs =
+      perfStats.successfulRegions > 0
+        ? perfStats.paintMs /
+          perfStats.successfulRegions
+        : 0;
+
     console.table({
       "Boundary": {
-        ms: Math.round(boundaryMs)
+        ms: Math.round(
+          perfStats.boundaryMs
+        )
       },
+
       "Flood fill": {
-        ms: Math.round(perfStats.floodMs)
+        ms: Math.round(
+          perfStats.floodMs
+        )
       },
-      "Painting": {
-        ms: Math.round(perfStats.paintMs)
+
+      "Paint / region event": {
+        ms: Math.round(
+          perfStats.paintMs
+        )
       },
-      "Region loop total": {
-        ms: Math.round(regionsMs)
-      },
+
       "Final render": {
-        ms: Math.round(renderMs)
+        ms: Math.round(
+          perfStats.renderMs
+        )
       },
+
+      "Other / overhead": {
+        ms: Math.round(
+          otherMs
+        )
+      },
+
       "TOTAL": {
-        ms: Math.round(totalMs)
+        ms: Math.round(
+          totalMs
+        )
       }
     });
 
     console.log(
-      `Successful regions: ${perfStats.successfulRegions} / ${SETTINGS.fill.attempts}`
+      `Attempts: ${perfStats.attempts}`
+    );
+
+    console.log(
+      `Successful regions: ` +
+      `${perfStats.successfulRegions}`
+    );
+
+    console.log(
+      `Average flood attempt: ` +
+      `${avgFloodMs.toFixed(2)} ms`
+    );
+
+    console.log(
+      `Average paint/event: ` +
+      `${avgPaintMs.toFixed(2)} ms`
+    );
+
+    console.log(
+      `Canvas: ${width} x ${height}`
+    );
+
+    console.log(
+      `Seed: ${generationSeed}`
     );
   }
 }
@@ -948,6 +1010,8 @@ function drawTextureOverlay() {
 }
 
 function testRegion() {
+  perfStats.attempts++;
+
   const samplePoint =
     getFillSamplePoint(
       activeViewport
