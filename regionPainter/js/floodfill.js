@@ -45,8 +45,13 @@ function floodFillRegion(
     return null;
   }
 
-  const visited = new Uint8Array(w * h);
-  const stack = [[sx, sy]];
+  const visited =
+    new Uint8Array(w * h);
+
+  const stack = [
+    sy * w + sx
+  ];
+
   const pixels = [];
 
   let minX = sx;
@@ -55,7 +60,14 @@ function floodFillRegion(
   let maxY = sy;
 
   while (stack.length > 0) {
-    const [x, y] = stack.pop();
+    const index =
+      stack.pop();
+
+    const x =
+      index % w;
+
+    const y =
+      Math.floor(index / w);
 
     if (
       x < minViewportX ||
@@ -65,8 +77,6 @@ function floodFillRegion(
     ) {
       continue;
     }
-
-    const index = y * w + x;
 
     if (visited[index]) {
       continue;
@@ -89,10 +99,21 @@ function floodFillRegion(
     minY = min(minY, y);
     maxY = max(maxY, y);
 
-    stack.push([x + 1, y]);
-    stack.push([x - 1, y]);
-    stack.push([x, y + 1]);
-    stack.push([x, y - 1]);
+    if (x < maxViewportX) {
+      stack.push(index + 1);
+    }
+
+    if (x > minViewportX) {
+      stack.push(index - 1);
+    }
+
+    if (y < maxViewportY) {
+      stack.push(index + w);
+    }
+
+    if (y > minViewportY) {
+      stack.push(index - w);
+    }
   }
 
   if (pixels.length < SETTINGS.fill.minRegionPixels) {

@@ -50,6 +50,15 @@ function paintRegion(region, g, baseColor) {
   const regionBrush =
     chooseRegionBrush();
 
+  const regionCol =
+    color(baseColor);
+
+  const regionRGB = {
+    r: red(regionCol),
+    g: green(regionCol),
+    b: blue(regionCol)
+  };
+
   // Paint freely onto a temporary layer.
   ensureRegionPaintTempLayer();
   regionPaintTempLayer.clear();
@@ -75,7 +84,7 @@ function paintRegion(region, g, baseColor) {
       p.x,
       p.y,
       size,
-      baseColor,
+      regionRGB,
       alpha,
       regionBrush
     );
@@ -473,8 +482,6 @@ function stampImageBrush(g, x, y, size, c, alpha, brushInfo) {
     return;
   }
 
-  const col = color(c);
-
   const rotation = random(TWO_PI);
   const aspect = random(0.75, 1.35);
 
@@ -487,9 +494,9 @@ function stampImageBrush(g, x, y, size, c, alpha, brushInfo) {
   g.imageMode(CENTER);
 
   g.tint(
-    red(col),
-    green(col),
-    blue(col),
+    c.r,
+    c.g,
+    c.b,``
     alpha
   );
 
