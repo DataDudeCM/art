@@ -46,6 +46,20 @@ const SETTINGS = {
     colEnd: 20
   },
 
+  artifact: {
+    enabled: true,
+    chance: 0.1, // default should be low 0.03
+    minRegionPixels: 2500,
+
+    fitScale: 1.4,
+
+    scaleMin: 0.9,
+    scaleMax: 1.8,
+
+    alphaMin: 170,
+    alphaMax: 255
+  },
+
   boundary: {
     source: "chaikin", // "chaikin" | "particleChaikin" | "rectangle" | "drawn"
     pointCount: 30, // more points = more lines and potential intersections

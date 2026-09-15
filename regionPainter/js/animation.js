@@ -502,7 +502,7 @@ function updateProgressivePaint() {
         palette
       );
 
-    paintRegion(
+    resolveRegionEvent(
       region,
       paintLayer,
       regionColor

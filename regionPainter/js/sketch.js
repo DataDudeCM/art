@@ -24,6 +24,12 @@ let generationBoundaryColor = null;
 
 let activeViewport = null;
 
+let artifactManifest = null;
+let artifactEntries = [];
+let artifactImages = new Map();
+
+let generationRegionArtifacts = new Map();
+
 
 
 let perfStats = {
@@ -71,7 +77,9 @@ const UI_STATE = {
 };
 
 function preload() {
+  
   loadPresetLibrary();
+
   loadJSON(
     "../common/brushes/brushes.json",
 
@@ -88,6 +96,36 @@ function preload() {
 
     error => {
       console.error("Could not load brush manifest:", error);
+    }
+  );
+
+  loadJSON(
+    "../common/artifacts/text/scraps.json",
+
+    data => {
+      artifactManifest = data;
+      artifactEntries = data.artifacts || [];
+
+      for (const entry of artifactEntries) {
+        artifactImages.set(
+          entry.file,
+          loadImage(
+            `../common/artifacts/text/${entry.file}`
+          )
+        );
+      }
+
+      console.log(
+        "Artifacts manifest loaded:",
+        artifactEntries.length
+      );
+    },
+
+    error => {
+      console.error(
+        "Could not load artifact manifest:",
+        error
+      );
     }
   );
 }
@@ -947,7 +985,7 @@ function testRegion() {
   const paintStart =
     performance.now();
 
-  paintRegion(
+  resolveRegionEvent(
     region,
     paintLayer,
     regionColor
