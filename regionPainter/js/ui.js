@@ -11,6 +11,7 @@ function setupUI() {
   setupAnimationControls();
   setupGridControls();
   setupGridVariationControls();
+  setupCanvasControls();
 
   document
     .getElementById("generate-button")
@@ -471,6 +472,134 @@ function setupPaletteControl() {
       UI_STATE.fixedPaletteKey = value;
     }
   });
+}
+
+function setupCanvasControls() {
+  const widthInput =
+    document.getElementById(
+      "canvas-width"
+    );
+
+  const heightInput =
+    document.getElementById(
+      "canvas-height"
+    );
+
+  const applyButton =
+    document.getElementById(
+      "canvas-apply-button"
+    );
+
+  const windowButton =
+    document.getElementById(
+      "canvas-window-button"
+    );
+
+  const zoomOut =
+    document.getElementById(
+      "zoom-out-button"
+    );
+
+  const zoomIn =
+    document.getElementById(
+      "zoom-in-button"
+    );
+
+  const zoomFit =
+    document.getElementById(
+      "zoom-fit-button"
+    );
+
+  const zoom100 =
+    document.getElementById(
+      "zoom-100-button"
+    );
+
+  const sizeNote =
+    document.getElementById(
+      "canvas-size-note"
+    );
+
+  function syncSize() {
+    widthInput.value =
+      SETTINGS.canvas.width;
+
+    heightInput.value =
+      SETTINGS.canvas.height;
+
+    sizeNote.textContent =
+      `${width} × ${height} actual pixels`;
+  }
+
+  applyButton.addEventListener(
+    "click",
+    () => {
+      applyCanvasSize(
+        Number(widthInput.value),
+        Number(heightInput.value)
+      );
+
+      syncSize();
+    }
+  );
+
+  windowButton.addEventListener(
+    "click",
+    () => {
+      const size =
+        getDefaultCanvasSize();
+
+      widthInput.value =
+        size.width;
+
+      heightInput.value =
+        size.height;
+
+      applyCanvasSize(
+        size.width,
+        size.height
+      );
+
+      setCanvasZoom(1);
+
+      syncSize();
+    }
+  );
+
+  zoomOut.addEventListener(
+    "click",
+    () => {
+      setCanvasZoom(
+        SETTINGS.view.zoom / 1.25
+      );
+    }
+  );
+
+  zoomIn.addEventListener(
+    "click",
+    () => {
+      setCanvasZoom(
+        SETTINGS.view.zoom * 1.25
+      );
+    }
+  );
+
+  zoomFit.addEventListener(
+    "click",
+    () => {
+      fitCanvasToWindow();
+    }
+  );
+
+  zoom100.addEventListener(
+    "click",
+    () => {
+      setCanvasZoom(1);
+    }
+  );
+
+  syncSize();
+  updateZoomDisplay();
 }
 
 function setupBoundaryControls() {

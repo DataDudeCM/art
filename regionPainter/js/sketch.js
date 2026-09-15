@@ -139,6 +139,19 @@ function preload() {
 function setup() {
   pixelDensity(1);
 
+  const defaultSize =
+    getDefaultCanvasSize();
+
+  if (!SETTINGS.canvas.width) {
+    SETTINGS.canvas.width =
+      defaultSize.width;
+  }
+
+  if (!SETTINGS.canvas.height) {
+    SETTINGS.canvas.height =
+      defaultSize.height;
+  }
+
   const canvas =
     createCanvas(
       SETTINGS.canvas.width,
@@ -218,6 +231,76 @@ function applyCanvasZoom(canvasElement) {
 
   canvasElement.style.height =
     `${height * zoom}px`;
+}
+
+function setCanvasZoom(zoom) {
+  SETTINGS.view.zoom =
+    constrain(
+      zoom,
+      0.1,
+      2
+    );
+
+  const canvasElement =
+    document.querySelector(
+      "#canvas-container canvas"
+    );
+
+  if (canvasElement) {
+    applyCanvasZoom(
+      canvasElement
+    );
+  }
+
+  updateZoomDisplay();
+}
+
+function fitCanvasToWindow() {
+  const container =
+    document.getElementById(
+      "canvas-container"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  const availableWidth =
+    max(
+      1,
+      container.clientWidth - 40
+    );
+
+  const availableHeight =
+    max(
+      1,
+      container.clientHeight - 40
+    );
+
+  const zoom =
+    min(
+      availableWidth / width,
+      availableHeight / height,
+      1
+    );
+
+  setCanvasZoom(zoom);
+}
+
+function updateZoomDisplay() {
+  const display =
+    document.getElementById(
+      "zoom-value"
+    );
+
+  if (!display) {
+    return;
+  }
+
+  display.textContent =
+    `${round(
+      SETTINGS.view.zoom * 100
+    )}%`;
 }
 
 function syncSeedDisplay() {
@@ -1098,38 +1181,7 @@ function testRegion() {
     performance.now() - paintStart;
 }
 
-function windowResized() {
-  const canvasElement =
-    document.querySelector(
-      "#canvas-container canvas"
-    );
 
-  if (canvasElement) {
-    applyCanvasZoom(canvasElement);
-  }
-
-  lastGenerationTime = millis();
-}
-
-function getTimestamp() {
-  return (
-    nf(year(), 4) +
-    nf(month(), 2) +
-    nf(day(), 2) + "-" +
-    nf(hour(), 2) +
-    nf(minute(), 2) +
-    nf(second(), 2)
-  );
-}
-
-function saveArtwork() {
-  const timestamp = getTimestamp();
-
-  saveCanvas(
-    `regionPainter-seed${generationSeed}-${timestamp}`,
-    "png"
-  );
-}
 
 function getPaletteKey(paletteObject) {
   return Object.keys(PALETTES).find(
@@ -1212,6 +1264,155 @@ function requestGenerate() {
   }, 25);
 }
 
+
+
+function updateActivePaletteDisplay() {
+  const paletteDisplay =
+    document.getElementById("active-palette");
+
+  if (paletteDisplay) {
+    paletteDisplay.textContent =
+      `Current: ${palette?.name || "Unknown"}`;
+  }
+}
+
+function getDefaultCanvasSize() {
+  const container =
+    document.getElementById(
+      "canvas-container"
+    );
+
+  const padding = 40;
+
+  return {
+    width: max(
+      320,
+      floor(
+        container.clientWidth -
+        padding
+      )
+    ),
+
+    height: max(
+      320,
+      floor(
+        container.clientHeight -
+        padding
+      )
+    )
+  };
+}
+
+function applyCanvasSize(
+  newWidth,
+  newHeight
+) {
+  const maxWidth =
+    SETTINGS.canvas.maxWidth || 4000;
+
+  const maxHeight =
+    SETTINGS.canvas.maxHeight || 4000;
+
+  newWidth =
+    constrain(
+      floor(newWidth),
+      320,
+      maxWidth
+    );
+
+  newHeight =
+    constrain(
+      floor(newHeight),
+      320,
+      maxHeight
+    );
+
+  SETTINGS.canvas.width =
+    newWidth;
+
+  SETTINGS.canvas.height =
+    newHeight;
+
+  resizeCanvas(
+    newWidth,
+    newHeight
+  );
+
+  boundaryDetectionLayer =
+    createGraphics(width, height);
+
+  boundaryLayer =
+    createGraphics(width, height);
+
+  paintLayer =
+    createGraphics(width, height);
+
+  textureLayer =
+    createGraphics(width, height);
+
+  drawingPreviewLayer =
+    createGraphics(width, height);
+
+  resetRegionCache();
+
+  generationRegionColors =
+    new Map();
+
+  generationRegionArtifacts =
+    new Map();
+
+  gridStructureData = [];
+
+  const canvasElement =
+    document.querySelector(
+      "#canvas-container canvas"
+    );
+
+  if (canvasElement) {
+    applyCanvasZoom(
+      canvasElement
+    );
+  }
+
+  renderArtwork();
+
+  lastGenerationTime =
+    millis();
+}
+
+function windowResized() {
+  const canvasElement =
+    document.querySelector(
+      "#canvas-container canvas"
+    );
+
+  if (canvasElement) {
+    applyCanvasZoom(canvasElement);
+  }
+
+  lastGenerationTime = millis();
+}
+
+function getTimestamp() {
+  return (
+    nf(year(), 4) +
+    nf(month(), 2) +
+    nf(day(), 2) + "-" +
+    nf(hour(), 2) +
+    nf(minute(), 2) +
+    nf(second(), 2)
+  );
+}
+
+function saveArtwork() {
+  const timestamp = getTimestamp();
+
+  saveCanvas(
+    `regionPainter-seed${generationSeed}-${timestamp}`,
+    "png"
+  );
+}
+
 function keyPressed() {
   if (key === "s" || key === "S") {
     const wasAuto =
@@ -1234,15 +1435,5 @@ function keyPressed() {
         presetName.trim()
       );
     }
-  }
-}
-
-function updateActivePaletteDisplay() {
-  const paletteDisplay =
-    document.getElementById("active-palette");
-
-  if (paletteDisplay) {
-    paletteDisplay.textContent =
-      `Current: ${palette?.name || "Unknown"}`;
   }
 }

@@ -109,6 +109,119 @@
       <div class="control-divider"></div>
 
       <section
+        class="control-group canvas-group collapsible-group"
+      >
+        <button
+          type="button"
+          class="section-toggle"
+          aria-expanded="true"
+        >
+          <span>Canvas / View</span>
+          <span class="section-arrow">▾</span>
+        </button>
+
+        <div class="section-content">
+
+          <div class="control-item">
+            <label for="canvas-width">
+              Canvas Width
+            </label>
+
+            <input
+              id="canvas-width"
+              type="number"
+              min="320"
+              max="4000"
+              step="1"
+            />
+          </div>
+
+          <div class="control-item">
+            <label for="canvas-height">
+              Canvas Height
+            </label>
+
+            <input
+              id="canvas-height"
+              type="number"
+              min="320"
+              max="4000"
+              step="1"
+            />
+          </div>
+
+          <div class="preset-actions">
+            <button
+              id="canvas-window-button"
+              type="button"
+            >
+              Window
+            </button>
+
+            <button
+              id="canvas-apply-button"
+              type="button"
+            >
+              Apply Size
+            </button>
+          </div>
+
+          <div
+            id="canvas-size-note"
+            class="control-note"
+          >
+          </div>
+
+          <div class="control-divider"></div>
+
+          <div class="control-item">
+            <label>
+              Zoom
+            </label>
+
+            <div class="zoom-actions">
+              <button
+                id="zoom-out-button"
+                type="button"
+              >
+                −
+              </button>
+
+              <button
+                id="zoom-fit-button"
+                type="button"
+              >
+                Fit
+              </button>
+
+              <button
+                id="zoom-100-button"
+                type="button"
+              >
+                100%
+              </button>
+
+              <button
+                id="zoom-in-button"
+                type="button"
+              >
+                +
+              </button>
+            </div>
+
+            <div
+              id="zoom-value"
+              class="control-note"
+            >
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <div class="control-divider"></div>
+
+      <section
         class="control-group grid-group collapsible-group collapsed"
       >
         <button

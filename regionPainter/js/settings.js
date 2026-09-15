@@ -1,8 +1,11 @@
 const SETTINGS = {
 
   canvas: {
-    width: 3000,
-    height: 4000,
+    width: null,
+    height: null,
+
+    maxWidth: 4000,
+    maxHeight: 4000,
 
     paperColor: null,
 
@@ -19,7 +22,7 @@ const SETTINGS = {
   },
 
   view: {
-    zoom: 0.25,
+    zoom: 1,
 
     showPaint: true,
     showStructureLines: false,

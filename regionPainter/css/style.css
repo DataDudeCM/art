@@ -393,3 +393,15 @@ button:hover {
   width: auto;
   margin-bottom: 0;
 }
+
+.zoom-actions {
+  display: grid;
+  grid-template-columns:
+    repeat(4, 1fr);
+  gap: 6px;
+}
+
+.zoom-actions button {
+  width: auto;
+  margin-bottom: 0;
+}

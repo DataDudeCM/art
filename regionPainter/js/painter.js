@@ -76,15 +76,6 @@ function paintRegion(region, g, baseColor) {
       activeViewport || getFullCanvasViewport()
     );
 
-  console.log(
-    "Region work:",
-    `${workRect.width} x ${workRect.height}`,
-    "area:",
-    workRect.width * workRect.height,
-    "region pixels:",
-    region.pixelCount
-  );
-
   ensureRegionPaintTempLayer(
     workRect.width,
     workRect.height
