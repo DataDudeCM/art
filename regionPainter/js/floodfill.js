@@ -1,3 +1,23 @@
+let regionCacheLookup = null;
+let regionCacheRegions = [null];
+
+function resetRegionCache() {
+  regionCacheLookup =
+    new Uint32Array(width * height);
+
+  // Index 0 means "not cached".
+  regionCacheRegions = [null];
+}
+
+function ensureRegionCache() {
+  if (
+    !regionCacheLookup ||
+    regionCacheLookup.length !== width * height
+  ) {
+    resetRegionCache();
+  }
+}
+
 function floodFillRegion(
   g,
   startX,
@@ -10,6 +30,8 @@ function floodFillRegion(
 
   const w = g.width;
   const h = g.height;
+
+  ensureRegionCache();
 
   const sx = floor(startX);
   const sy = floor(startY);
@@ -39,6 +61,18 @@ function floodFillRegion(
     sy > maxViewportY
   ) {
     return null;
+  }
+
+  const startIndex =
+    sy * w + sx;
+
+  const cachedRegionId =
+    regionCacheLookup[startIndex];
+
+  if (cachedRegionId !== 0) {
+    return regionCacheRegions[
+      cachedRegionId
+    ];
   }
 
   if (isBoundaryPixel(g, sx, sy)) {
@@ -172,7 +206,7 @@ function floodFillRegion(
     }
   }
 
-  return {
+  const region = {
     pixels,
     edgePixels,
     pixelCount: pixels.length,
@@ -184,6 +218,21 @@ function floodFillRegion(
       maxY
     }
   };
+
+  const regionId =
+    regionCacheRegions.length;
+
+  regionCacheRegions.push(region);
+
+  for (const p of pixels) {
+    const index =
+      p.y * w + p.x;
+
+    regionCacheLookup[index] =
+      regionId;
+  }
+
+  return region;
 }
 
 function isBoundaryPixel(g, x, y) {

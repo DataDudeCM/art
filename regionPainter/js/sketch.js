@@ -514,6 +514,8 @@ function generateArtwork() {
   generationRegionColors = new Map();
   generationRegionArtifacts = new Map();
 
+  resetRegionCache();
+
   boundaryDetectionLayer.clear();
   boundaryLayer.clear();
   paintLayer.clear();

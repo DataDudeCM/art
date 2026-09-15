@@ -118,6 +118,8 @@ function startGenerationAnimation() {
   generationRegionColors = new Map();
   generationRegionArtifacts = new Map();
 
+  resetRegionCache();
+
   if (
     SETTINGS.boundary.source ===
     "particleChaikin"
