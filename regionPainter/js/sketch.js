@@ -841,7 +841,10 @@ function renderArtwork() {
     image(paintLayer, 0, 0);
   }
 
-  if (SETTINGS.boundary.visible) {
+  if (
+    SETTINGS.boundary.visible &&
+    !SETTINGS.view.boundaryOverTexture
+  ) {
     image(boundaryLayer, 0, 0);
   }
 
@@ -857,6 +860,13 @@ function renderArtwork() {
     SETTINGS.view.showPaint
   ) {
     drawTextureOverlay();
+  }
+
+  if (
+    SETTINGS.boundary.visible &&
+    SETTINGS.view.boundaryOverTexture
+  ) {
+    image(boundaryLayer, 0, 0);
   }
 
   if (

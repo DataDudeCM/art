@@ -26,7 +26,9 @@ const SETTINGS = {
 
     showPaint: true,
     showStructureLines: false,
-    showStructurePoints: false
+    showStructurePoints: false,
+
+    boundaryOverTexture: true
   },
 
   grid: {
