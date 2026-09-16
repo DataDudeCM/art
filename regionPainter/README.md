@@ -262,3 +262,8 @@ A few principles are now worth protecting:
 ```
 
 See [`DESIGN.md`](DESIGN.md) for the detailed architecture and roadmap.
+
+## NOTE: 
+- Need to fix primitives with animation
+- Need to add ability to scale primitive brush size
+- Need to add artifacts UI controls (adjust frequency and scale)
