@@ -183,11 +183,11 @@ intentionally modernized.
 - About 10 pages in `archive/` load `../p5/p5.js` and `../addons/...`,
   which don't exist in the repo. They're already broken; switch them to the
   CDN when convenient.
-- `substrate/js/substratePaint.js` loads `/common/brushes/Acrylic Glaze.png`,
+- `generative/substrate/js/substratePaint.js` loads `/common/brushes/Acrylic Glaze.png`,
   which was deleted in commit `13ae041`. Pick a replacement brush.
 - `sound/js/songViz.js` line 23 has `../common/testmusic.mp3` pasted after
   `createCanvas(800, 800);` — a syntax error. Left as-is in phase 1.
-- `akai/akaiTemplate.html` loads `p5.dom.min.js` from the p5 1.11.2
+- `sound/akaiTemplate.html` loads `p5.dom.min.js` from the p5 1.11.2
   `addons/` path, which doesn't exist (p5.dom is part of core now).
 
 ## Checklist
@@ -215,8 +215,8 @@ Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
 - [x] Push
 
 ### 3. Move JS projects into categories
-- [ ] Use `git mv` so file history follows each project
-- [ ] One commit per category
+- [x] Use `git mv` so file history follows each project
+- [x] One commit per category
 - [ ] Test the moved projects in Live Server after each category
 - [ ] Push
 
