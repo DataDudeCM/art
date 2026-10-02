@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+*.egg-info/
+*.prof
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
