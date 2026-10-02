@@ -212,7 +212,7 @@ Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
 - [x] Remove tracked `.pyc` files and `get-pip.py`
 - [x] Run a pygame script from `python/pygame/` to confirm it works
 - [x] Commit
-- [ ] Push
+- [x] Push
 
 ### 3. Move JS projects into categories
 - [ ] Use `git mv` so file history follows each project
@@ -224,7 +224,6 @@ Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
 - [ ] Clone `art` fresh from GitHub into `C:\Users\ca0ma\code\` (don't copy)
 - [ ] Test a few pages in Live Server from the new location
 - [ ] Copy Claude's memory for this project to the new folder path
-- [ ] `artfromcode` is not moved — it now lives in `art/python/`
 
 ### 5. Retire duplicates (in the new location)
 - [ ] Compare `common/js/palette.js` with `MyCode/shared/js/palette.js`
@@ -232,12 +231,12 @@ Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
 - [ ] Point ProjectForge (`app/web.py`, `SHARED_PALETTE_FILE`) at
       `art/common/js/palette.js` using the post-move layout, test, and push
 - [ ] Delete `MyCode/shared/`
-- [ ] Archive `artfromcode` on GitHub
+- [x] Archive `artfromcode` on GitHub; delete the local `artfromcode` folder (done early)
 
 ### 6. Finish
 - [ ] Update `README.md` to describe the new structure
 - [ ] Delete this file
-- [ ] Delete the OneDrive copies of `art` and `artfromcode`
+- [ ] Delete the OneDrive copy of `art`
 
 ## Future Modernization
 
