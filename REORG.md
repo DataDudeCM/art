@@ -221,9 +221,9 @@ Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
 - [x] Push
 
 ### 4. Move out of OneDrive
-- [ ] Clone `art` fresh from GitHub into `C:\Users\ca0ma\code\` (don't copy)
+- [x] Clone `art` fresh from GitHub into `C:\Users\ca0ma\code\` (don't copy)
 - [ ] Test a few pages in Live Server from the new location
-- [ ] Copy Claude's memory for this project to the new folder path
+- [x] Copy Claude's memory for this project to the new folder path
 
 ### 5. Retire duplicates (in the new location)
 - [ ] Compare `common/js/palette.js` with `MyCode/shared/js/palette.js`
