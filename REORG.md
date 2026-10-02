@@ -206,12 +206,13 @@ intentionally modernized.
 Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
 
 ### 2. Merge artfromcode
-- [ ] Add `.gitignore` (`__pycache__/`, `*.py[cod]`, `.venv/`, ...)
-- [ ] `git subtree add --prefix=python https://github.com/DataDudeCM/artfromcode.git main`
-- [ ] Move `python/texture_library_app` to `python/tools/texture_library_app`
-- [ ] Remove tracked `.pyc` files and `get-pip.py`
-- [ ] Run a pygame script from `python/pygame/` to confirm it works
-- [ ] Commit and push
+- [x] Add `.gitignore` (`__pycache__/`, `*.py[cod]`, `.venv/`, ...)
+- [x] `git subtree add --prefix=python https://github.com/DataDudeCM/artfromcode.git main`
+- [x] Move `python/texture_library_app` to `python/tools/texture_library_app`
+- [x] Remove tracked `.pyc` files and `get-pip.py`
+- [x] Run a pygame script from `python/pygame/` to confirm it works
+- [x] Commit
+- [ ] Push
 
 ### 3. Move JS projects into categories
 - [ ] Use `git mv` so file history follows each project
