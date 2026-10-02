@@ -58,7 +58,7 @@ const SETTINGS = {
 
   artifact: {
     enabled: true,
-    chance: 0.5, // default should be low 0.03
+    chance: 0.1, // default should be low 0.03
     minRegionPixels: 2500,
 
     fitScale: 1.4,
