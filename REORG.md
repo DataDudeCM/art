@@ -2,74 +2,175 @@
 
 ## Goal
 
-Make the repository easier to explore and maintain without changing
-the underlying artwork.
+Make this the single home for all of my art code — JavaScript (p5.js)
+and Python — organized by the kind of art being explored rather than by
+language or by when it was made.
 
-Keep the folder structure relatively shallow and organize projects by
-the kind of art/system being explored rather than by when they were made.
+The artwork itself should not change. Only locations, paths, and
+repository structure change.
 
-## Proposed Structure
+## Decisions
 
-art/
-├── common/
-│   ├── js/
+1. **One repo for all art.** `artfromcode` (Python) merges into this repo
+   under `python/`, keeping its git history. The `artfromcode` repo is then
+   archived on GitHub.
+2. **Root-relative paths for shared assets.** All references to `common/`
+   use `/common/...` instead of `../common/...`, so a project works at any
+   folder depth and can move without path edits.
+3. **Projects grouped by kind of art,** in a shallow structure (category →
+   project).
+4. **Python work stays together under `python/`.** Not because of language,
+   but because those scripts run locally (not in the browser), share their
+   own helper modules, and use paths relative to the folder they are run
+   from.
+5. **`common/` is the source of truth for shared web assets,** including
+   `palette.js`. The old `MyCode/shared/` folder is retired.
+
+## Target Structure
+
+```text
+art/                              ← repo root and Live Server root
+├── common/                       shared web assets (unchanged)
+│   ├── js/                       palette.js, brush.js, legacy helpers, ...
 │   ├── images/
 │   ├── brushes/
-│   └── fonts/
+│   ├── fonts/
+│   ├── artifacts/
+│   └── json/
 │
 ├── generative/
-│   ├── particles/
-│   ├── recursion/
-│   └── systems/
-│
 ├── painting/
-│   ├── brush/
-│   └── watercolor/
-│
 ├── image-art/
-│   ├── collage/
-│   └── pixel/
-│
 ├── geometry/
 ├── sound/
 ├── experiments/
 ├── archive/
 │
+├── python/                       former artfromcode repo
+│   ├── pygame/                   moved as one unit (see Python notes)
+│   └── tools/
+│       └── texture_library_app/
+│
 ├── favicon.ico
-└── README.md
+├── README.md
+├── .gitignore
+└── art.code-workspace
+```
 
+## Proposed Project Mapping
+
+Guesses based on folder names. **Review and adjust before moving
+anything.** Some categories may turn out unnecessary or need renaming.
+
+| Current folder | Proposed location | Notes |
+|---|---|---|
+| `generative/particles` | `generative/particles` | already in place |
+| `generative/recursion` | `generative/recursion` | already in place |
+| `generative/systems` | `generative/systems` | already in place |
+| `recursion` | `generative/recursion-2`? | name clash with `generative/recursion` — merge or rename |
+| `substrate` | `generative/substrate` | |
+| `voronoi` | `generative/voronoi` | or `geometry/` |
+| `temporarlFractal` | `generative/temporalFractal` | fix spelling while moving? |
+| `emergentArtist` | `generative/emergentArtist` | |
+| `systemBecomingArt` | `generative/systemBecomingArt` | |
+| `evidenceOfEncounter` | `generative/evidenceOfEncounter` | |
+| `thespark` | `generative/thespark`? | |
+| `painting` | `painting/brush` | as in the original REORG idea |
+| `watercolor` | `painting/watercolor` | |
+| `regionPainter` | `painting/regionPainter` | |
+| `abstractArtist` | `painting/abstractArtist` | |
+| `portraitArt` | `painting/portraitArt`? | or `image-art/` |
+| `akai` | ? | |
+| `imagemanipulation` | `image-art/imagemanipulation` | 16 pages — could split into `collage/`, `pixel/` later |
+| `displacement` | `image-art/displacement` | |
+| `fracture` | `image-art/fracture`? | |
+| `mathart` | `geometry/mathart` | |
+| `rubik` | `geometry/rubik` | |
+| `shapedesigner` | `geometry/shapedesigner` | |
+| `asemic` | `geometry/asemic`? | asemic writing — maybe its own category |
+| `sound` | `sound/` | category and project are the same for now |
+| `newideas` | `experiments/newideas` | |
+| `doodles` | `experiments/doodles` | |
+| `set1` | `experiments/set1` | |
+| `ocean` | `experiments/ocean`? | |
+| `archive` | `archive/` | unchanged |
+
+## Paths
+
+### Rule
+
+Shared assets are always referenced root-relative:
+
+```html
+<script src="/common/js/palette.js"></script>
+<link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+```
+
+```js
+loadImage("/common/brushes/Watercolor 1.png");
+```
+
+Paths inside a project (its own `js/`, `assets/`, etc.) stay relative, so
+they move with the project.
+
+### Why
+
+About 57 references currently use `../common/`, which only works when a
+project is exactly one level below the repo root. Moving projects into
+categories would break every one of them. Root-relative paths work from
+any depth.
+
+### Requirements and caveats
+
+- Live Server must serve from the repo root (`art/`). This is already the
+  case when the `art` folder or `art.code-workspace` is opened in VS Code.
+- Pages opened directly from disk (`file://`) won't find `/common/`.
+  Always use Live Server.
+- If the repo is ever published as a GitHub Pages *project* site
+  (`username.github.io/art/`), root-relative paths would need a different
+  approach.
+
+## Python Notes
+
+- `pygame/` moves **as one unit**. Its scripts share `coreClasses.py` and
+  `corefuncs.py` and use paths such as `textures/...` and `images/...`
+  relative to the folder they're run from. Run them from inside
+  `python/pygame/`.
+- Clean up while merging:
+  - stop tracking all `__pycache__/` / `.pyc` files (67 tracked today)
+  - delete `pygame/get-pip.py`
+  - `artfromcode.code-workspace` — delete, or keep under `python/` if useful
+- `python/` is not served by Live Server and doesn't use `/common/`.
+  Python scripts can still use `common/` assets via paths relative to
+  their own file if needed.
+- **Later (optional):** turn the duplicated `coreClasses.py` /
+  `corefuncs.py` (in `pygame/`, `imageh/`, `pixels/`, `tileart/`) into one
+  small shared package. That would also allow Python projects to be grouped
+  by theme alongside the JS projects.
 
 ## Shared Assets
 
-Use this rule when deciding where assets belong:
-
 **Reusable asset → `common/`**
 
-Examples:
 - brush images
-- watercolor paper textures
+- paper and surface textures
 - general-purpose images
 - fonts
 - shared JavaScript utilities
 
-**Project-specific asset → project folder**
+**Project-specific asset → that project's folder**
 
-Example:
-
-abstractArtist/
+```text
+painting/abstractArtist/
 └── assets/
     └── project-specific-texture.jpg
-
+```
 
 ## Shared JavaScript
 
-Current shared helpers should live under:
+Current helpers in `common/js/`:
 
-common/js/
-
-Use:
-
-- `palette.js` — current palette system
+- `palette.js` — current palette system (also served to ProjectForge)
 - `brush.js` — current image-based brush system
 
 Backward-compatible versions:
@@ -77,40 +178,55 @@ Backward-compatible versions:
 - `palette-legacy.js`
 - `brush-legacy.js`
 
-Existing sketches should continue using the legacy helpers until they
-are intentionally modernized.
+Existing sketches keep using the legacy helpers until they are
+intentionally modernized.
 
+## Known Issues (unrelated to the reorg)
 
-## Favicon
+- About 10 pages in `archive/` load `../p5/p5.js` and `../addons/...`,
+  which don't exist in the repo. They're already broken; switch them to the
+  CDN when convenient.
+- `doodles/js/circlePackLayersDistTexture.js` uses `'../images/...'` and
+  `generative/particles/js/particleOrbitsPaint.js` uses `'../brushes/...'`.
+  Verify these still load (they may be intended as `common/` paths).
 
-Keep the shared favicon at the repository/server root:
+## Checklist
 
-favicon.ico
+### 0. Prep
+- [ ] Delete merged branches `regionPainter-animation`, `regionPainter-grid`,
+      `shader-preview` (local and GitHub)
+- [ ] Confirm the project mapping above
 
-Pages can reference it with:
+### 1. Root-relative paths (no files move)
+- [ ] Replace `../common/` with `/common/` in HTML and JS
+- [ ] Test a sample of pages in Live Server, checking the console for 404s
+- [ ] Commit
 
-<link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+### 2. Merge artfromcode
+- [ ] Add `.gitignore` (`__pycache__/`, `*.py[cod]`, `.venv/`, ...)
+- [ ] `git subtree add --prefix=python https://github.com/DataDudeCM/artfromcode.git main`
+- [ ] Move `python/texture_library_app` to `python/tools/texture_library_app`
+- [ ] Remove tracked `.pyc` files and `get-pip.py`
+- [ ] Run a pygame script from `python/pygame/` to confirm it works
+- [ ] Commit and push
 
-Because this is root-relative, HTML files can move between folders
-without changing the favicon path.
+### 3. Move JS projects into categories
+- [ ] Use `git mv` so file history follows each project
+- [ ] One commit per category
+- [ ] Test the moved projects in Live Server after each category
 
+### 4. Retire duplicates
+- [ ] Compare `common/js/palette.js` with `MyCode/shared/js/palette.js`
+      and make sure the `common/` version has everything ProjectForge uses
+- [ ] Point ProjectForge (`app/web.py`, `SHARED_PALETTE_FILE`) at
+      `art/common/js/palette.js`, test, and push
+- [ ] Delete `MyCode/shared/`
+- [ ] Archive `artfromcode` on GitHub; delete the local `artfromcode` folder
 
-## Reorganization Checklist
-
-- [ ] Decide final top-level project categories
-- [ ] Move projects into their new folders
-- [ ] Move reusable brush images to `common/brushes/`
-- [ ] Move reusable images/textures to `common/images/`
-- [ ] Leave project-specific assets with their projects
-- [ ] Update relative references to `common/js/`
-- [ ] Update relative references to shared images and brushes
-- [ ] Verify legacy palette references
-- [ ] Verify legacy brush references
-- [ ] Test moved sketches in the browser
-- [ ] Check browser console for missing files / 404s
-- [ ] Commit completed repository reorganization
-- [ ] Remove this file when cleanup is complete
-
+### 5. Finish
+- [ ] Update `README.md` to describe the new structure
+- [ ] Move the repo out of OneDrive (clone fresh into the new location)
+- [ ] Delete this file
 
 ## Future Modernization
 
