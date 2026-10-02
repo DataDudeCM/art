@@ -203,6 +203,8 @@ intentionally modernized.
 - [x] Test a sample of pages in Live Server, checking the console for 404s
 - [x] Commit
 
+Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
+
 ### 2. Merge artfromcode
 - [ ] Add `.gitignore` (`__pycache__/`, `*.py[cod]`, `.venv/`, ...)
 - [ ] `git subtree add --prefix=python https://github.com/DataDudeCM/artfromcode.git main`
@@ -215,19 +217,26 @@ intentionally modernized.
 - [ ] Use `git mv` so file history follows each project
 - [ ] One commit per category
 - [ ] Test the moved projects in Live Server after each category
+- [ ] Push
 
-### 4. Retire duplicates
+### 4. Move out of OneDrive
+- [ ] Clone `art` fresh from GitHub into `C:\Users\ca0ma\code\` (don't copy)
+- [ ] Test a few pages in Live Server from the new location
+- [ ] Copy Claude's memory for this project to the new folder path
+- [ ] `artfromcode` is not moved — it now lives in `art/python/`
+
+### 5. Retire duplicates (in the new location)
 - [ ] Compare `common/js/palette.js` with `MyCode/shared/js/palette.js`
       and make sure the `common/` version has everything ProjectForge uses
 - [ ] Point ProjectForge (`app/web.py`, `SHARED_PALETTE_FILE`) at
-      `art/common/js/palette.js`, test, and push
+      `art/common/js/palette.js` using the post-move layout, test, and push
 - [ ] Delete `MyCode/shared/`
-- [ ] Archive `artfromcode` on GitHub; delete the local `artfromcode` folder
+- [ ] Archive `artfromcode` on GitHub
 
-### 5. Finish
+### 6. Finish
 - [ ] Update `README.md` to describe the new structure
-- [ ] Move the repo out of OneDrive (clone fresh into the new location)
 - [ ] Delete this file
+- [ ] Delete the OneDrive copies of `art` and `artfromcode`
 
 ## Future Modernization
 
