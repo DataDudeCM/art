@@ -5,7 +5,7 @@ let heightScale = .75;     // adjust this if you want taller/shorter columns
 
 function preload() {
   // Replace 'portrait.jpg' with your portrait image path
-  img = loadImage('../images/doodle2.jpg');
+  img = loadImage('/common/images/doodle2.jpg');
 }
 
 function setup() {

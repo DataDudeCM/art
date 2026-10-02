@@ -6,7 +6,7 @@ let sourceImg;
 
 function preload() {
   // REPLACE 'your_photo.jpg' with one of your actual image files
-  sourceImg = loadImage('../images/fracture.png'); 
+  sourceImg = loadImage('/common/images/fracture.png'); 
 }
 
 function setup() {

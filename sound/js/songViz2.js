@@ -16,7 +16,7 @@ let numSegments;
 
 function preload() {
   // Update with your own audio file if needed.
-  song = loadSound('../common/testmusic.mp3');
+  song = loadSound('/common/testmusic.mp3');
 }
 
 function setup() {

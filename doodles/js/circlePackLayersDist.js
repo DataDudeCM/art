@@ -8,7 +8,7 @@ let palette = [];
 let cheight = 0;
 
 function preload() {
-  myCustomFont = loadFont('../common/fonts/test_sans.ttf');
+  myCustomFont = loadFont('/common/fonts/test_sans.ttf');
 }
 
 function setup() {

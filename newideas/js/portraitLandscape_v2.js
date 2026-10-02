@@ -5,7 +5,7 @@ let heightScale = .5;     // adjust this if you want taller/shorter columns
 
 function preload() {
   // Replace 'portrait.jpg' with your portrait image path
-  img = loadImage('../images/portrait.jpg');
+  img = loadImage('/common/images/portrait.jpg');
 }
 
 function setup() {

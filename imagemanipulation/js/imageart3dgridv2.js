@@ -12,8 +12,8 @@ let zSlider;       // controls maximum Z‐offset
 
 function preload() {
   // ─── Replace this with your own image path or URL ───
-  //img = loadImage('../images/bridance.jpg');
-  // img = loadImage('../images/doodle4.jpg'); // Example image
+  //img = loadImage('/common/images/bridance.jpg');
+  // img = loadImage('/common/images/doodle4.jpg'); // Example image
 }
 
 function setup() {

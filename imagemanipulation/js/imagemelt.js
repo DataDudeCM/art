@@ -9,7 +9,7 @@ let uploadedImg;
 
 function preload() {
   // 1) Load the image you want to warp:
-  //imgTexture = loadImage('../images/chaikin.jpg'); // Replace with your image path
+  //imgTexture = loadImage('/common/images/chaikin.jpg'); // Replace with your image path
 
   // 2) Create the shader from our two source strings:
   meltShader = createShader(vertSource, fragSource);

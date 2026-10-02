@@ -5,7 +5,7 @@ let chaos = 0; // Chaos factor oscillates over time for dynamic effect
 
 function preload() {
   // Replace with the path to your font file
-  font = loadFont('../common/fonts/test_sans.ttf');
+  font = loadFont('/common/fonts/test_sans.ttf');
 }
 
 function setup() {

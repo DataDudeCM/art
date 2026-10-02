@@ -9,7 +9,7 @@ let fillColor,outlineColor;
 let img;
 
 function preload() {
-  //img = loadImage('images/untitled-6.png'); // Replace 'your_image.jpg' with the path to your image
+  //img = loadImage('/common/images/untitled-6.png'); // Replace 'your_image.jpg' with the path to your image
 }
 
 

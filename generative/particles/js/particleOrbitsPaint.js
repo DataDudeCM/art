@@ -7,7 +7,7 @@ const minOrbit = 50;
 const maxOrbit = 800;
 
 function preload() {
-  brush = loadImage('../brushes/Splatter 2.png');
+  brush = loadImage('/common/brushes/Splatter 2.png');
   brush.resize(400, 400); // Resize brush for better visibility
 } 
 

@@ -158,7 +158,7 @@ const sketch = (p) => {
   }
 
   p.preload = () => {
-    brush = p.loadImage('../brushes/Acrylic Glaze.png');  
+    brush = p.loadImage('/common/brushes/Acrylic Glaze.png');  
   }
 
   p.setup = () => {

@@ -18,7 +18,7 @@ let textureLayer;
 
 function preload() {
   // Replace 'your-song.mp3' with the path to your MP3 file.
-  song = loadSound('../common/testmusic.mp3');
+  song = loadSound('/common/testmusic.mp3');
 }
 
 function setup() {

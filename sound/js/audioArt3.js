@@ -3,7 +3,7 @@ let fft;
 let isStarted = false;
 
 function preload() {
-  song = loadSound('../common/testmusic2.mp3'); 
+  song = loadSound('/common/testmusic2.mp3'); 
 }
 
 function setup() {

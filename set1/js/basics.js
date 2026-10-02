@@ -4,7 +4,7 @@
 let isLoopingFlag = true;
 
 function preload() {
-  img = loadImage('images/marble_texture.jpg');
+  img = loadImage('/common/images/marble_texture.jpg');
 }
 
 function setup() {

@@ -15,8 +15,8 @@ let mixSlider;     // mix between Image A and Image B (0 → 1)
 
 function preload() {
   // ─── Replace these with your own image paths/URLs (same dimensions!) ───
-  imgA = loadImage('../images/eclipse.jpg');
-  imgB = loadImage('../images/fracture.png');
+  imgA = loadImage('/common/images/eclipse.jpg');
+  imgB = loadImage('/common/images/fracture.png');
 }
 
 function setup() {

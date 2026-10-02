@@ -2,7 +2,7 @@ let img;
 let faceapi;
 
 // Use your local image file.
-const IMAGE_FILE = '../images/portraitimage.webp';
+const IMAGE_FILE = '/common/images/portraitimage.webp';
 const MAX_IMAGE_SIZE = 800; // Resize if wider than this.
 
 function preload() {

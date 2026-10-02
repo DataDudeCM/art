@@ -178,7 +178,7 @@ function preload() {
 
   spagBrush =
     loadImage(
-      "../common/brushes/Guache.png"
+      "/common/brushes/Guache.png"
     );
 }
 

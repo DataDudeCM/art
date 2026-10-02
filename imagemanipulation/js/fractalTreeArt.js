@@ -3,7 +3,7 @@ let levels = 6;
 
 function preload() {
   // Replace with your uploaded doodle filename
-  doodle = loadImage('../images/spacecity.jpg'); 
+  doodle = loadImage('/common/images/spacecity.jpg'); 
 }
 
 function setup() {

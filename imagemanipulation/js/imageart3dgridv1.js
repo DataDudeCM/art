@@ -10,7 +10,7 @@ let zRange = 200;
 
 function preload() {
   // ── Replace this with your own image path or URL ──
-  img = loadImage('../images/jinx2.png');
+  img = loadImage('/common/images/jinx2.png');
 }
 
 function setup() {

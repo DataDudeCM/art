@@ -1,7 +1,7 @@
 
 function preload() {
   // 1) Load your brush image (e.g., Acrylic Basic.png)
-  myBrush = loadImage('../brushes/Creamy.png');
+  myBrush = loadImage('/common/brushes/Creamy.png');
 }
 function setup() {
   createCanvas(600, 400);

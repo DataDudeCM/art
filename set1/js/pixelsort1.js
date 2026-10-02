@@ -5,7 +5,7 @@ let sortMode = "row"; // "row" or "column"
 let noiseScale = 0.01; // Adjust the smoothness of the noise
 
 function preload() {
-  img = loadImage('images/jinx.jpg'); // Replace with your image path
+  img = loadImage('/common/images/jinx.jpg'); // Replace with your image path
 }
 
 function setup() {

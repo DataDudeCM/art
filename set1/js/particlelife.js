@@ -4,7 +4,7 @@ let brush;
 
 function preload() {
   // If you have any assets to load, do it here
-  brush = loadImage('../brushes/Random.png');
+  brush = loadImage('/common/brushes/Random.png');
   brush.resize(100, 100); // Resize brush for better visibility
 }
 

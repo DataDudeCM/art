@@ -9,8 +9,8 @@ let cheight = 0;
 let swMax = 2;
 
 function preload() {
-  myCustomFont = loadFont('../common/fonts/test_sans.ttf');
-  myPaperTexture = loadImage('../images/baremetalTexturePlastic.jpg');
+  myCustomFont = loadFont('/common/fonts/test_sans.ttf');
+  myPaperTexture = loadImage('/common/images/baremetalTexturePlastic.jpg');
   img.resize(windowWidth, windoHeight); // Resize for performance; each pixel is a 3D vertex
 }
 

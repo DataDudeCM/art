@@ -4,7 +4,7 @@ let sortedImg;
 let sortMode = "row"; // "row" or "column"
 
 function preload() {
-  img = loadImage('images/doodle3.jpg'); // Replace with your image path
+  img = loadImage('/common/images/doodle3.jpg'); // Replace with your image path
 }
 
 function setup() {

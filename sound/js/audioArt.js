@@ -4,7 +4,7 @@ let isStarted = false; // Flag to track if we've started
 
 function preload() {
   // Make sure to upload a file named 'song.mp3' or update this path
-  song = loadSound('../common/testmusic.mp3');
+  song = loadSound('/common/testmusic.mp3');
 }
 
 function setup() {

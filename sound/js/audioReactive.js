@@ -12,7 +12,7 @@ let numStrings = 64;
 
 function preload() {
   // Replace with your local .wav file path
-  song = loadSound('../common/testmusic.mp3');
+  song = loadSound('/common/testmusic.mp3');
 }
 
 function setup() {

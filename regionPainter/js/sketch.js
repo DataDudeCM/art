@@ -87,7 +87,7 @@ function preload() {
   loadPresetLibrary();
 
   loadJSON(
-    "../common/brushes/brushes.json",
+    "/common/brushes/brushes.json",
 
     data => {
       brushManifest = data;
@@ -95,7 +95,7 @@ function preload() {
       for (const filename of brushManifest.brushes) {
         brushNames.push(filename);
         brushImages.push(
-          loadImage(`../common/brushes/${filename}`)
+          loadImage(`/common/brushes/${filename}`)
         );
       }
     },
@@ -106,7 +106,7 @@ function preload() {
   );
 
   loadJSON(
-    "../common/artifacts/text/scraps.json",
+    "/common/artifacts/text/scraps.json",
 
     data => {
       artifactManifest = data;
@@ -116,7 +116,7 @@ function preload() {
         artifactImages.set(
           entry.file,
           loadImage(
-            `../common/artifacts/text/${entry.file}`
+            `/common/artifacts/text/${entry.file}`
           )
         );
       }

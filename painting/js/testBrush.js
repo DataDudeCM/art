@@ -33,7 +33,7 @@ brushColor = getColors(palette)[0];
 async function loadBrushes() {
 
   const response =
-    await fetch("../common/brushes/brushes.json");
+    await fetch("/common/brushes/brushes.json");
 
   const manifest =
     await response.json();
@@ -74,7 +74,7 @@ function loadBrushFile(filename) {
       filename.replace(/\.[^/.]+$/, "");
 
     loadImage(
-      "../common/brushes/" + filename,
+      "/common/brushes/" + filename,
 
       img => {
         brushes[name] = img;

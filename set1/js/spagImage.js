@@ -19,7 +19,7 @@ let isReady = false; // Safety flag
 
 function preload() {
   // Ensure you have a file named 'waterportrait.png' in your folder
-  sourceImg = loadImage('../images/portraitimage.webp', 
+  sourceImg = loadImage('/common/images/portraitimage.webp', 
     () => { console.log("Image loaded successfully"); }, 
     () => { console.log("Failed to load image"); }
   ); 

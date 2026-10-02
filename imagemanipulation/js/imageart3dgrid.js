@@ -8,7 +8,7 @@ let intensitySlider;
 
 function preload() {
   // 1) Load the image you want to warp:
-  imgTexture = loadImage('../images/jinx2.png'); // Replace with your image path
+  imgTexture = loadImage('/common/images/jinx2.png'); // Replace with your image path
 
   // 2) Create the shader from our two source strings:
   meltShader = createShader(vertSource, fragSource);

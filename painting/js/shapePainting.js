@@ -10,8 +10,8 @@ let isLoopingFlag = true;
 
 function preload() {
   // 1) Load your brush image (e.g., Acrylic Basic.png)
-  myBrush = loadImage('../brushes/Acrylic Basic.png'); // Watercolor 4.png is a good one for testing, but you can try others too!
-  textureImg = loadImage('../images/canvasBoard.jpg'); // Example canvas texture
+  myBrush = loadImage('/common/brushes/Acrylic Basic.png'); // Watercolor 4.png is a good one for testing, but you can try others too!
+  textureImg = loadImage('/common/images/canvasBoard.jpg'); // Example canvas texture
 }
 
 function setup() {

@@ -16,7 +16,7 @@ let anchorx, anchory;
 let img;
 
 function preload() {
-  img = loadImage('../images/marble_texture.jpg');
+  img = loadImage('/common/images/marble_texture.jpg');
 }
 
 function setup() {

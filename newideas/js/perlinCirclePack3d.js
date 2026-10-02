@@ -1,7 +1,7 @@
 let img;
 
 function preload() {
-  img = loadImage('../images/circleFlow.png'); 
+  img = loadImage('/common/images/circleFlow.png'); 
 }
 
 function setup() {

@@ -5,7 +5,7 @@ let scale = 20; // spacing between grid points
 
 function preload() {
   // Load your image (make sure the path is correct)
-  img = loadImage('../images/portrait.jpg');
+  img = loadImage('/common/images/portrait.jpg');
 }
 
 function setup() {

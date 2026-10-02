@@ -10,7 +10,7 @@
 let img; // Declare variable for the image
 
 function preload() {
-  img = loadImage('images/crayon_texture.jpg'); // Load the texture image
+  img = loadImage('/common/images/crayon_texture.jpg'); // Load the texture image
 }
 
 

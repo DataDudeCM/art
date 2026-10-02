@@ -183,9 +183,8 @@ intentionally modernized.
 - About 10 pages in `archive/` load `../p5/p5.js` and `../addons/...`,
   which don't exist in the repo. They're already broken; switch them to the
   CDN when convenient.
-- `doodles/js/circlePackLayersDistTexture.js` uses `'../images/...'` and
-  `generative/particles/js/particleOrbitsPaint.js` uses `'../brushes/...'`.
-  Verify these still load (they may be intended as `common/` paths).
+- `substrate/js/substratePaint.js` loads `/common/brushes/Acrylic Glaze.png`,
+  which was deleted in commit `13ae041`. Pick a replacement brush.
 - `sound/js/songViz.js` line 23 has `../common/testmusic.mp3` pasted after
   `createCanvas(800, 800);` — a syntax error. Left as-is in phase 1.
 - `akai/akaiTemplate.html` loads `p5.dom.min.js` from the p5 1.11.2
@@ -199,9 +198,10 @@ intentionally modernized.
 - [x] Confirm the project mapping above
 
 ### 1. Root-relative paths (no files move)
-- [ ] Replace `../common/` with `/common/` in HTML and JS
-- [ ] Test a sample of pages in Live Server, checking the console for 404s
-- [ ] Commit
+- [x] Replace `../common/` with `/common/` in HTML and JS
+- [x] Also fix stale `../images/`, `../brushes/` and `images/` paths
+- [x] Test a sample of pages in Live Server, checking the console for 404s
+- [x] Commit
 
 ### 2. Merge artfromcode
 - [ ] Add `.gitignore` (`__pycache__/`, `*.py[cod]`, `.venv/`, ...)

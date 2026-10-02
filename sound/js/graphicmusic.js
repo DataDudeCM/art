@@ -5,7 +5,7 @@ let currentIndex = 0;
 
 function preload() {
   // Load your image
-  img = loadImage('../images/doodle6.jpg'); // Replace with the path to your image
+  img = loadImage('/common/images/doodle6.jpg'); // Replace with the path to your image
 }
 
 function setup() {
