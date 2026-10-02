@@ -43,6 +43,7 @@ art/                              ← repo root and Live Server root
 ├── image-art/
 ├── geometry/
 ├── sound/
+├── text/
 ├── experiments/
 ├── archive/
 │
@@ -57,42 +58,38 @@ art/                              ← repo root and Live Server root
 └── art.code-workspace
 ```
 
-## Proposed Project Mapping
+## Project Mapping
 
-Guesses based on folder names. **Review and adjust before moving
-anything.** Some categories may turn out unnecessary or need renaming.
-
-| Current folder | Proposed location | Notes |
+| Current folder | New location | Notes |
 |---|---|---|
 | `generative/particles` | `generative/particles` | already in place |
-| `generative/recursion` | `generative/recursion` | already in place |
-| `generative/systems` | `generative/systems` | already in place |
-| `recursion` | `generative/recursion-2`? | name clash with `generative/recursion` — merge or rename |
+| `generative/recursion` | `generative/recursion` | empty folder; `recursion` moves into it |
+| `recursion` | `generative/recursion` |  |
 | `substrate` | `generative/substrate` | |
-| `voronoi` | `generative/voronoi` | or `geometry/` |
-| `temporarlFractal` | `generative/temporalFractal` | fix spelling while moving? |
+| `voronoi` | `geometry/voronoi` | |
+| `temporarlFractal` | `generative/temporalFractal` | fix spelling while moving |
 | `emergentArtist` | `generative/emergentArtist` | |
 | `systemBecomingArt` | `generative/systemBecomingArt` | |
 | `evidenceOfEncounter` | `generative/evidenceOfEncounter` | |
-| `thespark` | `generative/thespark`? | |
-| `painting` | `painting/brush` | as in the original REORG idea |
+| `thespark` | `generative/thespark` | |
+| `painting` | `painting` | stays; other painting projects move in as subfolders |
 | `watercolor` | `painting/watercolor` | |
 | `regionPainter` | `painting/regionPainter` | |
 | `abstractArtist` | `painting/abstractArtist` | |
-| `portraitArt` | `painting/portraitArt`? | or `image-art/` |
-| `akai` | ? | |
+| `portraitArt` | `image-art/portraitArt` | |
+| `akai` | `sound` | merge (no file name clashes) |
 | `imagemanipulation` | `image-art/imagemanipulation` | 16 pages — could split into `collage/`, `pixel/` later |
 | `displacement` | `image-art/displacement` | |
-| `fracture` | `image-art/fracture`? | |
+| `fracture` | `generative/fracture` | |
 | `mathart` | `geometry/mathart` | |
 | `rubik` | `geometry/rubik` | |
 | `shapedesigner` | `geometry/shapedesigner` | |
-| `asemic` | `geometry/asemic`? | asemic writing — maybe its own category |
+| `asemic` | `text/asemic` | new text category |
 | `sound` | `sound/` | category and project are the same for now |
 | `newideas` | `experiments/newideas` | |
 | `doodles` | `experiments/doodles` | |
 | `set1` | `experiments/set1` | |
-| `ocean` | `experiments/ocean`? | |
+| `ocean` | `experiments/ocean` | |
 | `archive` | `archive/` | unchanged |
 
 ## Paths
@@ -189,13 +186,17 @@ intentionally modernized.
 - `doodles/js/circlePackLayersDistTexture.js` uses `'../images/...'` and
   `generative/particles/js/particleOrbitsPaint.js` uses `'../brushes/...'`.
   Verify these still load (they may be intended as `common/` paths).
+- `sound/js/songViz.js` line 23 has `../common/testmusic.mp3` pasted after
+  `createCanvas(800, 800);` — a syntax error. Left as-is in phase 1.
+- `akai/akaiTemplate.html` loads `p5.dom.min.js` from the p5 1.11.2
+  `addons/` path, which doesn't exist (p5.dom is part of core now).
 
 ## Checklist
 
 ### 0. Prep
-- [ ] Delete merged branches `regionPainter-animation`, `regionPainter-grid`,
+- [x] Delete merged branches `regionPainter-animation`, `regionPainter-grid`,
       `shader-preview` (local and GitHub)
-- [ ] Confirm the project mapping above
+- [x] Confirm the project mapping above
 
 ### 1. Root-relative paths (no files move)
 - [ ] Replace `../common/` with `/common/` in HTML and JS
