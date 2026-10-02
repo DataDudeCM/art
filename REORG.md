@@ -222,7 +222,7 @@ Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
 
 ### 4. Move out of OneDrive
 - [x] Clone `art` fresh from GitHub into `C:\Users\ca0ma\code\` (don't copy)
-- [ ] Test a few pages in Live Server from the new location
+- [x] Test a few pages in Live Server from the new location
 - [x] Copy Claude's memory for this project to the new folder path
 
 ### 5. Retire duplicates (in the new location)
