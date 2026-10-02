@@ -236,7 +236,7 @@ Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
 ### 6. Finish
 - [ ] Update `README.md` to describe the new structure
 - [ ] Delete this file
-- [ ] Delete the OneDrive copy of `art`
+- [x] Delete the OneDrive copy of `art` (done early)
 
 ## Future Modernization
 
