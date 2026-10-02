@@ -217,8 +217,8 @@ Pause OneDrive syncing (system tray → Pause syncing) while doing phases 2–3.
 ### 3. Move JS projects into categories
 - [x] Use `git mv` so file history follows each project
 - [x] One commit per category
-- [ ] Test the moved projects in Live Server after each category
-- [ ] Push
+- [x] Test the moved projects in Live Server after each category
+- [x] Push
 
 ### 4. Move out of OneDrive
 - [ ] Clone `art` fresh from GitHub into `C:\Users\ca0ma\code\` (don't copy)
