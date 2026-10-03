@@ -16,11 +16,11 @@ let numSegments;
 
 function preload() {
   // Change the filename to your own audio file (mp3, wav, etc.)
-  song = loadSound('');
+  song = loadSound('/common/testmusic.mp3');
 }
 
 function setup() {
-  createCanvas(800, 800);../common/testmusic.mp3
+  createCanvas(800, 800);
   colorMode(HSB, 360, 100, 100);
   background(0);
   
