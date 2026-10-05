@@ -11,3 +11,6 @@ venv/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local secrets (API keys)
+private_config.py
