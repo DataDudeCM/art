@@ -38,6 +38,7 @@ Projects are grouped by the kind of art they explore, not by language or when th
 | `archive/` | early sketches, kept as they were |
 | `python/` | pygame sketches (`python/pygame/`) and tools such as the texture library app (`python/tools/`) |
 | `common/` | shared assets and helpers used across projects |
+| `docs/` | design notes for projects in progress |
 
 ## Running the Sketches
 
