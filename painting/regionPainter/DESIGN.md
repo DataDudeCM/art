@@ -734,7 +734,7 @@ Artifacts should feel found rather than deliberately placed.
 
 # Boundary Image Import (planned)
 
-Status: plan, 2026-10-06. This supersedes the earlier "Deferred Boundary Import" decision.
+Status: phase 1 implemented 2026-10-06 (`js/boundaryImage.js`); phases 2 and 3 planned. This supersedes the earlier "Deferred Boundary Import" decision.
 
 ## Why now
 
@@ -838,6 +838,7 @@ That may be fine, or not. If not, add a `boundary.image.background` option to al
 2. **Systematic fill.** The `every` fill mode, plus a `minRegionPixels` control.
 3. **Polish.** Preset handling. A "show detection layer" view (none exists yet), for debugging leaking regions.
 
+Phase 1 test notes: gaps are measured after scaling, so a gap closed by `thicken` at scale 1.2 can reopen at larger scales; closing gaps in the drawing itself is more reliable than a high `thicken`.
 Deferred: SVG import, tracing raster to vector paths (so imported lines can get brush strokes), and edge detection on photos.
 
 ## Drawing guidelines (for the user guide)

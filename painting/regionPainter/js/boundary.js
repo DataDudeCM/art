@@ -482,6 +482,10 @@ function generateBoundary() {
     );
   }
 
+  if (boundary.type === "image") {
+    applyBoundaryImage(activeViewport);
+  }
+
   return boundary;
 }
 

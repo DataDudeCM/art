@@ -406,6 +406,10 @@ function finalizeBoundaryForCell(
       }
     );
   }
+
+  if (boundary.type === "image") {
+    applyBoundaryImage(viewport);
+  }
 }
 
 

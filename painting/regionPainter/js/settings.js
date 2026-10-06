@@ -71,7 +71,15 @@ const SETTINGS = {
   },
 
   boundary: {
-    source: "chaikin", // "chaikin" | "particleChaikin" | "rectangle" | "drawn"
+    source: "chaikin", // "chaikin" | "particleChaikin" | "rectangle" | "drawn" | "image"
+
+    // Uploaded boundary image (source "image").
+    // The image is fitted into the viewport and scaled by boundary.scale.
+    image: {
+      threshold: 128, // pixels darker than this (0-255) become boundary
+      thicken: 1, // grow boundary pixels by this many px to close small gaps
+      invert: false // true for white lines on a dark background
+    },
     pointCount: 30, // more points = more lines and potential intersections
     subdivisions: 8, // 8 number of segments between points
     strokeWeight: 1, // width of line

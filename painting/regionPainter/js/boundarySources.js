@@ -788,7 +788,8 @@ const BOUNDARY_SOURCES = {
   chaikin: createChaikinBoundarySource,
   particleChaikin: createParticleChaikinBoundarySource,
   rectangle: createRectangleBoundarySource,
-  drawn: createDrawnBoundarySource
+  drawn: createDrawnBoundarySource,
+  image: createImageBoundarySource
 };
 
 function getActiveBoundarySource() {

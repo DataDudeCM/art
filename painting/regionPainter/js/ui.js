@@ -622,6 +622,7 @@ function setupCanvasControls() {
 
 function setupBoundaryControls() {
   setupBoundarySource();
+  setupImageBoundaryControls();
   setupBoundaryBrushMode();
   setupBoundaryBrushSelect();
   setupBoundaryVisibility();
@@ -1018,6 +1019,94 @@ function updateDrawnBoundaryControls() {
       : "none";
 }
 
+function updateImageBoundaryControls() {
+  const controls =
+    document.getElementById(
+      "image-boundary-controls"
+    );
+
+  if (!controls) {
+    return;
+  }
+
+  controls.style.display =
+    SETTINGS.boundary.source === "image"
+      ? ""
+      : "none";
+}
+
+function setupImageBoundaryControls() {
+  const chooseButton =
+    document.getElementById(
+      "boundary-image-file-button"
+    );
+
+  const fileInput =
+    document.getElementById(
+      "boundary-image-file-input"
+    );
+
+  const invert =
+    document.getElementById(
+      "boundary-image-invert"
+    );
+
+  chooseButton.addEventListener(
+    "click",
+    () => {
+      fileInput.click();
+    }
+  );
+
+  fileInput.addEventListener(
+    "change",
+    event => {
+      const file =
+        event.target.files?.[0];
+
+      if (file) {
+        loadBoundaryImageFile(file);
+      }
+
+      // Allows choosing the same file again.
+      event.target.value = "";
+    }
+  );
+
+  setupRangeControl(
+    "boundary-image-threshold",
+    "boundary-image-threshold-value",
+    () => SETTINGS.boundary.image.threshold,
+    value => {
+      SETTINGS.boundary.image.threshold =
+        Number(value);
+    }
+  );
+
+  setupRangeControl(
+    "boundary-image-thicken",
+    "boundary-image-thicken-value",
+    () => SETTINGS.boundary.image.thicken,
+    value => {
+      SETTINGS.boundary.image.thicken =
+        Number(value);
+    }
+  );
+
+  invert.checked =
+    SETTINGS.boundary.image.invert;
+
+  invert.addEventListener(
+    "change",
+    event => {
+      SETTINGS.boundary.image.invert =
+        event.target.checked;
+    }
+  );
+
+  updateBoundaryImageDisplay();
+}
+
 function setupBoundarySource() {
   const select =
     document.getElementById(
@@ -1028,6 +1117,7 @@ function setupBoundarySource() {
     SETTINGS.boundary.source;
 
   updateDrawnBoundaryControls();
+  updateImageBoundaryControls();
   updateParticleBoundaryControls();
   updateBoundaryTouchAction();
   
@@ -1038,6 +1128,7 @@ function setupBoundarySource() {
         event.target.value;
 
       updateDrawnBoundaryControls();
+      updateImageBoundaryControls();
       updateParticleBoundaryControls();
       updateBoundaryTouchAction();
 
@@ -1675,6 +1766,7 @@ function syncAllControls() {
   }
 
   updateDrawnBoundaryControls();
+  updateImageBoundaryControls();
 
   // Future:
   // syncPaintControls();
@@ -1780,6 +1872,23 @@ function syncGridControls() {
 }
 
 function syncBoundaryControls() {
+  syncRangeControl(
+    "boundary-image-threshold",
+    "boundary-image-threshold-value",
+    SETTINGS.boundary.image.threshold
+  );
+
+  syncRangeControl(
+    "boundary-image-thicken",
+    "boundary-image-thicken-value",
+    SETTINGS.boundary.image.thicken
+  );
+
+  document.getElementById(
+    "boundary-image-invert"
+  ).checked =
+    SETTINGS.boundary.image.invert;
+
   syncRangeControl(
     "boundary-brush-size",
     "boundary-brush-size-value",

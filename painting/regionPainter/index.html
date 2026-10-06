@@ -624,7 +624,80 @@
               <option value="particleChaikin">Particle Chaikin</option>
               <option value="rectangle">Rectangle</option>
               <option value="drawn">Drawn</option>
+              <option value="image">Image</option>
             </select>
+          </div>
+
+          <div
+            id="image-boundary-controls"
+            class="control-item"
+          >
+            <button
+              id="boundary-image-file-button"
+              type="button"
+            >
+              Choose Image
+            </button>
+
+            <input
+              id="boundary-image-file-input"
+              type="file"
+              accept="image/*"
+              hidden
+            />
+
+            <div
+              id="boundary-image-file-name"
+              class="control-note"
+            >
+              No image selected
+            </div>
+
+            <label for="boundary-image-threshold">
+              Threshold
+            </label>
+
+            <div class="range-row">
+              <input
+                id="boundary-image-threshold"
+                type="range"
+                min="1"
+                max="255"
+                step="1"
+              />
+
+              <span
+                id="boundary-image-threshold-value"
+                class="range-value"
+              ></span>
+            </div>
+
+            <label for="boundary-image-thicken">
+              Close Gaps
+            </label>
+
+            <div class="range-row">
+              <input
+                id="boundary-image-thicken"
+                type="range"
+                min="0"
+                max="4"
+                step="1"
+              />
+
+              <span
+                id="boundary-image-thicken-value"
+                class="range-value"
+              ></span>
+            </div>
+
+            <label class="checkbox-row">
+              <input
+                type="checkbox"
+                id="boundary-image-invert"
+              />
+              Invert (white lines on dark)
+            </label>
           </div>
 
           <div
@@ -1391,6 +1464,7 @@
   <script src="js/settings.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/boundary.js"></script>
+  <script src="js/boundaryImage.js"></script>
   <script src="js/boundarySources.js"></script>
   <script src="js/floodfill.js"></script>
   <script src="js/painter.js"></script>
