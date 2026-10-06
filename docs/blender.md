@@ -2,7 +2,7 @@
 
 Which of my sketches gain from Blender, and how to connect them.
 
-Status: ideas (2026-10-06). Nothing built yet.
+Status: first experiment (cracked glass) working, 2026-10-06. The rest are ideas.
 
 Blender adds real depth, physically accurate light and materials, physics, and output I can 3D-print. The sketches that gain most are the ones whose system is already a **surface**, a **path** or a **physical process**. For those, depth and material change what the piece is, not just add a dimension.
 
@@ -27,7 +27,7 @@ A small Blender Python script builds the geometry from that file. This means:
 - one Blender script serves every sketch that exports the same kind of data;
 - it matches the telemetry design, where renderers don't care where the data came from (see [game-telemetry.md](game-telemetry.md)).
 
-Planned location: Blender scripts in `python/blender/`. Export code goes inside each sketch, behind a key or button.
+Blender scripts live in `python/blender/`. Export code goes inside each sketch, behind a key or button.
 
 `.blend` files are binary and can be large, so commit the scripts that generate scenes. Keep `.blend` files only for finished pieces, or out of git entirely; decide before the first one lands.
 
@@ -83,6 +83,41 @@ substrate, temporalFractal, evidenceOfEncounter and emergentArtist all leave tra
 - **ocean/wave:** Blender's built-in ocean simulation already does this better.
 - **rubik:** already 3D, so Blender only adds polish.
 - **asemic:** stays 2D in spirit.
+
+---
+
+## Experiment: cracked glass (working)
+
+`python/blender/cracked_glass.py` turns any white-on-black crack image (from fracture or eclipse) into a pane of cracked glass. It uses approach 1 below: the image as a crack map, not real geometry.
+
+- **The pane:** a thin glass pane. Its material uses the image as a mask: cracks get an inverted bump (grooves) and a partly frosted, reflective glass, so they glint and bend the light like real cracks.
+- **The background:** a procedural ember glow, or any image (`--background`). Use one of my own pieces to see it through the glass.
+- **The light and camera:** a low, grazing key light and an 18° camera angle.
+- **It's safe to run anywhere:** it builds its own "Cracked Glass" scene, so existing work in the .blend file is untouched.
+
+**Run it in Blender:** open the Scripting tab, open the script, set `CRACK_IMAGE` at the top, click Run Script, then press F12.
+
+**Run it headless:**
+```
+"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python cracked_glass.py -- --image cracks.png --out render.png --samples 64
+```
+
+First test (2026-10-06): an eclipse image rendered at 800 px with 48 samples in about 11 seconds.
+
+**Settings to adjust** (at the top of the script):
+
+| Setting | What it changes |
+|---|---|
+| `BUMP_STRENGTH` | How deep the grooves look |
+| `CRACK_FROST` | Clear, refracting cracks (0) versus white frosted lines (1) |
+| `CAMERA_ANGLE` | How far off-axis the camera sits |
+| background colours | Blue and ember; set in `backdrop_material()` |
+
+**Next to try:**
+- **Higher-resolution crack images,** 4000 px or more. At 1200 px the cracks read as rounded tubes rather than sharp breaks. eclipse.js sizes its canvas to the window, so it needs a pixel-density option for big saves.
+- **fracture's Glass mode,** for straighter, more realistic cracks.
+- **My own artwork as the background** (`--background`).
+- **Approach 2: real shards.** Export crack paths, cut the pane, and tilt the pieces. This only works where cracks fully enclose a region.
 
 ---
 
