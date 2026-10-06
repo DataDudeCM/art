@@ -38,7 +38,7 @@ CRACK_IMAGE = r""  # full path to a white-on-black crack PNG
 #              without something behind it to bend)
 #   "glow"   - blue and ember clouds
 #   or the full path to an image, e.g. one of my own pieces
-BACKGROUND = "studio"
+BACKGROUND = r""  # full path to an image, or "studio", "glow", or "none"
 
 PANE_WIDTH = 1.0  # metres; height follows the crack image's aspect ratio
 PANE_THICKNESS = 0.006
