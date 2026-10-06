@@ -27,7 +27,7 @@ Skyrim / Fallout ──────┘                              └─► UD
 1. **Adapters.** One per game. Each one only reads that game's data and converts it to the common format. Nothing else is game-specific.
 2. **Hub.** A small Python program. It receives from adapters, records every session, and sends data out to renderers. It also replays recordings.
 3. **Translation.** Turns raw values into artistic signals: tension, energy, transition and so on (see the Skyrim note). Keep this separate from both the hub and the renderers.
-4. **Renderers.** p5.js sketches (abstractArtist, regionPainter, new ones), lightWand, and maybe Blender later. A renderer never needs to know which game the data came from.
+4. **Renderers.** p5.js sketches (abstractArtist, regionPainter, new ones), lightWand, and maybe Blender later (a "paths → sculpture" script shared with the sketches; see [blender.md](blender.md)). A renderer never needs to know which game the data came from.
 
 ### Common format: samples and events
 
