@@ -58,14 +58,20 @@ def main():
     if not image_path:
         raise SystemExit("Set CRACK_IMAGE at the top of the script, or pass --image.")
 
-    crack = bpy.data.images.load(image_path, check_existing=True)
+    crack = load_image(image_path)
     crack.colorspace_settings.name = "Non-Color"
     width, height = crack.size
     pane_height = PANE_WIDTH * height / width
 
-    scene = bpy.data.scenes.new("Cracked Glass")
+    # Re-running replaces the previous result instead of piling up
+    # "Cracked Glass.001", ".002", ...
+    old = bpy.data.scenes.get("Cracked Glass")
+    scene = bpy.data.scenes.new("Cracked Glass (building)")
     if bpy.context.window:
         bpy.context.window.scene = scene
+    if old:
+        bpy.data.scenes.remove(old)
+    scene.name = "Cracked Glass"
 
     pane = add_object(scene, "Glass Pane", plane_mesh("Glass Pane", PANE_WIDTH, pane_height))
     pane.rotation_euler = (math.radians(90), 0, 0)  # stand it up, facing -Y
@@ -76,8 +82,15 @@ def main():
 
     background = args.background or BACKGROUND
     if background != "none":
-        size = max(PANE_WIDTH, pane_height) * 3
-        backdrop = add_object(scene, "Backdrop", plane_mesh("Backdrop", size, size))
+        pane_size = max(PANE_WIDTH, pane_height)
+        if background in ("studio", "glow"):
+            bw = bh = pane_size * 3
+        else:
+            # Keep the image's proportions, just big enough to fill the view.
+            iw, ih = load_image(background).size
+            short = pane_size * 1.6 / min(iw, ih)
+            bw, bh = iw * short, ih * short
+        backdrop = add_object(scene, "Backdrop", plane_mesh("Backdrop", bw, bh))
         backdrop.rotation_euler = (math.radians(90), 0, 0)
         backdrop.location = (0, 0.5, 0)
         backdrop.data.materials.append(backdrop_material(background))
@@ -144,6 +157,14 @@ def parse_args():
 
 # ── Scene helpers ────────────────────────────────────────────────────────────
 
+def load_image(path):
+    """Load an image, re-reading it from disk if Blender already has it,
+    so edits to the file show up on the next run."""
+    image = bpy.data.images.load(path, check_existing=True)
+    image.reload()
+    return image
+
+
 def plane_mesh(name, width, height):
     """A flat rectangle in the XY plane with UVs covering the whole image."""
     mesh = bpy.data.meshes.new(name)
@@ -182,12 +203,26 @@ def glass_material(crack_image):
     mask.interpolation = "Cubic"
     links.new(coords.outputs["UV"], mask.inputs["Vector"])
 
-    # Cracks are grooves: invert the bump so white sinks into the glass.
+    # Any coloured pixel is a crack: take the brightest channel, so green
+    # or blue cracks count as fully as white ones.
+    channels = nodes.new("ShaderNodeSeparateColor")
+    links.new(mask.outputs["Color"], channels.inputs["Color"])
+    red_green = nodes.new("ShaderNodeMath")
+    red_green.operation = "MAXIMUM"
+    links.new(channels.outputs["Red"], red_green.inputs[0])
+    links.new(channels.outputs["Green"], red_green.inputs[1])
+    crack_mask = nodes.new("ShaderNodeMath")
+    crack_mask.operation = "MAXIMUM"
+    links.new(red_green.outputs["Value"], crack_mask.inputs[0])
+    links.new(channels.outputs["Blue"], crack_mask.inputs[1])
+    crack_value = crack_mask.outputs["Value"]
+
+    # Cracks are grooves: invert the bump so the cracks sink into the glass.
     bump = nodes.new("ShaderNodeBump")
     bump.invert = True
     bump.inputs["Strength"].default_value = BUMP_STRENGTH
     bump.inputs["Distance"].default_value = 0.002
-    links.new(mask.outputs["Color"], bump.inputs["Height"])
+    links.new(crack_value, bump.inputs["Height"])
 
     clear = principled(nodes, color=(1, 1, 1), roughness=0.02, transmission=1.0)
     frosted = principled(nodes, color=(0.92, 0.96, 1.0), roughness=0.15, transmission=0.8)
@@ -197,7 +232,7 @@ def glass_material(crack_image):
     frost = nodes.new("ShaderNodeMath")
     frost.operation = "MULTIPLY"
     frost.inputs[1].default_value = CRACK_FROST
-    links.new(mask.outputs["Color"], frost.inputs[0])
+    links.new(crack_value, frost.inputs[0])
 
     mix = nodes.new("ShaderNodeMixShader")
     links.new(frost.outputs["Value"], mix.inputs["Fac"])
@@ -244,7 +279,7 @@ def backdrop_material(style):
         links.new(ramp.outputs["Color"], emission.inputs["Color"])
     elif style != "glow":
         image = nodes.new("ShaderNodeTexImage")
-        image.image = bpy.data.images.load(style, check_existing=True)
+        image.image = load_image(style)
         links.new(coords.outputs["UV"], image.inputs["Vector"])
         links.new(image.outputs["Color"], emission.inputs["Color"])
     else:
