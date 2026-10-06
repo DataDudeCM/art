@@ -91,7 +91,7 @@ substrate, temporalFractal, evidenceOfEncounter and emergentArtist all leave tra
 `python/blender/cracked_glass.py` turns any white-on-black crack image (from fracture or eclipse) into a pane of cracked glass. It uses approach 1 below: the image as a crack map, not real geometry.
 
 - **The pane:** a thin glass pane. Its material uses the image as a mask: cracks get an inverted bump (grooves) and a partly frosted, reflective glass, so they glint and bend the light like real cracks.
-- **The background:** a procedural ember glow, or any image (`--background`). Use one of my own pieces to see it through the glass.
+- **The background** (`BACKGROUND`, or `--background`): `studio`, a soft dark-grey backdrop (the default); `none`, a transparent PNG of just the cracks, for layering over other work; `glow`, blue and ember clouds; or the path to any image, such as one of my own pieces.
 - **The light and camera:** a low, grazing key light and an 18° camera angle.
 - **It's safe to run anywhere:** it builds its own "Cracked Glass" scene, so existing work in the .blend file is untouched.
 
@@ -111,7 +111,7 @@ First test (2026-10-06): an eclipse image rendered at 800 px with 48 samples in 
 | `BUMP_STRENGTH` | How deep the grooves look |
 | `CRACK_FROST` | Clear, refracting cracks (0) versus white frosted lines (1) |
 | `CAMERA_ANGLE` | How far off-axis the camera sits |
-| background colours | Blue and ember; set in `backdrop_material()` |
+| `BACKGROUND` | `studio`, `none` (transparent), `glow`, or an image path |
 
 **Next to try:**
 - **Higher-resolution crack images,** 4000 px or more. At 1200 px the cracks read as rounded tubes rather than sharp breaks. eclipse.js sizes its canvas to the window, so it needs a pixel-density option for big saves.

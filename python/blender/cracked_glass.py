@@ -8,7 +8,7 @@ never touches anything else in the .blend file:
     cracks get a small surface break (bump) and turn frosty and
     reflective, the way real cracks catch light
   - a background behind the glass, so you can see it bend through
-    the cracks (a procedural glow, or any image you choose)
+    the cracks (a soft studio backdrop, clouds, any image, or none)
   - a grazing key light so the cracks glint, a camera at a slight angle
 
 In Blender: open the Scripting tab, open this file, set CRACK_IMAGE
@@ -31,7 +31,14 @@ import bpy
 # Used when running inside Blender; command-line options override them.
 
 CRACK_IMAGE = r""  # full path to a white-on-black crack PNG
-BACKGROUND_IMAGE = r""  # optional: an image to see through the glass
+# What sits behind the glass:
+#   "studio" - a soft dark-grey pool of light, like a photo backdrop
+#   "none"   - transparent: a PNG of just the glinting cracks, for
+#              layering over other work (clear glass is invisible
+#              without something behind it to bend)
+#   "glow"   - blue and ember clouds
+#   or the full path to an image, e.g. one of my own pieces
+BACKGROUND = "studio"
 
 PANE_WIDTH = 1.0  # metres; height follows the crack image's aspect ratio
 PANE_THICKNESS = 0.006
@@ -67,12 +74,13 @@ def main():
     solidify.offset = 0
     pane.data.materials.append(glass_material(crack))
 
-    background_image = args.background or BACKGROUND_IMAGE
-    size = max(PANE_WIDTH, pane_height) * 3
-    backdrop = add_object(scene, "Backdrop", plane_mesh("Backdrop", size, size))
-    backdrop.rotation_euler = (math.radians(90), 0, 0)
-    backdrop.location = (0, 0.5, 0)
-    backdrop.data.materials.append(backdrop_material(background_image))
+    background = args.background or BACKGROUND
+    if background != "none":
+        size = max(PANE_WIDTH, pane_height) * 3
+        backdrop = add_object(scene, "Backdrop", plane_mesh("Backdrop", size, size))
+        backdrop.rotation_euler = (math.radians(90), 0, 0)
+        backdrop.location = (0, 0.5, 0)
+        backdrop.data.materials.append(backdrop_material(background))
 
     target = bpy.data.objects.new("Look Target", None)
     scene.collection.objects.link(target)
@@ -107,6 +115,12 @@ def main():
     render.resolution_y = round(render.resolution_x * height / width)
     scene.cycles.samples = args.samples or SAMPLES
     scene.cycles.use_denoising = True
+    if background == "none":
+        # Truly blank: a transparent PNG of just the cracks, for layering
+        # over other work. Glass needs this to stay see-through when empty.
+        render.film_transparent = True
+        scene.cycles.film_transparent_glass = True
+        render.image_settings.color_mode = "RGBA"
 
     if args.out:
         render.filepath = args.out
@@ -121,7 +135,7 @@ def parse_args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     parser = argparse.ArgumentParser(prog="cracked_glass.py")
     parser.add_argument("--image", help="white-on-black crack image")
-    parser.add_argument("--background", help="image to show through the glass")
+    parser.add_argument("--background", help='"studio", "none", "glow", or an image path')
     parser.add_argument("--out", help="render to this file and exit")
     parser.add_argument("--resolution", type=int, help="render width in pixels")
     parser.add_argument("--samples", type=int, help="Cycles samples (lower = faster)")
@@ -205,23 +219,35 @@ def principled(nodes, color, roughness, transmission):
     return shader
 
 
-def backdrop_material(image_path):
-    """Something to see through the glass: an image, or a soft procedural glow."""
+def backdrop_material(style):
+    """Something to see through the glass: "studio", "glow", or an image path."""
     mat = bpy.data.materials.new("Backdrop")
     nodes, links = mat.node_tree.nodes, mat.node_tree.links
     nodes.clear()
 
     emission = nodes.new("ShaderNodeEmission")
     emission.inputs["Strength"].default_value = 0.7
+    coords = nodes.new("ShaderNodeTexCoord")
 
-    if image_path:
-        coords = nodes.new("ShaderNodeTexCoord")
+    if style == "studio":
+        # A soft pool of light, brightest behind the pane, fading to near black.
+        mapping = nodes.new("ShaderNodeMapping")
+        mapping.inputs["Scale"].default_value = (0.75, 0.75, 0.75)
+        links.new(coords.outputs["Object"], mapping.inputs["Vector"])
+        gradient = nodes.new("ShaderNodeTexGradient")
+        gradient.gradient_type = "SPHERICAL"
+        links.new(mapping.outputs["Vector"], gradient.inputs["Vector"])
+        ramp = nodes.new("ShaderNodeValToRGB")
+        ramp.color_ramp.elements[0].color = (0.004, 0.004, 0.005, 1)
+        ramp.color_ramp.elements[1].color = (0.12, 0.12, 0.13, 1)
+        links.new(gradient.outputs["Fac"], ramp.inputs["Fac"])
+        links.new(ramp.outputs["Color"], emission.inputs["Color"])
+    elif style != "glow":
         image = nodes.new("ShaderNodeTexImage")
-        image.image = bpy.data.images.load(image_path, check_existing=True)
+        image.image = bpy.data.images.load(style, check_existing=True)
         links.new(coords.outputs["UV"], image.inputs["Vector"])
         links.new(image.outputs["Color"], emission.inputs["Color"])
     else:
-        coords = nodes.new("ShaderNodeTexCoord")
         noise = nodes.new("ShaderNodeTexNoise")
         noise.inputs["Scale"].default_value = 3.0
         noise.inputs["Detail"].default_value = 6.0
