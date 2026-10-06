@@ -732,15 +732,128 @@ Artifacts should feel found rather than deliberately placed.
 
 ---
 
-# Deferred Boundary Import
+# Boundary Image Import (planned)
 
-Uploaded raster, SVG, or externally prepared boundary sources are deferred.
+Status: plan, 2026-10-06. This supersedes the earlier "Deferred Boundary Import" decision.
 
-Current drawn/stylus input already provides a direct way to create intentional handmade boundary structures.
+## Why now
 
-If future use shows a strong need to import external boundary geometry, revisit that separately.
+The earlier decision deferred image import because drawn/stylus input already allowed handmade boundaries.
 
-Do not build image tracing, thresholding, SVG import, or raster-to-vector conversion into the current roadmap.
+A new need changes that: boundaries drawn *outside* regionPainter. For example, a deliberately simplified portrait in black and white, which regionPainter then paints.
+
+Raster import (an image) is in scope. SVG import and tracing a raster into vector paths stay deferred.
+
+## Core idea
+
+Region detection already works on pixels, not geometry. Any pixel in `boundaryDetectionLayer` with alpha > 20 is a wall, and flood fill uses 4-neighbour connectivity.
+
+So an image doesn't need converting into lines. It only needs thresholding into wall pixels in the detection layer. Flood fill, region identity, painting, artifacts and animation then work unchanged.
+
+```text
+uploaded image
+     |
+     |-- fit into viewport (keep proportions, centred), times boundary.scale
+     |-- threshold: dark pixels -> wall, light pixels -> empty
+     |-- thicken walls by N pixels (closes small gaps)
+     |
+     |-- detection layer: opaque wall pixels  -> region detection (unchanged)
+     `-- visible layer:   the drawing itself, if boundary.visible is on
+```
+
+4-neighbour connectivity helps here: a one-pixel line with diagonal steps still blocks the fill. Only real gaps leak.
+
+## Behaviour
+
+### New boundary source: `image`
+
+- Added to the boundary source select, after `drawn`.
+- When selected, it shows a file chooser, following the same pattern as the surface texture upload in `texture.js`: a button, a hidden input and a file name display.
+- The image is held in memory (`uploadedBoundaryImage`), like uploaded textures.
+- `generate()` returns a pixel mask instead of strokes. `generateBoundary()` gets a branch that writes the mask into the detection layer, and draws the visible version, for the active viewport.
+- Primitive strokes (circles, squares, triangles) still apply on top, using their existing settings. Mixing a drawing with random primitives may be interesting. Setting their count to zero gives the pure drawing.
+
+### Conversion settings
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `boundary.image.threshold` | 128 | Brightness below which a pixel counts as a wall (0–255). Handles grey or anti-aliased lines. |
+| `boundary.image.thicken` | 1 | Pixels to grow walls by (0–4). Closes small gaps so regions don't leak into each other. |
+| `boundary.image.invert` | false | For white-on-black drawings. |
+
+Each one gets a slider or checkbox in the boundary section, shown only when the source is `image`.
+
+Two existing settings also apply to the image source:
+
+- **`boundary.visible`**, the existing "show boundary" toggle. When on, the thresholded drawing is drawn as the visible line work. When off, only the painted regions show. There is no separate image setting.
+- **`boundary.scale`**, the same scale slider that Chaikin uses:
+  - 1.0 fits the whole image in the viewport;
+  - below 1.0 shrinks it, leaving more margin;
+  - above 1.0 enlarges it past the viewport edges, cropped by the viewport (`drawClippedToViewport`).
+
+  Because it's the same setting, the grid "boundary.scale" sweep works with images for free: a series zooming into one drawing.
+
+Conversion steps, per viewport:
+1. Draw the image into an offscreen buffer the size of the fitted rectangle: "contain" (whole image visible, centred, proportions kept), multiplied by `boundary.scale`. Only the part inside the viewport is needed.
+2. Threshold to a wall mask, using alpha too: transparent pixels are never walls.
+3. Thicken: dilate the mask by `thicken` pixels with a square kernel.
+4. Write the mask into `boundaryDetectionLayer` as opaque black pixels inside the viewport. Then `loadPixels()` as usual.
+5. If `boundary.visible` is on, draw the visible version onto `boundaryLayer`.
+
+Cache the processed mask by image, fitted size (including scale), threshold, thicken and invert, so regenerating with a new seed doesn't reprocess the image.
+
+Check pixel density: the mask must match the detection layer's actual pixel dimensions, not just its width and height.
+
+### Small features: systematic fill (phase 2)
+
+Region discovery is random sampling: `fill.attempts` random points, with regions under `minRegionPixels` (default 2500) rejected. Small portrait features, such as eyes, nostrils and lips, may never be hit, or may be rejected for size.
+
+Add a fill mode setting:
+- `random` (current behaviour, and the default).
+- `every`: scan the viewport for unvisited non-wall pixels, flood-fill each one, and paint every region above `minRegionPixels`. This uses the existing region cache for visited pixels.
+
+Lowering `minRegionPixels` matters for portraits too, so the `every` mode should come with a visible control for it.
+
+### Grid composition
+
+Each grid cell fits the same image into its own viewport. Grid variation could then sweep `boundary.scale`, `threshold` or `thicken` across rows or columns, giving a series from one drawing. Sweeping `threshold` and `thicken` means adding them to `GRID_SWEEP_PARAMETERS`.
+
+### Margins
+
+When the image's proportions don't match the viewport, or `boundary.scale` is below 1.0, the margins are empty space, not walls. They're paintable: they join whatever region they touch, usually the drawing's outside area.
+
+### Presets
+
+Presets can store `source: "image"` and the conversion settings, but not the image itself. When loading such a preset with no image uploaded, show a message and fall back to `chaikin`.
+
+### Background region
+
+The area outside a drawing is usually one large region. `maxRegionFraction` (0.7) rejects a region as exterior only if it covers more than 70% of the viewport. A portrait's background may be smaller than that, so it could get painted like any other region.
+
+That may be fine, or not. If not, add a `boundary.image.background` option to always treat the region touching the viewport edge as background.
+
+## Phases
+
+1. **Image source.** Source option, upload, fit, threshold, thicken, invert, detection mask and visible modes. Test with a hand-drawn image, plus a test image with deliberate gaps of 1–3 px to check `thicken`.
+2. **Systematic fill.** The `every` fill mode, plus a `minRegionPixels` control.
+3. **Polish.** Preset handling. A "show detection layer" view (none exists yet), for debugging leaking regions.
+
+Deferred: SVG import, tracing raster to vector paths (so imported lines can get brush strokes), and edge detection on photos.
+
+## Drawing guidelines (for the user guide)
+
+- Pure black lines on white work best.
+- Close every shape you want as a separate region.
+- Bold lines survive scaling; very thin lines may break when the image is shrunk to fit.
+- Solid black areas become walls and are never painted. Use this deliberately, for example for hair or shadows that stay dark.
+
+## Decisions (2026-10-06)
+
+- Line visibility follows the existing `boundary.visible` toggle; there's no image-specific setting.
+- Margins outside the image are paintable.
+- The image scales with the existing `boundary.scale`, including above 1.0 (larger than the canvas, cropped).
+- Images use the same default `boundary.scale` of 1.2, so a new image starts slightly enlarged and cropped.
+- An enlarged image stays centred. There's no pan or offset control.
 
 ---
 
