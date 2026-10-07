@@ -47,7 +47,7 @@ Three kinds of sketch, and what the helper needs for each:
    line every step, like a slit-scan camera: `capture.grab()` with a fixed `at` from
    the options. The line is resized to 100 pixels.
 3. **A finished picture**: no helper needed. Save the canvas as an ordinary image
-   (`saveCanvas`) and give it to lightWand's `image_paint.py`, which slices a picture
+   (`saveCanvas`) and give it to lightWand's `paint.py`, which slices a picture
    itself and stretches it over the exposure. Use the helper instead when the order
    things were drawn in should be what the wand plays.
 
@@ -153,11 +153,12 @@ This has to match exactly. lightWand loads it with `FrameSequence.load` in
 
 From `lightWand/python/`, with the venv's Python:
 
-- **Watch it:** set `INPUT_FILE = "../sequences/rule30"` in `preview_flow.py` and run it.
-  It loops, and you can snapshot parts of it with `[`, `]` and `S`.
-- **See the photo:** `python preview_paint.py ../sequences/rule30`
-- **Paint it:** set `INPUT_FILE = "../sequences/rule30"` and `EXPOSURE_SECONDS = None`
-  in `image_paint.py`.
+- **Watch it:** set `INPUT_FILE = "../sequences/rule30"` in `generate.py` and run it.
+  It loops, and you can snapshot parts of it with `[`, `]` and `S`. With
+  `OUTPUT = "both"` the wand shows it too.
+- **See the photo:** `python paint.py ../sequences/rule30`
+- **Paint it:** `python paint.py ../sequences/rule30 --output both` (or `--output wand`),
+  with `EXPOSURE_SECONDS = None` in `paint.py` to play it at its own length.
 
 A quick correctness check: open the PNG in an image viewer. It should look like the
 sketch's sampled line over time, with time running left to right.
