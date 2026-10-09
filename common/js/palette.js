@@ -239,6 +239,47 @@ const PALETTES = {
       { hex: "#c6c7c4", role: "neutral" },
       { hex: "#b3cde0", role: "cool" }
     ]
+  },
+
+  // Made for the light wand's smoke / fire generators (also in
+  // lightWand/palettes.json). Ordered as gradients: first color = fresh
+  // or hot, last = old or cool. Kept bright so they survive LED gamma.
+  duskSmoke: {
+    name: "Dusk Smoke",
+    tags: ["cool", "smoke", "soft"],
+    colors: [
+      { hex: "#3d5bd9", role: "cool" },
+      { hex: "#5f86ff", role: "cool" },
+      { hex: "#8f7dff", role: "accent" },
+      { hex: "#b99cff", role: "light" },
+      { hex: "#8a3fd6", role: "accent" },
+      { hex: "#9b97a8", role: "neutral" }
+    ]
+  },
+
+  emberFire: {
+    name: "Ember Fire",
+    tags: ["warm", "fire", "bright"],
+    colors: [
+      { hex: "#fff1a8", role: "light" },
+      { hex: "#ffd23f", role: "warm" },
+      { hex: "#ff9f1c", role: "warm" },
+      { hex: "#f25c05", role: "accent" },
+      { hex: "#c8102e", role: "accent" },
+      { hex: "#9a918a", role: "neutral" }
+    ]
+  },
+
+  ashSmoke: {
+    name: "Ash Smoke",
+    tags: ["neutral", "smoke", "soft"],
+    colors: [
+      { hex: "#d8d6d2", role: "light" },
+      { hex: "#b4b2ae", role: "neutral" },
+      { hex: "#929296", role: "neutral" },
+      { hex: "#76787f", role: "cool" },
+      { hex: "#5c606a", role: "cool" }
+    ]
   }
 };
 
