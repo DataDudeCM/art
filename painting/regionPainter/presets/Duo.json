@@ -1,0 +1,42 @@
+{
+  "presetVersion": 1,
+  "presetName": "Duo",
+  "updatedAt": "2026-09-16T00:53:32.181Z",
+  "paletteKey": "industrialSun",
+  "paletteName": "Industrial Sun",
+  "settings": {
+    "canvas": {
+      "width": 2544,
+      "height": 1372,
+      "paperColor": "#eff1f3"
+    },
+    "texture": {
+      "opacity": 68,
+      "scope": "cells"
+    },
+    "grid": {
+      "enabled": true,
+      "rows": 1,
+      "gutter": 50,
+      "outerMargin": 80
+    },
+    "boundary": {
+      "pointCount": 40,
+      "scale": 3.1,
+      "primitivesEnabled": true,
+      "primitiveChance": 0.4,
+      "forcedBrush": "Watercolor 6.png",
+      "thinBrushSize": 50,
+      "midSizeMultiplier": 2.4,
+      "brushAlpha": 138
+    },
+    "paint": {
+      "marksPerRegion": 259,
+      "fillStrength": 70,
+      "opacityVariation": 48,
+      "alphaMin": 7,
+      "alphaMax": 22,
+      "bleedPixels": 12
+    }
+  }
+}
