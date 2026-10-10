@@ -21,7 +21,7 @@ waveform determines size of crack
 
 
 function preload() {
-  sound = loadSound('js/testmusic.mp3');
+  sound = loadSound('../common/testmusic.mp3');
 }
 
 function setup() {
