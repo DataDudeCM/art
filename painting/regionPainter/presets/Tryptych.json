@@ -1,0 +1,44 @@
+{
+  "presetVersion": 1,
+  "presetName": "Tryptych",
+  "updatedAt": "2026-09-16T00:46:16.394Z",
+  "paletteKey": "charcoalCoral",
+  "paletteName": "Charcoal Coral",
+  "settings": {
+    "canvas": {
+      "width": 2544,
+      "height": 1372,
+      "paperColor": "#f8f4e3",
+      "backgroundMode": "white"
+    },
+    "texture": {
+      "opacity": 68,
+      "scope": "cells"
+    },
+    "grid": {
+      "enabled": true,
+      "rows": 1,
+      "cols": 3,
+      "gutter": 50,
+      "outerMargin": 80
+    },
+    "boundary": {
+      "pointCount": 40,
+      "scale": 3.1,
+      "primitivesEnabled": true,
+      "primitiveChance": 0.4,
+      "forcedBrush": "Watercolor 6.png",
+      "thinBrushSize": 17,
+      "midSizeMultiplier": 3.3
+    },
+    "fill": {
+      "colorMode": "randomPerHit"
+    },
+    "paint": {
+      "fillStrength": 51,
+      "opacityVariation": 48,
+      "alphaMax": 18,
+      "bleedPixels": 12
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "presetVersion": 1,
+  "presetName": "SunandSea2x2",
+  "updatedAt": "2026-09-16T00:34:21.509Z",
+  "paletteKey": "sunAndSea",
+  "paletteName": "Sun and Sea",
+  "settings": {
+    "canvas": {
+      "width": 2000,
+      "height": 2000,
+      "paperColor": "#00A4CC",
+      "backgroundMode": "white"
+    },
+    "texture": {
+      "scope": "cells"
+    },
+    "grid": {
+      "enabled": true
+    },
+    "boundary": {
+      "primitivesEnabled": true,
+      "forcedBrush": "Watercolor 6.png",
+      "thinBrushSize": 10,
+      "midSizeMultiplier": 3.3,
+      "brushAlpha": 197
+    }
+  }
+}
