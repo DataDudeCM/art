@@ -1,0 +1,30 @@
+title,category,sketch,image_folder,image,match,notes
+Substrate,generative,generative/substrate/,Substrate,"walker_art_2025-8-9-21-35-32-355504 (Medium).png",sure,
+The Spark,generative,generative/thespark/,spark,,sure,
+Temporal Fractal,generative,generative/temporalFractal/,tempFractal,,sure,
+Fractures,generative,generative/fracture/,Fractures,,sure,
+Evidence of Encounter,generative,generative/evidenceOfEncounter/,evidenceEncounter,,sure,
+Recursive City,generative,generative/recursion/recurseCity.html,recursiveCity,,likely,
+Region Painter,painting,painting/regionPainter/,regionPainter,"regionPainter-seed113875157-20260917-185744.png",sure,202 images to choose from
+Displacement,image-art,image-art/displacement/,displacement,,sure,
+Mosaic,image-art,image-art/imagemanipulation/mosaicMaker.html,Mosaic,,likely,or selfRefMosaic.html?
+Mosaic Image Brush,image-art,image-art/imagemanipulation/,MosaicImageBrush,,guess,which html?
+Asemic Writing,text,text/asemic/,asemic,"AsemicMachine_v3_script_2026-08-13_19-48-29.png",sure,
+Doodles,experiments,experiments/doodles/doodles.html,doodles,,likely,or doodle-generator.html?
+Doodle Grid,experiments,experiments/doodles/doodle_grid.html,doodlegrid,,likely,
+Three-Body Problem,experiments,experiments/set1/3body.html,3BodyProblem,"city_2024-3-24-10-22-16-55982.png",likely,
+Eclipse,experiments,experiments/set1/eclipse.html,Eclipse,,likely,
+Physics,experiments,experiments/set1/physics1.html,Physics,,likely,
+City Sketch,experiments,experiments/set1/city.html,CitySketch 1,,likely,or citymap.html?
+Strands,experiments,experiments/set1/spag-v2.html,Strands,,guess,spag = spaghetti strands?
+Dominoes,experiments,experiments/newideas/,Dominoes,,guess,dominoes.js has no html of its own
+Sunburst,archive,archive/sunburst.html,sunburst,"Particles_2023-9-3-8-41-47-24037..jpg",likely,42 images; still archive?
+Chaikin Art,python,python/pygame/chaikin.py,py_ChaikinArt,,guess,several chaikin*.py variants
+Perlin Lattice,python,python/pygame/lattice.py,py_PerlinLattice,,guess,lattice2 / latticewater too
+Perlin Particles,python,python/pygame/perlinflowfield.py,py_perlinparticles,,guess,
+Subway Map,python,python/pygame/tileart/,py_SubwayMap,,likely,
+Wave Function Collapse,python,python/pygame/tileart/carbon_silicon_tilegen.py,py_WaveFunctionCollapse,,likely,subfolders: Plumbing; ArcanePlumbingTiles; carbonsilicon
+Circle Cutouts,experiments,experiments/newideas/perlinCirclePack.html,CircleCutouts,"circlePackLayersDist_2026-2-5-9-5-22-8490.png",none,code not found in art/
+Image Scatter,?,,imageScatter,,none,code not found in art/
+Spiro,?,,Sprio1,,none,code not found in art/
+Recursive Grid Art,python,,py_RecursiveGridArt,,none,code not found in art/

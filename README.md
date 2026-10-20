@@ -6,6 +6,41 @@ I've been fascinated by the intersection of code and visual art for a long timeâ
 
 Some projects are experiments. Some are finished pieces. Some are strange little ideas that went somewhere unexpected. That's part of the point.
 
+<!-- gallery:start -->
+## Gallery
+
+### generative
+
+<table>
+<tr><td align="center"><a href="generative/substrate/"><img src="docs/gallery/substrate.jpg" width="180" alt="Substrate"></a><br>Substrate</td></tr>
+</table>
+
+### painting
+
+<table>
+<tr><td align="center"><a href="painting/regionPainter/"><img src="docs/gallery/region-painter.jpg" width="180" alt="Region Painter"></a><br>Region Painter</td></tr>
+</table>
+
+### text
+
+<table>
+<tr><td align="center"><a href="text/asemic/"><img src="docs/gallery/asemic-writing.jpg" width="180" alt="Asemic Writing"></a><br>Asemic Writing</td></tr>
+</table>
+
+### experiments
+
+<table>
+<tr><td align="center"><a href="experiments/set1/3body.html"><img src="docs/gallery/three-body-problem.jpg" width="180" alt="Three-Body Problem"></a><br>Three-Body Problem</td><td align="center"><a href="experiments/newideas/perlinCirclePack.html"><img src="docs/gallery/circle-cutouts.jpg" width="180" alt="Circle Cutouts"></a><br>Circle Cutouts</td></tr>
+</table>
+
+### archive
+
+<table>
+<tr><td align="center"><a href="archive/sunburst.html"><img src="docs/gallery/sunburst.jpg" width="180" alt="Sunburst"></a><br>Sunburst</td></tr>
+</table>
+
+<!-- gallery:end -->
+
 ## What You'll Find Here
 
 The work spans a pretty wide range of generative and computational art, including:
