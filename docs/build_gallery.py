@@ -51,7 +51,10 @@ def cell(item):
     img = f'<img src="docs/gallery/{item["thumb"]}" width="180" alt="{item["title"]}">'
     if item["sketch"]:
         img = f'<a href="{quote(item["sketch"])}">{img}</a>'
-    return f"{img}<br>{item['title']}"
+    text = f"{img}<br>{item['title']}"
+    if item["description"]:
+        text += f"<br><sub>{item['description']}</sub>"
+    return text
 
 
 def gallery_markdown(items):
@@ -89,6 +92,7 @@ def main():
                 "category": row["category"].strip() or "other",
                 "sketch": sketch,
                 "thumb": thumb,
+                "description": (row.get("description") or "").strip(),
             })
             print(f"ok  {thumb}")
 

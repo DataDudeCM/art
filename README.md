@@ -12,31 +12,31 @@ Some projects are experiments. Some are finished pieces. Some are strange little
 ### generative
 
 <table>
-<tr><td align="center"><a href="generative/substrate/"><img src="docs/gallery/substrate.jpg" width="180" alt="Substrate"></a><br>Substrate</td></tr>
+<tr><td align="center"><a href="generative/substrate/"><img src="docs/gallery/substrate.jpg" width="180" alt="Substrate"></a><br>Substrate<br><sub>Branching walkers grow until they collide, building a web of cracks and streets.</sub></td></tr>
 </table>
 
 ### painting
 
 <table>
-<tr><td align="center"><a href="painting/regionPainter/"><img src="docs/gallery/region-painter.jpg" width="180" alt="Region Painter"></a><br>Region Painter</td></tr>
+<tr><td align="center"><a href="painting/regionPainter/"><img src="docs/gallery/region-painter.jpg" width="180" alt="Region Painter"></a><br>Region Painter<br><sub>Finds the enclosed spaces in a looping line and paints them with translucent image brushes.</sub></td></tr>
 </table>
 
 ### text
 
 <table>
-<tr><td align="center"><a href="text/asemic/"><img src="docs/gallery/asemic-writing.jpg" width="180" alt="Asemic Writing"></a><br>Asemic Writing</td></tr>
+<tr><td align="center"><a href="text/asemic/"><img src="docs/gallery/asemic-writing.jpg" width="180" alt="Asemic Writing"></a><br>Asemic Writing<br><sub>A machine that writes convincing manuscripts in a script no one can read.</sub></td></tr>
 </table>
 
 ### experiments
 
 <table>
-<tr><td align="center"><a href="experiments/set1/3body.html"><img src="docs/gallery/three-body-problem.jpg" width="180" alt="Three-Body Problem"></a><br>Three-Body Problem</td><td align="center"><a href="experiments/newideas/perlinCirclePack.html"><img src="docs/gallery/circle-cutouts.jpg" width="180" alt="Circle Cutouts"></a><br>Circle Cutouts</td></tr>
+<tr><td align="center"><a href="experiments/set1/3body.html"><img src="docs/gallery/three-body-problem.jpg" width="180" alt="Three-Body Problem"></a><br>Three-Body Problem<br><sub>Recursive rings of circles that orbit and expand; the mouse sets spread and size.</sub></td><td align="center"><a href="experiments/doodles/circlePackLayeredCutout.html"><img src="docs/gallery/circle-cutouts.jpg" width="180" alt="Circle Cutouts"></a><br>Circle Cutouts<br><sub>Layers of textured paper with circles punched out to reveal the layers below.</sub></td></tr>
 </table>
 
 ### archive
 
 <table>
-<tr><td align="center"><a href="archive/sunburst.html"><img src="docs/gallery/sunburst.jpg" width="180" alt="Sunburst"></a><br>Sunburst</td></tr>
+<tr><td align="center"><a href="archive/sunburst.html"><img src="docs/gallery/sunburst.jpg" width="180" alt="Sunburst"></a><br>Sunburst<br><sub>Thousands of faint lines strung between two drifting circles build up into rays of light.</sub></td></tr>
 </table>
 
 <!-- gallery:end -->
