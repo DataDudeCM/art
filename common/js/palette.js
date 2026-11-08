@@ -63,16 +63,8 @@ Example:
   ]
 }
 
-Helper should fall back to getDarkColor() when ink is absent.
-
-  function getInkColor(paletteOrName) {
-    const palette = resolvePalette(paletteOrName);
-
-    return (
-      palette?.ink ||
-      getDarkColor(palette)
-    );
-  }
+getInkColor() (in the semantic helpers below) returns `ink`,
+falling back to getDarkColor() when ink is absent.
 
 */
 
@@ -387,6 +379,65 @@ function getLightColor(paletteOrName) {
 
 function getAccentColor(paletteOrName) {
   return getColorByRole(paletteOrName, "accent", true);
+}
+
+// One helper per common role, each with a sensible fallback so it always
+// returns a colour from the palette.
+
+function getMidColor(paletteOrName) {
+  return (
+    getColorByRole(paletteOrName, "mid", false) ||
+    getColorByRole(paletteOrName, "neutral", false) ||
+    randomColor(paletteOrName)
+  );
+}
+
+function getNeutralColor(paletteOrName) {
+  return (
+    getColorByRole(paletteOrName, "neutral", false) ||
+    getColorByRole(paletteOrName, "mid", false) ||
+    randomColor(paletteOrName)
+  );
+}
+
+function getWarmColor(paletteOrName) {
+  return getColorByRole(paletteOrName, "warm", true);
+}
+
+function getCoolColor(paletteOrName) {
+  return getColorByRole(paletteOrName, "cool", true);
+}
+
+function getShadowColor(paletteOrName) {
+  return (
+    getColorByRole(paletteOrName, "shadow", false) ||
+    getDarkColor(paletteOrName)
+  );
+}
+
+function getHighlightColor(paletteOrName) {
+  return (
+    getColorByRole(paletteOrName, "highlight", false) ||
+    getLightColor(paletteOrName)
+  );
+}
+
+function getPaperColor(paletteOrName) {
+  return (
+    getColorByRole(paletteOrName, "paper", false) ||
+    getLightColor(paletteOrName)
+  );
+}
+
+// Reserved outline/boundary colour: the palette's top-level `ink`,
+// falling back to its dark colour (see the design note above).
+function getInkColor(paletteOrName) {
+  const palette = resolvePalette(paletteOrName);
+
+  return (
+    (palette && palette.ink) ||
+    getDarkColor(palette)
+  );
 }
 
 
