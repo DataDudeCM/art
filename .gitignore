@@ -14,3 +14,6 @@ desktop.ini
 
 # Local secrets (API keys)
 private_config.py
+
+# Sweep output (python/tools/sweep): renders and contact sheets
+sweeps/

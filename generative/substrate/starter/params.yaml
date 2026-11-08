@@ -1,0 +1,83 @@
+# Tunable parameters of the substrate starter.
+# Defaults are Chris's own values from art/generative/substrate/js/substrate.js.
+# The keys must match the PARAMS block in sketch.js.
+
+name: Substrate
+about: >
+  Walkers grow straight lines across a white canvas, leave a soft glow on
+  one side, and branch at right angles (sometimes 45 degrees). A walker
+  stops when it would run into another line or the edge, so the lines
+  divide the canvas into cells. Each branch is thinner than its parent and
+  less likely to branch again. One dark blue-grey ink on white; colour is
+  fixed.
+
+params:
+  numWalkers:
+    default: 2
+    min: 1
+    max: 8
+    integer: true
+    about: Starting points. Each starts two walkers going opposite ways (one if startAtEdge).
+  spawnChance:
+    default: 0.02
+    min: 0.002
+    max: 0.08
+    about: Chance per step that a walker branches. Higher = more, smaller cells.
+  spawnChanceDecay:
+    default: 0.85
+    min: 0.5
+    max: 1.0
+    about: Each branch's spawnChance is its parent's times this. Lower = branching dies out sooner.
+  startWidth:
+    default: 5
+    min: 1
+    max: 20
+    about: Line thickness of the first walkers, in pixels.
+  widthDecay:
+    default: 0.8
+    min: 0.5
+    max: 0.95
+    about: Each branch's width is its parent's times this. Walkers stop below 0.5 px, so lower = fewer generations.
+  acuteAngleChance:
+    default: 0.2
+    min: 0.0
+    max: 1.0
+    about: Chance a branch leaves at 45 degrees instead of 90. 0 = a strict right-angle grid.
+  wobble:
+    default: 0.01
+    min: 0.0
+    max: 0.1
+    about: How much walkers drift off straight (noise). Above ~0.03 lines curve like vines.
+  startAtEdge:
+    default: false
+    about: true = walkers start from the canvas edges; false = from random points inside.
+  lookAheadDistance:
+    default: 5
+    min: 2
+    max: 25
+    about: How far ahead a walker checks for lines. Larger = lines stop further short, leaving gaps.
+  whiskerAngle:
+    default: 15
+    min: 3
+    max: 45
+    about: Spread (degrees) of the side probes. Wider = walkers stop earlier near other lines.
+  startAlpha:
+    default: 20
+    min: 0
+    max: 50
+    about: Strength of the glow beside each line (0 = no glow, 50 = full).
+  startGlowLength:
+    default: 15
+    min: 0
+    max: 120
+    about: Glow width in pixels for the first walkers.
+  glowLengthRatio:
+    default: 0.75
+    min: 0.0
+    max: 3.0
+    about: A branch's glow width is this times the distance since its parent last branched. Higher = wide washes.
+  glowFade:
+    default: 5
+    min: 1
+    max: 12
+    about: How fast the glow fades away from the line. Low = broad soft wash, high = thin edge.

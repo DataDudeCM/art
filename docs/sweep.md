@@ -2,7 +2,7 @@
 
 A general tool to sweep through the parameters of any of my sketches, show the results as contact sheets, and turn my picks into **themes**: named parameter ranges with weights. A possible end point is a hash-driven Art Blocks version of a sketch that reads the themes.
 
-Status: idea and plan, 2026-11-08. Nothing built yet. Drafted with Claude in a diamond-age-studio session; the vault session is `Sessions/2026-11-08-sweep-tool.md`.
+Status: 2026-11-08, piece 2 started: `sweep.py strips` works on substrate (see `python/tools/sweep/README.md`). Pieces 3–5 not built. Drafted with Claude in a diamond-age-studio session; the vault session is `Sessions/2026-11-08-sweep-tool.md`.
 
 ---
 
@@ -43,8 +43,8 @@ sweep (wide) → contact sheet → I mark favourites, rejects and theme names
 
 ## Open decisions
 
-- **Where starters live.** Today in diamond-age-studio. They belong here with the sweep; diamond-age would then read them from `art/`, the way it reads `common/js/palette.js`. Folder to be agreed, e.g. `tools/sweep/` for the scripts and `tools/sweep/starters/<name>/` or a `starter/` folder inside each sketch's own folder.
-- **Rendering code.** Reuse diamond-age's Playwright renderer, or a small copy here so `art` stays independent of it.
+- ~~Where starters live~~ **Decided:** a `starter/` folder inside each sketch's folder (`generative/substrate/starter/`); the scripts are in `python/tools/sweep/`. Still to do: diamond-age reads starters from `art/*/*/starter/` and its own copy is removed.
+- ~~Rendering code~~ **Decided:** a small renderer here (`render.py`): one browser, several pages at once, files served with `page.route`. Diamond-age's renderer starts a browser per image.
 - **How ranges are derived** from favourites (min/max of the picks plus a margin, or a box shrunk away from rejects).
 - **Sketches with 20–30 parameters** (Chris's question). A random sweep across all of them leaves big gaps, and each tile changes everything at once. Likely answer:
   1. Start with one strip per parameter (vary one, others at defaults) to find the few that matter, and to see where the sketch breaks. Freeze the rest at Chris's values.
@@ -52,7 +52,9 @@ sweep (wide) → contact sheet → I mark favourites, rejects and theme names
   3. Go coarse to fine: wide sweep, picks, then resample tightly around each pick.
   4. Optionally group related parameters into a few macro knobs (e.g. "density").
 
-  So the strips are probably the first thing `sweep.py` should do.
+  So the strips are probably the first thing `sweep.py` should do. (Done: `sweep.py strips`.)
+
+  First strips on substrate (2026-11-08) found a break that involves two parameters: a walker's look-ahead probe lands inside its own new dot, so it stops at once. This happens whenever `lookAheadDistance` is less than about `startWidth / 2` (`startWidth` ≥ 10.5 with look-ahead 5; look-ahead 2 with width 5). One-at-a-time strips only catch a break like that when it falls on the default line. Theme ranges need a constraint like this, or the sampling has to check pairs.
 
 ## Art Blocks: check before building the export
 
