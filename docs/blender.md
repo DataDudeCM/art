@@ -137,6 +137,8 @@ First test (2026-10-06): an eclipse image rendered at 800 px with 48 samples in 
 **Next to try:**
 - **Per-tile shapes:** brightness only says "pipe or not", so pipes come out flat-topped. Exporting the WFC grid as JSON (tile and rotation per cell) would let Blender build each pipe as a real half-cylinder.
 - **rainWorn's paper height** (the plan below), which this script can now render once rainWorn exports its fields.
+- **Exploring a relief in Blender:** a headless run keeps only the PNG. To orbit, relight or sculpt a relief, run the script from the Scripting tab instead (set `IMAGE` at the top), and use `MESH = 700` while exploring, since 1400 is about two million faces.
+- **A `--save scene.blend` option** for headless runs, so a batch can be rendered and the good ones opened later. Default it to a gitignored folder so large `.blend` files never reach git.
 
 ## First experiment (planned)
 
