@@ -66,6 +66,23 @@ def find_features(image_path):
     }
 
 
+# MediaPipe's face outline, clockwise from the top of the forehead.
+FACE_OVAL = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378,
+             400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21,
+             54, 103, 67, 109]
+
+
+def face_outline(image_path):
+    """The face outline as [(x, y), ...] fractions of the image, or None if no face.
+    It runs from hairline to chin; hair and ears are outside it."""
+    model = _model()
+    with _quiet_stderr():
+        lm = _detect(image_path, model)
+    if lm is None:
+        return None
+    return [(lm[i].x, lm[i].y) for i in FACE_OVAL]
+
+
 def _detect(image_path, model):
     try:
         import mediapipe as mp

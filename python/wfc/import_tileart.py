@@ -18,7 +18,7 @@ import re
 import shutil
 from pathlib import Path
 
-ART = Path(__file__).resolve().parents[3]
+ART = Path(__file__).resolve().parents[2]
 OLD = ART / "python" / "pygame" / "tileart"
 NEW = ART / "common" / "tilesets"
 

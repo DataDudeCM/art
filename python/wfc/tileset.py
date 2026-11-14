@@ -14,7 +14,7 @@ from pathlib import Path
 
 from PIL import Image
 
-ART = Path(__file__).resolve().parents[3]
+ART = Path(__file__).resolve().parents[2]
 TILESETS = ART / "common" / "tilesets"
 OPPOSITE = (2, 3, 0, 1)  # top<->bottom, right<->left
 

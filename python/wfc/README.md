@@ -15,7 +15,8 @@ Runs from any folder. Window keys: Backspace = new seed, S = save to `out/`, Spa
 |---|---|
 | `tileset.py` | Loads `common/tilesets/<name>/tileset.json`, expands rotations, works out which tiles fit next to which |
 | `solver.py` | The collapse itself. No pygame. `weight_fn(x, y, variant)` steers tile choice per cell |
-| `view.py` | Window and headless rendering |
+| `view.py` | Window and headless rendering. pygame is needed only for the window |
+| `portrait.py` | WFC portrait experiments: a face (found with `python/eikonal/face_points.py`) steers tile choice. Step 1 is material only: `--inside`/`--outside` tile notes, `--strength`, `--edge`, `--hard` |
 | `import_tileart.py` | One-off that converted the old `tileart` sets. Kept as a record of where each table came from |
 | `carbon_silicon_tilegen.py` | Generates the carbon-silicon tiles. It writes its own `manifest.json` (and has its own small solver); after regenerating, copy the PNGs into `common/tilesets/carbon-silicon/` and update `tileset.json` to match |
 
