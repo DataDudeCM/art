@@ -6,7 +6,7 @@ dead ends show up immediately. On a dead end the attempt restarts with a new
 seed derived from the first one, so a seed always gives the same picture.
 
 weight_fn(x, y, variant_index) -> multiplier is the hook for steering the
-picture, e.g. by a portrait's brightness. Return 0 to forbid a tile in a cell.
+picture, e.g. by an image's brightness (see picture.py). Return 0 to forbid a tile in a cell.
 """
 
 import heapq

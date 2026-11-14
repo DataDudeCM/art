@@ -81,7 +81,7 @@ def list_sets(bg=None):
 
 
 def window(ts, args, weight_fn=None, size=None, title=None):
-    """Animated solve. weight_fn and size let portrait.py reuse this window;
+    """Animated solve. weight_fn and size let picture.py reuse this window;
     without them it behaves as before."""
     import pygame
 

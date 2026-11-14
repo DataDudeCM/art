@@ -1,19 +1,19 @@
-"""WFC portraits: a picture steers which tile goes in each cell.
+"""WFC pictures: any image steers which tile goes in each cell.
 
 Two modes:
 
-  tone      (step 2) Each tile's average brightness is measured, the picture is
-            shrunk to one brightness per cell, and tiles close to their cell's
-            brightness are favoured. With circuit2, chips fall in the shadows
-            and white roads in the highlights.
-  material  (step 1) MediaPipe's face outline becomes a mask; tiles whose note
-            matches --inside are favoured inside the face, --outside outside it.
-            Nothing is shaded.
+  tone      Works with any image. Each tile's average brightness is measured,
+            the picture is shrunk to one brightness per cell, and tiles close
+            to their cell's brightness are favoured. With circuit2, chips fall
+            in the shadows and white roads in the highlights.
+  material  Needs a face. MediaPipe's face outline becomes a mask; tiles whose
+            note matches --inside are favoured inside the face, --outside
+            outside it. Nothing is shaded.
 
-  python portrait.py ../../common/images/bigeyes.jpg                 tone, circuit2
-  python portrait.py photo.jpg --cols 72 --strength 40 --seed 3 --debug
-  python portrait.py photo.jpg --mode material --edge 30             carbon-silicon
-  python portrait.py photo.jpg --tileset mondrian --equalize --strength 60 --cols 72 --window
+  python picture.py ../../common/images/bigeyes.jpg                 tone, circuit2
+  python picture.py photo.jpg --cols 72 --strength 40 --seed 3 --debug
+  python picture.py photo.jpg --mode material --edge 30             carbon-silicon
+  python picture.py photo.jpg --tileset mondrian --equalize --strength 60 --cols 72 --window
 
 --strength is how hard the picture pushes against the tile set's own weights
 (0 ignores the picture). Each run prints how closely the result's brightness
@@ -183,7 +183,7 @@ def main():
         view_args = argparse.Namespace(seed=args.seed, cell=args.cell, bg=args.bg, window=1000,
                                        speed=args.speed, save_prefix=f"{args.mode}-{Path(args.image).stem}")
         view.window(ts, view_args, weight_fn=weight_fn, size=(cols, rows),
-                    title=f"{ts.name} portrait of {Path(args.image).name}")
+                    title=f"{ts.name} from {Path(args.image).name}")
         return
 
     t0 = time.time()
