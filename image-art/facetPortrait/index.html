@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facet Portrait</title>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      background: #222;
+      color: #ddd;
+      font: 14px Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+    }
+
+    #panel {
+      width: 230px;
+      padding: 16px;
+      box-sizing: border-box;
+      flex: none;
+    }
+
+    #panel h1 {
+      font-size: 16px;
+      margin: 0 0 12px;
+    }
+
+    #panel label {
+      display: block;
+      margin: 12px 0 4px;
+    }
+
+    #panel input[type=range] {
+      width: 100%;
+    }
+
+    #panel button {
+      margin-top: 4px;
+    }
+
+    #status {
+      margin-top: 16px;
+      color: #aaa;
+    }
+
+    #stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.2/p5.min.js"></script>
+</head>
+
+<body>
+  <div id="panel">
+    <h1>Facet Portrait</h1>
+
+    <label for="file">Photo (or drop one on the page)</label>
+    <input id="file" type="file" accept="image/*">
+
+    <label for="facets">Facets: <span id="facetsValue"></span></label>
+    <input id="facets" type="range" min="10" max="40" step="1">
+
+    <label>Seed: <span id="seedValue"></span></label>
+    <button id="newSeed">New seed (N)</button>
+
+    <label><input id="showPhoto" type="checkbox" checked> Show photo (P)</label>
+    <label><input id="showHatch" type="checkbox" checked> Show hatching (H)</label>
+    <label><input id="showPoints" type="checkbox"> Show points (O)</label>
+
+    <div id="status"></div>
+  </div>
+
+  <div id="stage"></div>
+
+  <script type="module" src="js/sketch.js"></script>
+</body>
+
+</html>
