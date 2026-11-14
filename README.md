@@ -93,7 +93,7 @@ That also means pages opened directly from disk (`file://`) won't find `/common/
 
 Files that belong to a single project (its own `js/` or `assets/` folder) are referenced with ordinary relative paths, so they move with the project.
 
-The Python sketches run locally, not in the browser. Run the pygame scripts from inside `python/pygame/`: they share `coreClasses.py` and `corefuncs.py` and load `images/` and `textures/` relative to that folder.
+The Python sketches run locally, not in the browser. Run the pygame scripts from inside `python/pygame/`: they share `coreClasses.py` and `corefuncs.py` and load `images/` and `textures/` relative to that folder. The exception is `python/pygame/wfc/` (wave function collapse), which runs from anywhere and reads its tile sets from `common/tilesets/`.
 
 ## The Approach
 
