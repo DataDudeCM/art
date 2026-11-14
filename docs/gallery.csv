@@ -22,8 +22,8 @@ Sunburst,archive,archive/sunburst.html,sunburst,"Particles_2023-9-3-8-41-47-2403
 Chaikin Art,python,python/pygame/chaikin.py,py_ChaikinArt,,guess,several chaikin*.py variants,
 Perlin Lattice,python,python/pygame/lattice.py,py_PerlinLattice,,guess,lattice2 / latticewater too,
 Perlin Particles,python,python/pygame/perlinflowfield.py,py_perlinparticles,,guess,,
-Subway Map,python,python/pygame/tileart/,py_SubwayMap,,likely,,
-Wave Function Collapse,python,python/pygame/tileart/carbon_silicon_tilegen.py,py_WaveFunctionCollapse,,likely,subfolders: Plumbing; ArcanePlumbingTiles; carbonsilicon,
+Subway Map,python,python/pygame/circuit.py,py_SubwayMap,,guess,images are named grid_ like circuit.py's saves; not WFC,
+Wave Function Collapse,python,python/wfc/,py_WaveFunctionCollapse,"tileart_20250411_160648 Firefly Upscaler 2x scale.jpg",sure,subfolders: Plumbing; ArcanePlumbingTiles; carbonsilicon. Code moved from pygame/tileart to python/wfc (Nov 2026),"Hand-drawn tiles that may only touch where their edges match, assembled into pipework, circuit boards and transit lines."
 Circle Cutouts,experiments,experiments/doodles/circlePackLayeredCutout.html,CircleCutouts,"circlePackLayersDist_2026-2-5-9-5-22-8490.png",none,code not found in art/,"Layers of textured paper with circles punched out to reveal the layers below."
 Image Scatter,?,,imageScatter,,none,code not found in art/,
 Spiro,?,,Sprio1,,none,code not found in art/,

@@ -39,6 +39,12 @@ Some projects are experiments. Some are finished pieces. Some are strange little
 <tr><td align="center"><a href="archive/sunburst.html"><img src="docs/gallery/sunburst.jpg" width="180" alt="Sunburst"></a><br>Sunburst<br><sub>Thousands of faint lines strung between two drifting circles build up into rays of light.</sub></td></tr>
 </table>
 
+### python
+
+<table>
+<tr><td align="center"><a href="python/wfc/"><img src="docs/gallery/wave-function-collapse.jpg" width="180" alt="Wave Function Collapse"></a><br>Wave Function Collapse<br><sub>Hand-drawn tiles that may only touch where their edges match, assembled into pipework, circuit boards and transit lines.</sub></td></tr>
+</table>
+
 <!-- gallery:end -->
 
 ## What You'll Find Here
@@ -71,7 +77,7 @@ Projects are grouped by the kind of art they explore, not by language or when th
 | `sound/` | sound-driven graphics and the Akai MIDI controller sketches |
 | `experiments/` | doodles, sets, and new ideas that haven't found a home yet |
 | `archive/` | early sketches, kept as they were |
-| `python/` | pygame sketches (`python/pygame/`) and tools such as the texture library app (`python/tools/`) |
+| `python/` | pygame sketches (`python/pygame/`), standalone projects such as wave function collapse (`python/wfc/`) and eikonal portraits (`python/eikonal/`), and tools such as the texture library app (`python/tools/`) |
 | `common/` | shared assets and helpers used across projects |
 | `docs/` | design notes for projects in progress |
 
