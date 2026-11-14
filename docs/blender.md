@@ -2,7 +2,7 @@
 
 Which of my sketches gain from Blender, and how to connect them.
 
-Status: first experiment (cracked glass) working, 2026-10-06. The rest are ideas.
+Status: cracked glass working (2026-10-06); heightfield relief working (2026-11-14). The rest are ideas.
 
 Blender adds real depth, physically accurate light and materials, physics, and output I can 3D-print. The sketches that gain most are the ones whose system is already a **surface**, a **path** or a **physical process**. For those, depth and material change what the piece is, not just add a dimension.
 
@@ -121,10 +121,27 @@ First test (2026-10-06): an eclipse image rendered at 800 px with 48 samples in 
 
 ---
 
-## First experiment
+## Experiment: heightfield relief (working)
+
+`python/blender/heightfield.py` turns any image into a lit relief: brightness becomes height (or darkness, with `--invert`). First used on WFC renders from `python/wfc/picture.py`: hand-drawn plumbing tiles on black become raised pipework.
+
+- **Looks:** `--look color` keeps the image's colours; `plaster` is one matte colour, so only light and shadow show the form. For WFC images, `color` reads better: without the black-and-white contrast the shapes get lost.
+- **Dials:** `--depth` (relief height), `--soften` (rounds hard edges), `--mesh` (detail), `--key` (light strength).
+- **Speed:** about 20 seconds at 1000 px wide, 48 samples.
+
+**Run it headless:**
+```
+"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python heightfield.py -- --image board.png --look color --mesh 1400 --soften 1 --out relief.png
+```
+
+**Next to try:**
+- **Per-tile shapes:** brightness only says "pipe or not", so pipes come out flat-topped. Exporting the WFC grid as JSON (tile and rotation per cell) would let Blender build each pipe as a real half-cylinder.
+- **rainWorn's paper height** (the plan below), which this script can now render once rainWorn exports its fields.
+
+## First experiment (planned)
 
 1. Add an export key to rainWorn that saves its paper height and pigment density fields as PNGs.
-2. Write `python/blender/heightfield.py`: plane, subdivision, displacement from the PNG, a paper material, raking light, camera.
+2. `python/blender/heightfield.py` now exists (see above); add a paper material for this use.
 3. Render. Compare with the p5 output.
 4. If it works, try the same script on portraitLandscape's height field (candidate 3). That checks the script is general.
 
