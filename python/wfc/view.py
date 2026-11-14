@@ -1,7 +1,8 @@
 """Watch wave function collapse fill a grid with one of the tile sets in
 common/tilesets/, or render straight to a PNG.
 
-  python view.py --list                       tile sets, with any edge warnings
+  python view.py --list                       tile sets: brightness range and spread, edge warnings
+  python view.py --list --bg white            the same, measured over a white background
   python view.py circuit2                     animate a 20x20 grid in a window
   python view.py circuit2 --size 40x30 --seed 7
   python view.py plumbing --size 60x60 --out board.png    no window, just the PNG
@@ -52,12 +53,30 @@ def save(ts, solver, args, path=None):
     print("wrote", path)
 
 
-def list_sets():
+BARS = " ▁▂▃▄▅▆▇█"
+
+
+def spread_bar(values, bins=20):
+    """One character per brightness band from black (left) to white (right);
+    taller means more tile variants at that brightness."""
+    counts = [0] * bins
+    for v in values:
+        counts[min(bins - 1, int(v * bins))] += 1
+    top = max(counts)
+    return "".join(BARS[0 if c == 0 else max(1, round(c / top * 8))] for c in counts)
+
+
+def list_sets(bg=None):
+    print(f"{'tile set':22} {'variants':>8}   brightness     black {'':12} white")
     for name in available():
         ts = TileSet(name)
-        print(f"{name:22} {len(ts):3} variants")
+        lum = ts.brightness(bg)
+        flag = "  *" if ts.transparent() else ""
+        print(f"{name:22} {len(ts):8}   {min(lum):.2f} - {max(lum):.2f}    |{spread_bar(lum)}|{flag}")
         for warning in ts.lint():
             print("    warning:", warning)
+    print(f"\n* has transparent tiles: brightness measured over --bg ({bg or '#202020'}); "
+          "a different background changes it.")
 
 
 def window(ts, args):
@@ -132,7 +151,7 @@ def main():
     args = ap.parse_args()
 
     if args.list or not args.tileset:
-        list_sets()
+        list_sets(args.bg)
         return
     ts = TileSet(args.tileset)
     if args.out:

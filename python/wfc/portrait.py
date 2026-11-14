@@ -1,18 +1,22 @@
-"""WFC portrait, step 1: material only.
+"""WFC portraits: a picture steers which tile goes in each cell.
 
-The face outline (found with MediaPipe) becomes a mask over the grid. Tiles
-whose note matches --inside are favoured inside the face, tiles matching
---outside are favoured outside it, and nothing is shaded. With the
-carbon-silicon set the two materials can only meet through electrode
-("interface") tiles, so if it works, the face's silhouette is drawn by where
-those electrodes land.
+Two modes:
 
-  python portrait.py ../../common/images/bigeyes.jpg
-  python portrait.py photo.jpg --cols 60 --strength 8 --seed 3 --debug
-  python portrait.py photo.jpg --hard          forbid the wrong material outright
+  tone      (step 2) Each tile's average brightness is measured, the picture is
+            shrunk to one brightness per cell, and tiles close to their cell's
+            brightness are favoured. With circuit2, chips fall in the shadows
+            and white roads in the highlights.
+  material  (step 1) MediaPipe's face outline becomes a mask; tiles whose note
+            matches --inside are favoured inside the face, --outside outside it.
+            Nothing is shaded.
 
---strength is how hard the picture pushes: 1 ignores the face, 4 is a nudge,
-20+ is close to --hard. Output goes to out/ (gitignored).
+  python portrait.py ../../common/images/bigeyes.jpg                 tone, circuit2
+  python portrait.py photo.jpg --cols 72 --strength 40 --seed 3 --debug
+  python portrait.py photo.jpg --mode material --edge 30             carbon-silicon
+
+--strength is how hard the picture pushes against the tile set's own weights
+(0 ignores the picture). Each run prints how closely the result's brightness
+follows the picture (r = 1 is perfect). Output goes to out/ (gitignored).
 """
 
 import argparse
@@ -28,12 +32,42 @@ from tileset import TileSet
 from view import render
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent / "eikonal"))  # shared face finder
-from face_points import face_outline  # noqa: E402
+DEFAULT_SET = {"tone": "circuit2", "material": "carbon-silicon"}
 
+
+# -- tone ------------------------------------------------------------------
+
+def picture_brightness(image_path, cols, rows, gamma, equalize=False):
+    """The picture as one brightness per cell, 0-1, full tonal range.
+    equalize spreads the tones evenly, so midtones get as many tile choices as the extremes."""
+    img = ImageOps.exif_transpose(Image.open(image_path)).convert("L")
+    img = ImageOps.autocontrast(img, cutoff=1).resize((cols, rows), Image.BOX)
+    if equalize:
+        img = ImageOps.equalize(img)
+    return (np.asarray(img, dtype=np.float64) / 255.0) ** gamma
+
+
+def tone_weights(lum, target, strength):
+    """weight_fn: favour tiles whose brightness is near their cell's target.
+    The target is stretched onto the tile set's own brightness range."""
+    lo, hi = lum.min(), lum.max()
+    goal = lo + (hi - lo) * target
+    span = hi - lo
+
+    def weight(x, y, v):
+        d = (lum[v] - goal[y, x]) / span
+        return float(np.exp(-strength * d * d))
+
+    return weight
+
+
+# -- material --------------------------------------------------------------
 
 def face_mask(image_path, cols, rows, supersample=8):
-    """Fraction of each grid cell that lies inside the face outline, shape (rows, cols)."""
+    """Fraction of each grid cell inside the face outline, shape (rows, cols)."""
+    sys.path.insert(0, str(HERE.parent / "eikonal"))  # shared face finder
+    from face_points import face_outline
+
     outline = face_outline(image_path)
     if outline is None:
         raise SystemExit("no face found in the image")
@@ -50,8 +84,7 @@ def outline_band(mask, width=1):
     band = np.zeros_like(inside)
     for dy in range(-width, width + 1):
         for dx in range(-width, width + 1):
-            shifted = np.roll(np.roll(inside, dy, axis=0), dx, axis=1)
-            band |= shifted != inside
+            band |= np.roll(np.roll(inside, dy, axis=0), dx, axis=1) != inside
     return band
 
 
@@ -61,79 +94,111 @@ def material_weights(ts, mask, inside, outside, strength, hard, edge=1.0):
     band = outline_band(mask) if edge != 1.0 else None
     material = [v.note for v in ts.variants]
     if inside not in material or outside not in material:
-        names = sorted(set(material))
-        raise SystemExit(f"tile notes in {ts.name} are {names}; pick --inside/--outside from those")
+        raise SystemExit(f"tile notes in {ts.name} are {sorted(set(material))}; "
+                         "pick --inside/--outside from those")
 
     def weight(x, y, v):
         m = mask[y, x]
         t = 2.0 * m - 1.0  # -1 fully outside, +1 fully inside
         if material[v] == inside:
-            if hard and m == 0.0:
-                return 0.0
-            return strength ** t
+            return 0.0 if hard and m == 0.0 else strength ** t
         if material[v] == outside:
-            if hard and m == 1.0:
-                return 0.0
-            return strength ** -t
+            return 0.0 if hard and m == 1.0 else strength ** -t
         if material[v] == "interface" and band is not None and band[y, x]:
             return edge
-        return 1.0  # shared tiles, and interface tiles away from the outline: neutral
+        return 1.0
 
     return weight
 
 
-def debug_image(art, mask, cell_px):
+# -- output ----------------------------------------------------------------
+
+def tint_mask(art, mask, cell_px):
     """The render with the face mask tinted red, for checking the fit."""
     rows, cols = mask.shape
     tint = Image.fromarray((mask * 110).astype(np.uint8)).resize((cols * cell_px, rows * cell_px), Image.NEAREST)
-    red = Image.new("RGB", art.size, (220, 40, 40))
-    return Image.composite(red, art, tint)
+    return Image.composite(Image.new("RGB", art.size, (220, 40, 40)), art, tint)
+
+
+def side_by_side(target, art, height=600):
+    """Target brightness grid | render | render blurred (how it reads from across a room)."""
+    rows, cols = target.shape
+    w = round(height * cols / rows)
+    tgt = Image.fromarray((target * 255).astype(np.uint8)).resize((w, height), Image.NEAREST).convert("RGB")
+    a = art.resize((w, height), Image.LANCZOS)
+    far = art.resize((cols, rows), Image.BOX).resize((w, height), Image.BICUBIC)
+    sheet = Image.new("RGB", (3 * w + 20, height), "white")
+    for k, im in enumerate((tgt, a, far)):
+        sheet.paste(im, (k * (w + 10), 0))
+    return sheet
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("image")
-    ap.add_argument("--tileset", default="carbon-silicon")
-    ap.add_argument("--inside", default="carbon", help="tile note favoured inside the face")
-    ap.add_argument("--outside", default="silicon", help="tile note favoured outside the face")
+    ap.add_argument("--mode", choices=["tone", "material"], default="tone")
+    ap.add_argument("--tileset", help="default: circuit2 for tone, carbon-silicon for material")
     ap.add_argument("--cols", type=int, default=48, help="grid width in cells; rows follow the image shape")
-    ap.add_argument("--strength", type=float, default=6.0, help="how hard the face pushes (1 = not at all)")
-    ap.add_argument("--hard", action="store_true", help="forbid the wrong material entirely")
-    ap.add_argument("--edge", type=float, default=1.0,
-                    help="multiply interface (electrode) tiles along the face outline, e.g. 30")
+    ap.add_argument("--strength", type=float, help="how hard the picture pushes (tone default 20, material 6)")
     ap.add_argument("--seed", type=int)
     ap.add_argument("--cell", type=int, default=24, help="pixels per cell in the PNG")
     ap.add_argument("--bg", help="background colour or image behind transparent tiles")
-    ap.add_argument("--debug", action="store_true", help="also save a copy with the face mask tinted")
-    ap.add_argument("--out", help="output PNG (default: out/portrait-<image>-s<seed>.png)")
+    ap.add_argument("--debug", action="store_true", help="also save a comparison sheet")
+    ap.add_argument("--out", help="output PNG (default: out/<mode>-<image>-s<seed>.png)")
+    tone = ap.add_argument_group("tone mode")
+    tone.add_argument("--gamma", type=float, default=1.0, help=">1 darkens midtones before matching")
+    tone.add_argument("--flat", action="store_true", help="ignore the tile set's own weights")
+    tone.add_argument("--equalize", action="store_true", help="spread the picture's tones evenly first")
+    mat = ap.add_argument_group("material mode")
+    mat.add_argument("--inside", default="carbon", help="tile note favoured inside the face")
+    mat.add_argument("--outside", default="silicon", help="tile note favoured outside the face")
+    mat.add_argument("--hard", action="store_true", help="forbid the wrong material entirely")
+    mat.add_argument("--edge", type=float, default=1.0, help="multiply electrode tiles along the outline")
     args = ap.parse_args()
 
-    ts = TileSet(args.tileset)
+    ts = TileSet(args.tileset or DEFAULT_SET[args.mode])
+    if args.flat:
+        for v in ts.variants:
+            v.weight = 1.0
     w, h = ImageOps.exif_transpose(Image.open(args.image)).size
     cols, rows = args.cols, max(1, round(args.cols * h / w))
-    mask = face_mask(args.image, cols, rows)
-    weight_fn = material_weights(ts, mask, args.inside, args.outside, args.strength, args.hard, args.edge)
+
+    if args.mode == "tone":
+        strength = 20.0 if args.strength is None else args.strength
+        lum = np.array(ts.brightness(args.bg))
+        target = picture_brightness(args.image, cols, rows, args.gamma, args.equalize)
+        weight_fn = tone_weights(lum, target, strength)
+    else:
+        strength = 6.0 if args.strength is None else args.strength
+        mask = face_mask(args.image, cols, rows)
+        weight_fn = material_weights(ts, mask, args.inside, args.outside, strength, args.hard, args.edge)
 
     t0 = time.time()
     solver = Solver(ts, cols, rows, seed=args.seed, weight_fn=weight_fn)
     cells = solver.solve()
-    print(f"{cols}x{rows} grid, seed {solver.seed}, attempt {solver.attempt + 1}, {time.time() - t0:.2f}s")
+    print(f"{ts.name} {cols}x{rows}, strength {strength:g}, seed {solver.seed}, "
+          f"attempt {solver.attempt + 1}, {time.time() - t0:.2f}s")
 
-    notes = np.array([ts.variants[v].note for v in cells]).reshape(rows, cols)
-    inside = mask > 0.5
-    for name in (args.inside, args.outside, "interface"):
-        print(f"  {name:10} inside face {np.mean(notes[inside] == name):5.0%}   "
-              f"outside {np.mean(notes[~inside] == name):5.0%}")
+    if args.mode == "tone":
+        got = lum[np.array(cells)].reshape(rows, cols)
+        r = np.corrcoef(got.ravel(), target.ravel())[0, 1]
+        print(f"  brightness follows the picture: r = {r:.2f}")
+    else:
+        notes = np.array([ts.variants[v].note for v in cells]).reshape(rows, cols)
+        inside = mask > 0.5
+        for name in (args.inside, args.outside, "interface"):
+            print(f"  {name:10} inside face {np.mean(notes[inside] == name):5.0%}   "
+                  f"outside {np.mean(notes[~inside] == name):5.0%}")
 
     art = render(ts, cells, cols, rows, args.cell, args.bg)
-    out = Path(args.out) if args.out else HERE / "out" / f"portrait-{Path(args.image).stem}-s{solver.seed}.png"
+    out = Path(args.out) if args.out else HERE / "out" / f"{args.mode}-{Path(args.image).stem}-s{solver.seed}.png"
     out.parent.mkdir(parents=True, exist_ok=True)
     art.save(out)
     print("wrote", out)
     if args.debug:
-        dbg = out.with_name(out.stem + "-mask.png")
-        debug_image(art, mask, args.cell).save(dbg)
-        print("wrote", dbg)
+        extra = out.with_name(out.stem + "-debug.png")
+        (side_by_side(target, art) if args.mode == "tone" else tint_mask(art, mask, args.cell)).save(extra)
+        print("wrote", extra)
 
 
 if __name__ == "__main__":

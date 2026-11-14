@@ -79,6 +79,24 @@ class TileSet:
     def __len__(self):
         return len(self.variants)
 
+    def brightness(self, bg="#202020"):
+        """Average brightness (0-1) of each variant, composited over `bg`.
+        Only transparent tiles depend on `bg`."""
+        from PIL import ImageColor
+
+        back = ImageColor.getrgb(bg or "#202020")[:3] + (255,)
+        out = []
+        for v in self.variants:
+            canvas = Image.new("RGBA", v.image.size, back)
+            canvas.alpha_composite(v.image)
+            gray = canvas.convert("L")
+            out.append(sum(i * n for i, n in enumerate(gray.histogram())) / (255.0 * gray.width * gray.height))
+        return out
+
+    def transparent(self):
+        """True if any tile has see-through pixels (so brightness depends on the background)."""
+        return any(v.image.getextrema()[3][0] < 255 for v in self.variants)
+
     def lint(self):
         """Warnings about sides nothing can ever sit next to."""
         sides = "top right bottom left".split()
