@@ -47,7 +47,8 @@ def render(ts, cells, w, h, cell_px, bg=None):
 
 
 def save(ts, solver, args, path=None):
-    path = Path(path) if path else OUT / f"{ts.name}_{solver.w}x{solver.h}_s{solver.seed}.png"
+    prefix = getattr(args, "save_prefix", None) or ts.name
+    path = Path(path) if path else OUT / f"{prefix}_{solver.w}x{solver.h}_s{solver.seed}.png"
     path.parent.mkdir(parents=True, exist_ok=True)
     render(ts, solver.result(), solver.w, solver.h, args.cell, args.bg).save(path)
     print("wrote", path)
@@ -79,10 +80,13 @@ def list_sets(bg=None):
           "a different background changes it.")
 
 
-def window(ts, args):
+def window(ts, args, weight_fn=None, size=None, title=None):
+    """Animated solve. weight_fn and size let portrait.py reuse this window;
+    without them it behaves as before."""
     import pygame
 
-    w, h = args.size
+    w, h = size or args.size
+    title = title or ts.name
     px = max(4, min(args.window // w, args.window // h))
     pygame.init()
     screen = pygame.display.set_mode((w * px, h * px))
@@ -94,9 +98,9 @@ def window(ts, args):
     clock = pygame.time.Clock()
 
     def start(seed):
-        solver = Solver(ts, w, h, seed=seed)
+        solver = Solver(ts, w, h, seed=seed, weight_fn=weight_fn)
         screen.blit(bg, (0, 0))
-        pygame.display.set_caption(f"{ts.name}  seed {solver.seed}")
+        pygame.display.set_caption(f"{title}  seed {solver.seed}")
         print("seed", solver.seed)
         return solver, solver.steps()
 
@@ -124,7 +128,7 @@ def window(ts, args):
                     kind, decided = next(steps)
                 except StopIteration:
                     finished = True
-                    pygame.display.set_caption(f"{ts.name}  seed {solver.seed}  done "
+                    pygame.display.set_caption(f"{title}  seed {solver.seed}  done "
                                                f"(attempt {solver.attempt + 1})  S = save")
                     break
                 if kind == "restart":

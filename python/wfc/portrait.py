@@ -13,6 +13,7 @@ Two modes:
   python portrait.py ../../common/images/bigeyes.jpg                 tone, circuit2
   python portrait.py photo.jpg --cols 72 --strength 40 --seed 3 --debug
   python portrait.py photo.jpg --mode material --edge 30             carbon-silicon
+  python portrait.py photo.jpg --tileset mondrian --equalize --strength 60 --cols 72 --window
 
 --strength is how hard the picture pushes against the tile set's own weights
 (0 ignores the picture). Each run prints how closely the result's brightness
@@ -144,6 +145,9 @@ def main():
     ap.add_argument("--cell", type=int, default=24, help="pixels per cell in the PNG")
     ap.add_argument("--bg", help="background colour or image behind transparent tiles")
     ap.add_argument("--debug", action="store_true", help="also save a comparison sheet")
+    ap.add_argument("--window", action="store_true",
+                    help="watch it collapse in a window (Backspace = new seed, S = save, Space = pause, Esc = quit)")
+    ap.add_argument("--speed", type=int, help="window: collapses per frame (default: scales with grid)")
     ap.add_argument("--out", help="output PNG (default: out/<mode>-<image>-s<seed>.png)")
     tone = ap.add_argument_group("tone mode")
     tone.add_argument("--gamma", type=float, default=1.0, help=">1 darkens midtones before matching")
@@ -172,6 +176,15 @@ def main():
         strength = 6.0 if args.strength is None else args.strength
         mask = face_mask(args.image, cols, rows)
         weight_fn = material_weights(ts, mask, args.inside, args.outside, strength, args.hard, args.edge)
+
+    if args.window:
+        import view
+
+        view_args = argparse.Namespace(seed=args.seed, cell=args.cell, bg=args.bg, window=1000,
+                                       speed=args.speed, save_prefix=f"{args.mode}-{Path(args.image).stem}")
+        view.window(ts, view_args, weight_fn=weight_fn, size=(cols, rows),
+                    title=f"{ts.name} portrait of {Path(args.image).name}")
+        return
 
     t0 = time.time()
     solver = Solver(ts, cols, rows, seed=args.seed, weight_fn=weight_fn)
