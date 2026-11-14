@@ -1,0 +1,20 @@
+{
+  "name": "circuit",
+  "source": "python/pygame/tileart/tiles/circuit; edge table from circuit-coding-train in tiles_v2/tile.py",
+  "edge_convention": "Edges are [top, right, bottom, left], each read clockwise around the tile (top left>right, right top>bottom, bottom right>left, left bottom>top). Two sides fit when one is the other reversed. Weights are per orientation. rotate=false: the tile is used only as drawn.",
+  "tiles": [
+    {"file": "0.png", "edges": ["AAA", "AAA", "AAA", "AAA"], "weight": 40, "rotate": false, "note": "blank grey"},
+    {"file": "1.png", "edges": ["BBB", "BBB", "BBB", "BBB"], "weight": 10, "rotate": false, "note": "blank green"},
+    {"file": "2.png", "edges": ["BBB", "BCB", "BBB", "BBB"], "weight": 10, "rotate": true, "note": "right only - light green"},
+    {"file": "3.png", "edges": ["BBB", "BDB", "BBB", "BDB"], "weight": 30, "rotate": true, "note": "straight horiz - white road"},
+    {"file": "4.png", "edges": ["ABB", "BCB", "BBA", "AAA"], "weight": 40, "rotate": true},
+    {"file": "5.png", "edges": ["ABB", "BBB", "BBB", "BBA"], "weight": 10, "rotate": true},
+    {"file": "6.png", "edges": ["BBB", "BCB", "BBB", "BCB"], "weight": 10, "rotate": true, "note": "straight horiz - light green road"},
+    {"file": "7.png", "edges": ["BDB", "BCB", "BDB", "BCB"], "weight": 10, "rotate": true},
+    {"file": "8.png", "edges": ["BDB", "BBB", "BCB", "BBB"], "weight": 5, "rotate": true},
+    {"file": "9.png", "edges": ["BCB", "BCB", "BBB", "BCB"], "weight": 10, "rotate": true},
+    {"file": "10.png", "edges": ["BCB", "BCB", "BCB", "BCB"], "weight": 10, "rotate": true},
+    {"file": "11.png", "edges": ["BCB", "BCB", "BBB", "BBB"], "weight": 10, "rotate": true},
+    {"file": "12.png", "edges": ["BBB", "BCB", "BBB", "BCB"], "weight": 10, "rotate": true}
+  ]
+}

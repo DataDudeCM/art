@@ -1,0 +1,23 @@
+{
+  "name": "mondrian",
+  "source": "python/pygame/tileart/tiles/Mondrian; edge table from tiles_v2/tile.py",
+  "edge_convention": "Edges are [top, right, bottom, left], each read clockwise around the tile (top left>right, right top>bottom, bottom right>left, left bottom>top). Two sides fit when one is the other reversed. Weights are per orientation. rotate=false: the tile is used only as drawn.",
+  "tiles": [
+    {"file": "0.png", "edges": ["YYY", "YYY", "YYY", "YYY"], "weight": 30, "rotate": false},
+    {"file": "1.png", "edges": ["BBB", "BBB", "BBB", "BBB"], "weight": 20, "rotate": false},
+    {"file": "2.png", "edges": ["RRR", "RRR", "RRR", "RRR"], "weight": 30, "rotate": false},
+    {"file": "3.png", "edges": ["BBB", "BBB", "BBB", "BBB"], "weight": 20, "rotate": false},
+    {"file": "4.png", "edges": ["LLL", "LLL", "LLL", "LLL"], "weight": 30, "rotate": false},
+    {"file": "5.png", "edges": ["BBB", "BBB", "BBB", "BBB"], "weight": 20, "rotate": false},
+    {"file": "6.png", "edges": ["WWW", "WWW", "WWW", "WWW"], "weight": 50, "rotate": false},
+    {"file": "7.png", "edges": ["BBB", "BBB", "BBB", "BBB"], "weight": 15, "rotate": false},
+    {"file": "8.png", "edges": ["BBB", "BYY", "YYB", "BBB"], "weight": 20, "rotate": true},
+    {"file": "9.png", "edges": ["BYY", "YYY", "YYB", "BBB"], "weight": 20, "rotate": true},
+    {"file": "10.png", "edges": ["BBB", "BRR", "RRB", "BBB"], "weight": 20, "rotate": true},
+    {"file": "11.png", "edges": ["BRR", "RRR", "RRB", "BBB"], "weight": 20, "rotate": true},
+    {"file": "12.png", "edges": ["BBB", "BLL", "LLB", "BBB"], "weight": 20, "rotate": true},
+    {"file": "13.png", "edges": ["BLL", "LLL", "LLB", "BBB"], "weight": 20, "rotate": true},
+    {"file": "14.png", "edges": ["BBB", "BWW", "WWB", "BBB"], "weight": 30, "rotate": true},
+    {"file": "15.png", "edges": ["BWW", "WWW", "WWB", "BBB"], "weight": 35, "rotate": true}
+  ]
+}

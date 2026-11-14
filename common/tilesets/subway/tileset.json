@@ -1,0 +1,26 @@
+{
+  "name": "subway",
+  "source": "python/pygame/tileart/tiles/Subway; edge table from tiles_v2/tile.py",
+  "edge_convention": "Edges are [top, right, bottom, left], each read clockwise around the tile (top left>right, right top>bottom, bottom right>left, left bottom>top). Two sides fit when one is the other reversed. Weights are per orientation. rotate=false: the tile is used only as drawn.",
+  "tiles": [
+    {"file": "0.png", "edges": ["BLB", "BLB", "BLB", "BLB"], "weight": 30, "rotate": false},
+    {"file": "1.png", "edges": ["BLB", "BLB", "BLB", "BLB"], "weight": 15, "rotate": false},
+    {"file": "2.png", "edges": ["BBB", "BBB", "BBB", "BBB"], "weight": 100, "rotate": false},
+    {"file": "3.png", "edges": ["BLB", "BRB", "BLB", "BRB"], "weight": 25, "rotate": false},
+    {"file": "4.png", "edges": ["BRB", "BRB", "BRB", "BRB"], "weight": 20, "rotate": false},
+    {"file": "5.png", "edges": ["BRB", "BRB", "BRB", "BRB"], "weight": 20, "rotate": false},
+    {"file": "6.png", "edges": ["BLB", "BLB", "BBB", "BLB"], "weight": 5, "rotate": true},
+    {"file": "7.png", "edges": ["BBB", "BLB", "BBB", "BLB"], "weight": 40, "rotate": true},
+    {"file": "8.png", "edges": ["BBB", "BLB", "BBB", "BLB"], "weight": 20, "rotate": true},
+    {"file": "9.png", "edges": ["BBB", "BBB", "BBB", "BLB"], "weight": 5, "rotate": true},
+    {"file": "10.png", "edges": ["BLB", "BLB", "BBB", "BLB"], "weight": 25, "rotate": true},
+    {"file": "11.png", "edges": ["BLB", "BBB", "BBB", "BLB"], "weight": 10, "rotate": true},
+    {"file": "12.png", "edges": ["BBB", "BRB", "BBB", "BRB"], "weight": 30, "rotate": true},
+    {"file": "13.png", "edges": ["BBB", "BRB", "BBB", "BRB"], "weight": 15, "rotate": true},
+    {"file": "14.png", "edges": ["BRB", "BRB", "BBB", "BRB"], "weight": 10, "rotate": true},
+    {"file": "15.png", "edges": ["BRB", "BRB", "BBB", "BRB"], "weight": 15, "rotate": true},
+    {"file": "16.png", "edges": ["BBB", "BBB", "BBB", "BRB"], "weight": 5, "rotate": true},
+    {"file": "17.png", "edges": ["BRB", "BBB", "BBB", "BRB"], "weight": 20, "rotate": true},
+    {"file": "18.png", "edges": ["BLB", "BRB", "BBB", "BRB"], "weight": 10, "rotate": true}
+  ]
+}

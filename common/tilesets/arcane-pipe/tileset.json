@@ -1,0 +1,15 @@
+{
+  "name": "arcane-pipe",
+  "source": "python/pygame/tileart/tiles/ArcanePipe; edge table from tiles_v2/tile.py",
+  "edge_convention": "Edges are [top, right, bottom, left], each read clockwise around the tile (top left>right, right top>bottom, bottom right>left, left bottom>top). Two sides fit when one is the other reversed. Weights are per orientation. rotate=false: the tile is used only as drawn.",
+  "tiles": [
+    {"file": "0.png", "edges": ["ATA", "AAA", "AAA", "ATA"], "weight": 25, "rotate": true},
+    {"file": "1.png", "edges": ["AAA", "ATA", "AAA", "ATA"], "weight": 40, "rotate": true},
+    {"file": "2.png", "edges": ["ATA", "ATA", "AAA", "ATA"], "weight": 15, "rotate": true},
+    {"file": "3.png", "edges": ["ATA", "ATA", "ATA", "ATA"], "weight": 10, "rotate": true},
+    {"file": "4.png", "edges": ["ATA", "ATA", "ATA", "ATA"], "weight": 10, "rotate": true},
+    {"file": "5.png", "edges": ["ATA", "AAA", "AAA", "TAA"], "weight": 10, "rotate": true},
+    {"file": "6.png", "edges": ["AAA", "AAT", "AAA", "TAA"], "weight": 10, "rotate": true},
+    {"file": "7.png", "edges": ["AAA", "ATA", "AAA", "TAA"], "weight": 10, "rotate": true}
+  ]
+}

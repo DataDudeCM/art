@@ -1,0 +1,13 @@
+{
+  "name": "ironpipe",
+  "source": "python/pygame/tileart/tiles/ironpipe; edge table from tiles_v2/tile.py",
+  "edge_convention": "Edges are [top, right, bottom, left], each read clockwise around the tile (top left>right, right top>bottom, bottom right>left, left bottom>top). Two sides fit when one is the other reversed. Weights are per orientation. rotate=false: the tile is used only as drawn.",
+  "tiles": [
+    {"file": "0.png", "edges": ["AAA", "AAA", "AAA", "AAA"], "weight": 25, "rotate": false},
+    {"file": "1.png", "edges": ["ABA", "ABA", "ABA", "ABA"], "weight": 25, "rotate": false},
+    {"file": "2.png", "edges": ["AAA", "ABA", "AAA", "ABA"], "weight": 25, "rotate": true},
+    {"file": "3.png", "edges": ["ABA", "AAA", "AAA", "ABA"], "weight": 25, "rotate": true},
+    {"file": "4.png", "edges": ["ABA", "ABA", "ABA", "ABA"], "weight": 10, "rotate": true},
+    {"file": "5.png", "edges": ["ABA", "ABA", "AAA", "ABA"], "weight": 10, "rotate": true}
+  ]
+}

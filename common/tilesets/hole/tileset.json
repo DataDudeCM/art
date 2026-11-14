@@ -1,0 +1,9 @@
+{
+  "name": "hole",
+  "source": "python/pygame/tileart/tiles/hole; edge table from tiles_v2/tile.py",
+  "edge_convention": "Edges are [top, right, bottom, left], each read clockwise around the tile (top left>right, right top>bottom, bottom right>left, left bottom>top). Two sides fit when one is the other reversed. Weights are per orientation. rotate=false: the tile is used only as drawn.",
+  "tiles": [
+    {"file": "0.png", "edges": ["AAA", "AAA", "AAA", "AAA"], "weight": 25, "rotate": false},
+    {"file": "1.png", "edges": ["AAA", "AAA", "BBB", "AAA"], "weight": 75, "rotate": true}
+  ]
+}
