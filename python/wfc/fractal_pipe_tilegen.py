@@ -9,6 +9,12 @@ brightness.
 
   python fractal_pipe_tilegen.py                 depths 0-3 into common/tilesets/fractal-pipe/
   python fractal_pipe_tilegen.py --depths 5 --name fractal-pipe-deep
+  python fractal_pipe_tilegen.py --curve hilbert --style tube --bg dark --width 40 --depths 3 --margin 0.12 --name fractal-coil
+
+Two curves. koch wrinkles the line in place; its segments shrink to a quarter
+per depth, so only thin lines survive deep recursion. hilbert coils the line
+through the middle of the tile like a radiator; its segments only halve per
+depth, so thick pipes work.
 
 Then:  python view.py fractal-pipe --size 12x12 --cell 128
 """
@@ -22,6 +28,9 @@ from tileset import TILESETS
 
 PAPER = (247, 244, 236)
 INK = (28, 26, 24)
+PIPE = (255, 255, 255)
+DARK = (34, 34, 34)
+BLACK = (0, 0, 0)
 SS = 2  # draw at this multiple of the tile size, then shrink, for smooth lines
 
 # Quadratic Koch curve: forward, left, forward, right, forward, right, forward,
@@ -46,6 +55,44 @@ def wrinkle(p0, p1, depth, flip=1):
     return pts
 
 
+def hilbert(order):
+    """Hilbert curve through a 2^order grid: from cell (0, 0) to cell (2^order - 1, 0)."""
+    n = 1 << order
+    pts = []
+    for d in range(n * n):
+        x = y = 0
+        t, s = d, 1
+        while s < n:
+            rx, ry = 1 & (t >> 1), 1 & (t ^ (t >> 1))
+            if ry == 0:
+                if rx == 1:
+                    x, y = s - 1 - x, s - 1 - y
+                x, y = y, x
+            x += s * rx
+            y += s * ry
+            t >>= 2
+            s <<= 1
+        pts.append((x, y))
+    return pts
+
+
+def coil_path(kind, order, margin=0.2):
+    """A Hilbert coil in the middle of the tile, joined to the edges by short leads.
+    The coil's two ends sit at its bottom corners; the leads run in the margin."""
+    if order == 0:
+        return path(kind, 0)
+    n = 1 << order
+    s = (1 - 2 * margin) / n  # spacing between passes of the coil
+    coil = [(margin + (x + 0.5) * s, 1 - margin - (y + 0.5) * s) for x, y in hilbert(order)]
+    (x0, yb), (x1, _) = coil[0], coil[-1]
+    lead_in = [(0, 0.5), (margin / 2, 0.5), (margin / 2, yb)]
+    if kind == "straight":
+        lead_out = [(1 - margin / 2, yb), (1 - margin / 2, 0.5), (1, 0.5)]
+    else:  # corner: out through the bottom edge
+        lead_out = [(x1, 1 - margin / 2), (0.5, 1 - margin / 2), (0.5, 1)]
+    return lead_in + coil + lead_out
+
+
 def path(kind, depth):
     """The tile's line as points in 0-1 coordinates."""
     if kind == "straight":  # left edge to right edge
@@ -56,16 +103,26 @@ def path(kind, depth):
             wrinkle((0.5, 0.5), (0.5, 1), depth) + [(0.5, 1)])
 
 
-def draw_tile(kind, depth, size, width):
+def stroke(d, pts, colour, width):
+    """A polyline with round joints and round ends (so neighbouring tiles join cleanly)."""
+    d.line(pts, fill=colour, width=round(width), joint="curve")
+    r = width / 2
+    for x, y in pts:
+        d.ellipse([x - r, y - r, x + r, y + r], fill=colour)
+
+
+def draw_tile(kind, depth, size, width, curve="koch", style="line", bg="paper", margin=0.2):
     big = size * SS
-    img = Image.new("RGB", (big, big), PAPER)
+    dark = bg == "dark"
+    img = Image.new("RGB", (big, big), DARK if dark else PAPER)
     if kind != "blank":
-        pts = [(x * big, y * big) for x, y in path(kind, depth)]
+        points = coil_path(kind, depth, margin) if curve == "hilbert" else path(kind, depth)
+        pts = [(x * big, y * big) for x, y in points]
         d = ImageDraw.Draw(img)
-        d.line(pts, fill=INK, width=round(width * SS), joint="curve")
-        r = width * SS / 2  # round the two ends so neighbouring tiles join cleanly
-        for x, y in (pts[0], pts[-1]):
-            d.ellipse([x - r, y - r, x + r, y + r], fill=INK)
+        # On dark, a plain line is drawn in white; a tube keeps its black outline.
+        stroke(d, pts, PIPE if dark and style == "line" else (BLACK if dark else INK), width * SS)
+        if style == "tube":  # a white body inside an ink outline, like a drawn pipe
+            stroke(d, pts, PIPE, max(1.0, width - 2 * max(2.0, width * 0.18)) * SS)
     return img.resize((size, size), Image.LANCZOS)
 
 
@@ -76,7 +133,23 @@ def main():
     ap.add_argument("--size", type=int, default=512, help="tile size in pixels")
     ap.add_argument("--width", type=float, default=3.0, help="line width in pixels")
     ap.add_argument("--blank", type=int, default=60, help="weight of the blank tile (lines are 100 each)")
+    ap.add_argument("--curve", choices=["koch", "hilbert"], default="koch",
+                    help="koch: the line wrinkles in place. hilbert: the line coils through the "
+                         "middle of the tile, which leaves room for much thicker lines")
+    ap.add_argument("--style", choices=["line", "tube"], default="line",
+                    help="tube: a white pipe body inside an ink outline")
+    ap.add_argument("--bg", choices=["paper", "dark"], default="paper",
+                    help="dark: white pipes on near-black, like the hand-drawn plumbing set")
+    ap.add_argument("--margin", type=float, default=0.2,
+                    help="hilbert only: gap between the coil and the tile edge, 0-0.4 (smaller = bigger coil)")
     args = ap.parse_args()
+
+    # A line wider than about half its shortest segment fuses into a blob.
+    shortest = ((1 - 2 * args.margin) / 2 ** (args.depths - 1) if args.curve == "hilbert"
+                else 0.5 / 4 ** (args.depths - 1)) * args.size
+    if args.width > shortest / 2:
+        print(f"note: at depth {args.depths - 1} the shortest segment is {shortest:.0f} px; "
+              f"a {args.width:g} px line will fuse there. Use fewer --depths or a thinner --width.")
 
     out = TILESETS / args.name
     out.mkdir(parents=True, exist_ok=True)
@@ -84,19 +157,23 @@ def main():
              "straight": ["AAA", "ABA", "AAA", "ABA"],
              "corner": ["AAA", "AAA", "ABA", "ABA"]}
     tiles = []
-    draw_tile("blank", 0, args.size, args.width).save(out / "blank.png")
+    for old in out.glob("*.png"):  # a rerun with fewer depths shouldn't leave strays
+        old.unlink()
+    draw_tile("blank", 0, args.size, args.width, bg=args.bg).save(out / "blank.png")
     tiles.append({"file": "blank.png", "edges": edges["blank"], "weight": args.blank,
                   "rotate": False, "note": "blank"})
     for depth in range(args.depths):
         for kind in ("straight", "corner"):
             name = f"{kind}-d{depth}.png"
-            draw_tile(kind, depth, args.size, args.width).save(out / name)
+            draw_tile(kind, depth, args.size, args.width, args.curve, args.style,
+                      args.bg, args.margin).save(out / name)
             tiles.append({"file": name, "edges": edges[kind], "weight": 100,
                           "rotate": True, "note": f"{kind}, depth {depth}"})
 
     head = {"name": args.name,
-            "source": f"generated by python/wfc/fractal_pipe_tilegen.py (depths 0-{args.depths - 1}, "
-                      f"size {args.size}, width {args.width:g})",
+            "source": f"generated by python/wfc/fractal_pipe_tilegen.py (--curve {args.curve} --style {args.style} "
+                      f"--depths {args.depths} --size {args.size} --width {args.width:g} --blank {args.blank} "
+                      f"--bg {args.bg} --margin {args.margin:g})",
             "edge_convention": "Edges are [top, right, bottom, left], read clockwise. A = paper, "
                                "B = the line crossing at the middle of the side. Every depth of a "
                                "tile has the same edges; depth only changes how wrinkled the line is."}
