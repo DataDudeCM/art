@@ -89,12 +89,16 @@ Generates a blank, a straight and a corner at several depths. Every depth has th
 ```
 python fractal_pipe_tilegen.py                                             -> fractal-pipe (thin Koch wrinkle, depths 0-3)
 python fractal_pipe_tilegen.py --curve hilbert --style tube --bg dark --width 40 --depths 3 --margin 0.12 --name fractal-coil
-python view.py fractal-coil --size 12x9 --cell 128
+python fractal_pipe_tilegen.py --curve hilbert --depths 3 --margin 0.12 --width 30 --palette "Charcoal Coral" --brush "Watercolor 1" --cross 30 --name brush-threads
+python view.py brush-threads --size 8x6 --cell 192
 ```
 
 - `--curve koch` wrinkles the line in place; only thin lines survive deep recursion. `--curve hilbert` coils the line through the middle of the tile, which leaves room for thick pipes.
 - `--style tube` draws a white body inside an ink outline; `--bg dark` gives white pipes on near-black.
 - `--width` and `--depths` trade off: the script warns when a line is too wide for the deepest level.
+- `--palette "<name>"` takes colours from `common/js/palette.js`: the palette's paper colour becomes the ground, and each of `--colours` line colours (default 3) gets its own edge letter, so a line keeps its colour for its whole run, as in the hand-drawn subway set.
+- `--brush "<name>"` paints the lines by stamping a brush from `common/brushes/` along the path. Works best with `--curve hilbert` and a width of 24 or more; `--seed` changes the brush randomness.
+- `--cross WEIGHT` adds crossing tiles, one colour passing over another.
 
 ### By hand
 
