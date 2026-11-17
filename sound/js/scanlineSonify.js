@@ -28,7 +28,7 @@
 //
 // Design notes: vault session 2026-11-17-music-and-art-crossovers.
 
-const IMG_PATH = '../common/images/doodle4.jpg';
+const IMG_PATH = '../common/images/circleFlow.png';
 const ROWS = 36;              // 3 octaves, chromatic 
 const BASE_MIDI = 48;         // C3 = bottom row
 const DISPLAY_H = 720;
