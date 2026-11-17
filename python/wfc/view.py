@@ -6,6 +6,7 @@ common/tilesets/, or render straight to a PNG.
   python view.py circuit2                     animate a 20x20 grid in a window
   python view.py circuit2 --size 40x30 --seed 7
   python view.py plumbing --size 60x60 --out board.png    no window, just the PNG
+  python view.py plumbing --size 60x60 --out board.png --entropy   plus board-entropy.png
 
 Window keys: Backspace = new seed, S = save PNG to out/, Space = pause, Esc = quit.
 The seed is printed and shown in the title, so a picture can be made again.
@@ -46,12 +47,33 @@ def render(ts, cells, w, h, cell_px, bg=None):
     return canvas.convert("RGB")
 
 
+def entropy_map(solver, cell_px):
+    """Greyscale PNG of options_at_collapse, the same size as the render.
+    Black = forced (1 option left), white = the freest picks in this run.
+    Log scale, capped at the 99th percentile: the first collapse has every
+    option and would otherwise squash everything else to black."""
+    import math
+
+    counts = solver.options_at_collapse
+    ranked = sorted(counts)
+    top = max(2, ranked[min(len(ranked) - 1, int(len(ranked) * 0.99))])
+    img = Image.new("L", (solver.w, solver.h))
+    img.putdata([round(255 * min(1.0, math.log(c) / math.log(top))) for c in counts])
+    forced = sum(c == 1 for c in counts) / len(counts)
+    print(f"  options at collapse: 1 to {ranked[-1]} (white from {top}), {forced:.0%} of cells forced")
+    return img.resize((solver.w * cell_px, solver.h * cell_px), Image.NEAREST)
+
+
 def save(ts, solver, args, path=None):
     prefix = getattr(args, "save_prefix", None) or ts.name
     path = Path(path) if path else OUT / f"{prefix}_{solver.w}x{solver.h}_s{solver.seed}.png"
     path.parent.mkdir(parents=True, exist_ok=True)
     render(ts, solver.result(), solver.w, solver.h, args.cell, args.bg).save(path)
     print("wrote", path)
+    if getattr(args, "entropy", False):
+        extra = path.with_name(path.stem + "-entropy.png")
+        entropy_map(solver, args.cell).save(extra)
+        print("wrote", extra)
 
 
 BARS = " ▁▂▃▄▅▆▇█"
@@ -152,6 +174,8 @@ def main():
     ap.add_argument("--bg", help="background colour (#202020) or image path, behind transparent tiles")
     ap.add_argument("--window", type=int, default=1000, help="window size limit in pixels")
     ap.add_argument("--speed", type=int, help="collapses per frame (default: scales with grid)")
+    ap.add_argument("--entropy", action="store_true",
+                    help="also save <name>-entropy.png: options each cell had when decided (black = forced)")
     args = ap.parse_args()
 
     if args.list or not args.tileset:

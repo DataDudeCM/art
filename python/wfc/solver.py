@@ -7,6 +7,9 @@ seed derived from the first one, so a seed always gives the same picture.
 
 weight_fn(x, y, variant_index) -> multiplier is the hook for steering the
 picture, e.g. by an image's brightness (see picture.py). Return 0 to forbid a tile in a cell.
+
+options_at_collapse[idx] records how many options each cell still had when it
+was decided: 1 means its neighbours forced it, more means it was a free pick.
 """
 
 import heapq
@@ -64,6 +67,7 @@ class Solver:
         full = (1 << len(self.ts)) - 1
         self.cells = [full] * (self.w * self.h)
         self.done = [False] * (self.w * self.h)
+        self.options_at_collapse = [0] * (self.w * self.h)
         self._decided = []
         self._heap = []
         if self.weight_fn:  # cells where weight_fn forbids tiles start narrowed
@@ -103,12 +107,13 @@ class Solver:
             weights = None
         pick = self.rng.choices(options, weights=weights)[0]
         self.cells[idx] = 1 << pick
-        self._finish(idx)
+        self._finish(idx, len(options))
         self._propagate(idx)
 
-    def _finish(self, idx):
+    def _finish(self, idx, options=1):
         if not self.done[idx]:
             self.done[idx] = True
+            self.options_at_collapse[idx] = options
             self._decided.append(idx)
 
     def _allowed_from(self, mask, d):

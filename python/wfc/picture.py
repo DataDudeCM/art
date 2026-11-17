@@ -145,6 +145,8 @@ def main():
     ap.add_argument("--cell", type=int, default=24, help="pixels per cell in the PNG")
     ap.add_argument("--bg", help="background colour or image behind transparent tiles")
     ap.add_argument("--debug", action="store_true", help="also save a comparison sheet")
+    ap.add_argument("--entropy", action="store_true",
+                    help="also save <name>-entropy.png: options each cell had when decided (black = forced)")
     ap.add_argument("--window", action="store_true",
                     help="watch it collapse in a window (Backspace = new seed, S = save, Space = pause, Esc = quit)")
     ap.add_argument("--speed", type=int, help="window: collapses per frame (default: scales with grid)")
@@ -180,7 +182,7 @@ def main():
     if args.window:
         import view
 
-        view_args = argparse.Namespace(seed=args.seed, cell=args.cell, bg=args.bg, window=1000,
+        view_args = argparse.Namespace(seed=args.seed, cell=args.cell, bg=args.bg, window=1000, entropy=args.entropy,
                                        speed=args.speed, save_prefix=f"{args.mode}-{Path(args.image).stem}")
         view.window(ts, view_args, weight_fn=weight_fn, size=(cols, rows),
                     title=f"{ts.name} from {Path(args.image).name}")
@@ -211,6 +213,12 @@ def main():
     if args.debug:
         extra = out.with_name(out.stem + "-debug.png")
         (side_by_side(target, art) if args.mode == "tone" else tint_mask(art, mask, args.cell)).save(extra)
+        print("wrote", extra)
+    if args.entropy:
+        from view import entropy_map
+
+        extra = out.with_name(out.stem + "-entropy.png")
+        entropy_map(solver, args.cell).save(extra)
         print("wrote", extra)
 
 
