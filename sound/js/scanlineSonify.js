@@ -27,6 +27,9 @@
 //   1      piccolo preset (see PRESETS; add more on 2, 3 ...)
 //   M      export MIDI with the current settings: one file with what you
 //          hear, plus an _rgb file with one track per colour (see below)
+//   O      live MIDI out on/off, to FL Studio via loopMIDI (see below)
+//   K      next MIDI output port
+//   L      live MIDI: send heard / rgb / both
 //
 // Design notes: vault session 2026-11-17-music-and-art-crossovers.
 
@@ -257,7 +260,7 @@ function updateAudio(col) {
   }
   // Uncorrelated tones add roughly by RMS, so scale by sqrt(sum of squares).
   // A single quiet row stays quiet; a full column doesn't clip.
-  const m = playing ? 0.35 / Math.max(1, Math.sqrt(sumSq)) : 0;
+  const m = playing && !liveOut ? 0.35 / Math.max(1, Math.sqrt(sumSq)) : 0;
   audio.master.gain.setTargetAtTime(m, t, 0.03);
 }
 
@@ -383,17 +386,23 @@ function downloadBytes(bytes, filename) {
 
 let lastExport = '';          // shown in the status box
 
-function exportMidi() {
-  // what you hear in the current mode, all voices folded onto their pitches
-  const all = v => VOICES.map(k => [k, v[k]]);
-  const heard = buildStream(colorMode, all);
-
-  // colour split: chord mode keeps root/third/fifth, the others use the
-  // timbre split (red, green, blue amounts at the row's own pitch)
+// The four streams shared by export and live MIDI out:
+//   heard: what you hear in the current mode, all voices folded onto pitches
+//   rgb:   the colour split. Chord mode keeps root/third/fifth; the others use
+//          the timbre split (red, green, blue amounts at the row's own pitch)
+function streamDefs() {
+  const heard = { name: MODE_LABEL[colorMode], channel: 0, mode: colorMode, pick: v => VOICES.map(k => [k, v[k]]) };
   const split = colorMode === 'chord' ? 'chord' : 'timbre';
   const keys = split === 'chord' ? ['sine', 'third', 'fifth'] : ['saw', 'sine', 'square'];
   const names = split === 'chord' ? ['red (root)', 'green (third)', 'blue (fifth)'] : ['red', 'green', 'blue'];
-  const rgb = keys.map((k, i) => ({ name: names[i], channel: i + 1, notes: buildStream(split, v => [[k, v[k]]]) }));
+  const rgb = keys.map((k, i) => ({ name: names[i], channel: i + 1, mode: split, pick: v => [[k, v[k]]] }));
+  return { heard, rgb };
+}
+
+function exportMidi() {
+  const defs = streamDefs();
+  const heard = buildStream(defs.heard.mode, defs.heard.pick);
+  const rgb = defs.rgb.map(d => ({ name: d.name, channel: d.channel, notes: buildStream(d.mode, d.pick) }));
 
   const base = IMG_PATH.split('/').pop().replace(/\.[^.]+$/, '');
   const tag = [colorMode, pentatonic ? 'penta' : 'chrom', invert ? 'ink' : 'bright',
@@ -405,6 +414,117 @@ function exportMidi() {
   return { heard, rgb };
 }
 
+// ---------- live MIDI out (keys O, K, L) ----------
+// Sends the same notes as the export, live, as the playhead moves, so FL
+// Studio's instruments play the image. Needs a MIDI port: on Windows install
+// loopMIDI (a virtual cable) and enable its port as an input in FL. Without
+// it, Windows' built-in "Microsoft GS Wavetable Synth" plays General MIDI.
+//   O  live MIDI out on/off (browser sines are muted while it's on)
+//   K  next output port
+//   L  what to send: heard (ch 1) / rgb (ch 2-4) / both
+// Velocity is the level when the note starts (the export uses the note's
+// average, which a live note can't know yet).
+
+const SEND_CHOICES = ['heard', 'rgb', 'both'];
+let midiAccess = null;
+let midiOutputs = [];
+let midiOutIndex = 0;
+let liveOut = false;
+let sendChoice = 'heard';
+let midiStatus = '';
+const liveOn = new Map();     // channel -> Map(pitch -> true): notes sounding in the synth
+
+function refreshOutputs() {
+  const prev = midiOutputs[midiOutIndex] && midiOutputs[midiOutIndex].id;
+  midiOutputs = [...midiAccess.outputs.values()];
+  let i = midiOutputs.findIndex(o => o.id === prev);
+  if (i < 0) i = midiOutputs.findIndex(o => /loop/i.test(o.name));   // prefer loopMIDI
+  midiOutIndex = max(0, i);
+}
+
+function currentOutput() { return midiOutputs[midiOutIndex] || null; }
+
+async function toggleLiveOut() {
+  if (liveOut) { allNotesOff(); liveOut = false; return; }
+  if (!navigator.requestMIDIAccess) { midiStatus = 'no Web MIDI: use Chrome or Edge'; return; }
+  if (!midiAccess) {
+    try {
+      midiAccess = await navigator.requestMIDIAccess();
+      midiAccess.onstatechange = () => refreshOutputs();   // e.g. loopMIDI started later
+    } catch (e) { midiStatus = 'MIDI access refused'; return; }
+    refreshOutputs();
+  }
+  if (!currentOutput()) { midiStatus = 'no MIDI output ports found'; return; }
+  midiStatus = '';
+  liveOut = true;
+  setupGsPrograms();
+}
+
+function nextOutput() {
+  if (!midiOutputs.length) return;
+  allNotesOff();
+  midiOutIndex = (midiOutIndex + 1) % midiOutputs.length;
+  setupGsPrograms();
+}
+
+// Only for Windows' GS synth, which plays piano on every channel by default:
+// give each channel its own General MIDI sound. Never sent to other ports,
+// so it can't change instrument presets in FL.
+function setupGsPrograms() {
+  const out = currentOutput();
+  if (!out || !/GS Wavetable/i.test(out.name)) return;
+  const programs = [72, 81, 73, 80];   // piccolo; saw lead, flute, square lead
+  programs.forEach((p, ch) => out.send([0xc0 | ch, p]));
+}
+
+function liveStreams() {
+  const d = streamDefs();
+  if (sendChoice === 'heard') return [d.heard];
+  if (sendChoice === 'rgb') return d.rgb;
+  return [d.heard, ...d.rgb];
+}
+
+// Called every frame while playing: diff what should sound now against what
+// is sounding, and send only the changes.
+function updateLiveMidi(col) {
+  const out = currentOutput();
+  if (!out) return;
+  const gate = max(threshold, MIN_GATE);
+  const wanted = new Map();   // channel -> Map(pitch -> amplitude)
+  for (const s of liveStreams()) {
+    const m = new Map();
+    for (const [p, a] of columnPitches(col, s.mode, s.pick)) if (a >= gate) m.set(p, a);
+    wanted.set(s.channel, m);
+  }
+  // note-offs first: notes that stopped, or whose channel is no longer sent
+  for (const [ch, on] of liveOn) {
+    const w = wanted.get(ch) || new Map();
+    for (const p of [...on.keys()]) {
+      if (!w.has(p)) { out.send([0x80 | ch, p, 0]); on.delete(p); }
+    }
+  }
+  for (const [ch, w] of wanted) {
+    if (!liveOn.has(ch)) liveOn.set(ch, new Map());
+    const on = liveOn.get(ch);
+    for (const [p, a] of w) {
+      if (on.has(p)) continue;
+      out.send([0x90 | ch, p, Math.round(20 + 107 * constrain(a, 0, 1))]);
+      on.set(p, true);
+    }
+  }
+}
+
+function allNotesOff() {
+  const out = currentOutput();
+  if (out) {
+    for (const [ch, on] of liveOn) {
+      for (const p of on.keys()) out.send([0x80 | ch, p, 0]);
+      out.send([0xb0 | ch, 123, 0]);   // All Notes Off, in case anything was missed
+    }
+  }
+  liveOn.clear();
+}
+
 // ---------- draw ----------
 
 function draw() {
@@ -412,11 +532,12 @@ function draw() {
 
   if (playing) {
     playX += dispW / (sweepSeconds * 60) * (deltaTime / (1000 / 60));
-    if (playX >= dispW) playX = 0;
+    if (playX >= dispW) { playX = 0; if (liveOut) allNotesOff(); }
   }
   const col = constrain(floor(playX), 0, dispW - 1);
   if (audio) updateAudio(col);
   else levels = columnVoices(col);
+  if (liveOut && playing) updateLiveMidi(col);
 
   if (showGrid) {
     noSmooth();
@@ -489,7 +610,13 @@ function drawStatus() {
     `sweep ${sweepSeconds}s  ([ ])`,
     `grid ${showGrid ? 'on' : 'off'}  (G)`,
     lastExport ? `MIDI: ${lastExport}` : 'export MIDI  (M)',
+    midiStatus ? `MIDI out: ${midiStatus}` :
+      liveOut ? `MIDI out: on, send ${sendChoice}  (O L)` : `MIDI out: off  (O)`,
   ];
+  if (liveOut) {
+    const name = currentOutput() ? currentOutput().name : '(none)';
+    lines.push(`  port: ${name.length > 24 ? name.slice(0, 23) + '…' : name}  (K)`);
+  }
   const w = 215, h = lines.length * 15 + 10;
   noStroke();
   fill(0, 160);
@@ -507,6 +634,7 @@ function keyPressed() {
     if (!audio) audio = buildAudio();
     if (audio.ctx.state === 'suspended') audio.ctx.resume();
     playing = !playing;
+    if (!playing && liveOut) allNotesOff();
     return false;
   }
   if (PRESETS[key]) { applyPreset(PRESETS[key]); return; }
@@ -516,8 +644,11 @@ function keyPressed() {
   else if (k === 'i') invert = !invert;
   else if (k === 'p') pentatonic = !pentatonic;
   else if (k === 'g') showGrid = !showGrid;
-  else if (k === 'r') playX = 0;
+  else if (k === 'r') { playX = 0; if (liveOut) allNotesOff(); }
   else if (k === 'm') exportMidi();
+  else if (k === 'o') toggleLiveOut();
+  else if (k === 'k') nextOutput();
+  else if (k === 'l') { allNotesOff(); sendChoice = SEND_CHOICES[(SEND_CHOICES.indexOf(sendChoice) + 1) % SEND_CHOICES.length]; }
   else if (key === '=' || key === '+') threshold = min(0.95, round((threshold + 0.05) * 100) / 100);
   else if (key === '-' || key === '_') threshold = max(0, round((threshold - 0.05) * 100) / 100);
   else if (key === '[') sweepSeconds = min(240, sweepSeconds + 5);
@@ -525,5 +656,8 @@ function keyPressed() {
 }
 
 function mousePressed() {
-  if (mouseX >= 0 && mouseX < dispW && mouseY >= 0 && mouseY < height) playX = mouseX;
+  if (mouseX >= 0 && mouseX < dispW && mouseY >= 0 && mouseY < height) {
+    playX = mouseX;
+    if (liveOut) allNotesOff();
+  }
 }
