@@ -8,6 +8,20 @@
     <style>
         body { margin: 0; background: #1b1b1b; color: #ddd; font-family: Arial, sans-serif; }
         main { padding: 12px; }
+        #controls { margin-top: 10px; font-size: 13px; }
+        #controls .global { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-bottom: 8px; }
+        #controls table { border-collapse: collapse; }
+        #controls th { text-align: left; font-weight: normal; color: #888; padding: 2px 10px; }
+        #controls td { padding: 3px 10px; }
+        #controls tr.sel td { background: #2c2c2c; }
+        #controls tr.sel td:first-child { box-shadow: inset 3px 0 #e05050; }
+        #controls tr.off td { color: #666; }
+        #controls .dim { color: #888; }
+        #controls .num { display: inline-block; min-width: 52px; margin-left: 6px; }
+        #controls select, #controls button { background: #2a2a2a; color: #ddd; border: 1px solid #555; border-radius: 3px; padding: 2px 6px; font: inherit; }
+        #controls select:disabled { opacity: 0.4; }
+        #controls button.active { background: #6a2020; border-color: #e05050; }
+        #controls input[type=range] { width: 140px; accent-color: #e05050; vertical-align: middle; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.2/p5.min.js"></script>
 </head>

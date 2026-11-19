@@ -20,16 +20,24 @@
 //   I      invert: dark ink is loud, paper is silent
 //   P      snap rows to C major pentatonic (same 3-octave range)
 //   - / =  brightness threshold down / up (levels below it are silenced)
-//   [ / ]  slower / faster sweep
+//   [ / ]  tempo down / up (BPM); B cycles bars. Sweep = bars of 4/4 at BPM
 //   G      show the 36-row grid the sound is actually made from
 //   R      rewind
 //   click  move the playhead
 //   1      piccolo preset (see PRESETS; add more on 2, 3 ...)
-//   M      export MIDI with the current settings: one file with what you
-//          hear, plus an _rgb file with one track per colour (see below)
-//   O      live MIDI out on/off, to FL Studio via loopMIDI (see below)
+//
+// MIDI: five tracks (see "MIDI tracks" below). The controls under the canvas
+// do the same as these keys.
+//   S      tracks 2-4 split: thirds (one octave each) / R G B
+//   N      select track 1-5 (marked > in the status box)
+//   UP/DN  note length of the selected track: free, 1/32 ... whole
+//          (hold SHIFT to set all five tracks)
+//   A      how a step reads the image: first column / average / max
+//   T      held ink: retrigger every step / tie into one note
+//   X      selected track on/off (off tracks are not sent or exported)
+//   M      export one 5-track MIDI file with the current settings
+//   O      live MIDI out on/off, to FL Studio via loopMIDI
 //   K      next MIDI output port
-//   L      live MIDI: send heard / rgb / both
 //
 // Design notes: vault session 2026-11-17-music-and-art-crossovers.
 
@@ -49,7 +57,12 @@ let grid = [];                // grid[col][row] = { r, g, b, l } in 0..1
 let gridImg;                  // the downsampled image, for the G overlay
 
 let playX = 0;                // playhead, in display columns
-let sweepSeconds = 30;
+let loops = 0;                // times the playhead has wrapped (live step grid runs on)
+let lastNow = 0;
+let bpm = 120;                // keys [ ]
+let bars = 16;                // key B: the image lasts this many bars of 4/4
+const BAR_CHOICES = [4, 8, 16, 32];
+function sweepSeconds() { return bars * 4 * 60 / bpm; }
 let playing = false;
 const COLOR_MODES = ['gray', 'timbre', 'chord'];
 const MODE_LABEL = { gray: 'grayscale', timbre: 'RGB timbre', chord: 'RGB chord' };
@@ -62,13 +75,14 @@ let showGrid = false;
 // Number-key presets: sound settings only (playhead and grid view untouched).
 // Piccolo: found by Chris on doodle2.jpg. A high threshold leaves only the
 // darkest ink, so one or two pentatonic sines sound at a time: a melody line.
+// (Found at a 35 s sweep; 16 bars at 110 BPM is 34.9 s.)
 const PRESETS = {
-  '1': { name: 'piccolo', sweepSeconds: 35, threshold: 0.6, invert: true, colorMode: 'gray', pentatonic: true },
+  '1': { name: 'piccolo', bpm: 110, bars: 16, threshold: 0.6, invert: true, colorMode: 'gray', pentatonic: true },
 };
 let presetName = '';          // shown until a setting is changed by hand
 
 function applyPreset(p) {
-  ({ sweepSeconds, threshold, invert, colorMode, pentatonic } = p);
+  ({ bpm, bars, threshold, invert, colorMode, pentatonic } = p);
   presetName = p.name;
 }
 
@@ -85,6 +99,7 @@ function setup() {
   c.parent(select('main'));
   buildGrid();
   textFont('Arial');
+  buildControls();
 }
 
 // Box-average the full-resolution image into dispW columns x ROWS rows.
@@ -232,10 +247,13 @@ function cellVoices(p, mode = colorMode) {
 }
 
 // The 36 per-row voices for one column, merged onto pentatonic rows if on.
-function columnVoices(col, mode = colorMode) {
-  const raw = grid[col].map(p => cellVoices(p, mode));
+// `rows` (a Set) keeps only those rows, before the pentatonic merge, so a
+// band's edge row can still snap to a note just outside the band.
+const silentVoices = () => ({ level: 0, saw: 0, sine: 0, square: 0, third: 0, fifth: 0 });
+function columnVoices(col, mode = colorMode, rows = null) {
+  const raw = grid[col].map((p, r) => (rows && !rows.has(r) ? silentVoices() : cellVoices(p, mode)));
   if (!pentatonic) return raw;
-  const out = raw.map(() => ({ level: 0, saw: 0, sine: 0, square: 0, third: 0, fifth: 0 }));
+  const out = raw.map(silentVoices);
   raw.forEach((v, r) => {
     const o = out[OWNER[r]];
     o.level = max(o.level, v.level);
@@ -264,44 +282,82 @@ function updateAudio(col) {
   audio.master.gain.setTargetAtTime(m, t, 0.03);
 }
 
-// ---------- MIDI export (key M) ----------
-// Walks the whole image offline with the current settings and downloads two
-// Standard MIDI Files for FL Studio:
-//   <name>.mid      one track: what the sketch plays in the current mode
-//   <name>_rgb.mid  three tracks, one per colour channel, so each can get its
-//                   own instrument. In grayscale and timbre mode the three
-//                   tracks play the row's own pitch (red, green, blue amounts);
-//                   in chord mode they are the roots, thirds and fifths.
-// Notes: a pitch's note starts when its level rises above the gate and ends
-// when it drops back; velocity is the note's average level. MIDI has no
-// continuous per-note volume, so swells inside a note are lost.
-// Tempo is set so the whole image lasts EXPORT_BARS bars of 4/4 at the
-// current sweep length, so FL's bar grid divides the image evenly.
+// ---------- MIDI tracks ----------
+// Five tracks, on MIDI channels 1-5, shared by export (M) and live out (O):
+//   1  full slice: all 36 rows, following the C mode (what you hear)
+//   2-4  split (key S):
+//        thirds: top / middle / bottom octave (12 rows each), following C mode
+//        R G B:  one track per colour. Chord mode keeps root / third / fifth;
+//                the others use the timbre split (red, green, blue amounts
+//                at the row's own pitch)
+//   5  top third, grayscale, played an octave lower
+//
+// Note length, per track (UP/DN):
+//   free  a note starts when a row's level rises above the gate and ends when
+//         it drops back: as long as the ink is (the original behaviour)
+//   1/32 .. whole: a step sequencer. The sweep is cut into steps of that
+//         length; each step reads its stretch of columns (key A: the first
+//         column, the average, or the max) and plays every pitch at or over
+//         the gate for exactly one step. Held ink retriggers every step, or
+//         ties into one long note (key T).
+// Tie and free notes are capped at MAX_NOTE_BEATS (4 whole notes).
+// Velocity is the level read (free: the note's average level).
 
-const EXPORT_BARS = 16;
+const LENGTHS = ['free', '1/32', '1/16', '1/8', '1/4', '1/2', '1'];
+const LENGTH_BEATS = { '1/32': 0.125, '1/16': 0.25, '1/8': 0.5, '1/4': 1, '1/2': 2, '1': 4 };
+const READS = ['first', 'avg', 'max'];
 const PPQ = 480;              // ticks per quarter note
 const MIN_GATE = 0.02;        // ignore near-silence even at threshold 0
+// Longest note, for tie and free tracks: a note held this long ends and
+// restarts at once if the ink carries on. 16 beats = 4 whole notes.
+const MAX_NOTE_BEATS = 16;
+const MAX_NOTE_TICKS = MAX_NOTE_BEATS * PPQ;
+const BAND = [0, 1, 2].map(b => new Set(Array.from({ length: 12 }, (_, i) => b * 12 + i)));
 
-// Amplitude per MIDI pitch for one column. pick(voices) returns
-// [[voiceKey, amplitude], ...]; the pitch comes from the voice key.
-function columnPitches(col, mode, pick) {
+let split = 'thirds';         // key S: 'thirds' or 'rgb'
+let selTrack = 0;             // key N
+const trackSettings = [0, 1, 2, 3, 4].map(() => ({ on: true, len: 'free', read: 'max', tie: false }));
+
+// The five track definitions for the current settings. Each has the sound
+// source (mode, pick, rows, transpose) plus its trackSettings entry.
+function trackDefs() {
+  const all = v => VOICES.map(k => [k, v[k]]);
+  const full = { mode: colorMode, pick: all, rows: null, transpose: 0 };
+  const defs = [{ ...full, name: MODE_LABEL[colorMode] }];
+  if (split === 'thirds') {
+    ['top third', 'middle third', 'bottom third'].forEach((name, i) => defs.push({ ...full, name, rows: BAND[i] }));
+  } else {
+    const s = colorMode === 'chord' ? 'chord' : 'timbre';
+    const keys = s === 'chord' ? ['sine', 'third', 'fifth'] : ['saw', 'sine', 'square'];
+    const names = s === 'chord' ? ['red (root)', 'green (third)', 'blue (fifth)'] : ['red', 'green', 'blue'];
+    keys.forEach((k, i) => defs.push({ name: names[i], mode: s, pick: v => [[k, v[k]]], rows: null, transpose: 0 }));
+  }
+  defs.push({ name: 'top third -1 oct', mode: 'gray', pick: v => [['sine', v.sine]], rows: BAND[0], transpose: -12 });
+  return defs.map((d, i) => ({ ...d, ...trackSettings[i], channel: i }));
+}
+
+// Amplitude per MIDI pitch for one column of one track.
+function columnPitches(col, def) {
   const out = new Map();
-  columnVoices(col, mode).forEach((v, r) => {
+  columnVoices(col, def.mode, def.rows).forEach((v, r) => {
     const [i3, i5] = chordIntervals(r);
     const offset = { saw: 0, sine: 0, square: 0, third: i3, fifth: i5 };
-    for (const [k, a] of pick(v)) {
+    for (const [k, a] of def.pick(v)) {
       if (a <= 0) continue;
-      const m = rowMidi(r) + offset[k];
+      const m = rowMidi(r) + offset[k] + def.transpose;
       out.set(m, max(out.get(m) || 0, min(1, a)));
     }
   });
   return out;
 }
 
-// Gate a stream of per-column pitch maps into notes: { pitch, start, end, vel }
-// with start/end in columns (end exclusive).
+function gateLevel() { return max(threshold, MIN_GATE); }
+function totalTicks() { return bars * 4 * PPQ; }
+
+// Free notes: gate a stream of per-column pitch maps into
+// { pitch, start, end, vel } with start/end in columns (end exclusive).
 function gateNotes(cols) {
-  const gate = max(threshold, MIN_GATE);
+  const gate = gateLevel();
   const open = new Map();     // pitch -> { start, sum, n }
   const notes = [];
   const close = (m, end) => {
@@ -324,13 +380,66 @@ function gateNotes(cols) {
   return notes;
 }
 
-function buildStream(mode, pick) {
-  const cols = [];
-  for (let c = 0; c < dispW; c++) cols.push(columnPitches(c, mode, pick));
-  return gateNotes(cols);
+// Steps for a note length: [firstColumn, endColumn) for each. Every step gets
+// at least one column, even when steps are narrower than a column.
+function stepRanges(len) {
+  const n = Math.round(bars * 4 / LENGTH_BEATS[len]);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const c0 = min(dispW - 1, floor(i * dispW / n));
+    out.push([c0, max(c0 + 1, floor((i + 1) * dispW / n))]);
+  }
+  return out;
 }
 
-// --- Standard MIDI File writer (format 1) ---
+// One step's level per pitch, read from its columns: first, average or max.
+function stepValues(cols, c0, c1, read) {
+  if (read === 'first') return cols[c0];
+  const out = new Map();
+  for (let c = c0; c < c1; c++) {
+    for (const [m, a] of cols[c]) out.set(m, read === 'max' ? max(out.get(m) || 0, a) : (out.get(m) || 0) + a);
+  }
+  if (read === 'avg') for (const [m, a] of out) out.set(m, a / (c1 - c0));
+  return out;
+}
+
+// A track's notes for the whole image, in ticks: { pitch, start, end, vel }.
+function trackNotes(def) {
+  const cols = [];
+  for (let c = 0; c < dispW; c++) cols.push(columnPitches(c, def));
+  if (def.len === 'free') {
+    const tpc = totalTicks() / dispW;
+    const out = [];
+    for (const n of gateNotes(cols)) {
+      const s = Math.round(n.start * tpc), e = Math.round(n.end * tpc);
+      for (let t = s; t < e; t += MAX_NOTE_TICKS) out.push({ ...n, start: t, end: min(e, t + MAX_NOTE_TICKS) });
+    }
+    return out;
+  }
+  const gate = gateLevel(), stepTicks = LENGTH_BEATS[def.len] * PPQ;
+  const notes = [];
+  let open = new Map();       // pitch -> note sounding in the previous step (for tie)
+  stepRanges(def.len).forEach(([c0, c1], i) => {
+    const next = new Map();
+    for (const [m, a] of stepValues(cols, c0, c1, def.read)) {
+      if (a < gate) continue;
+      let n = def.tie ? open.get(m) : null;
+      if (n && (i + 1) * stepTicks - n.start > MAX_NOTE_TICKS) n = null;   // at the cap: restart
+      if (n) n.end = (i + 1) * stepTicks;
+      else { n = { pitch: m, start: i * stepTicks, end: (i + 1) * stepTicks, vel: a }; notes.push(n); }
+      next.set(m, n);
+    }
+    open = next;
+  });
+  return notes;
+}
+
+// ---------- MIDI export (key M) ----------
+// One Standard MIDI File (format 1) with a tempo track plus one track per
+// enabled MIDI track; FL Studio puts each on its own channel when imported.
+// MIDI has no continuous per-note volume, so swells inside a note are lost.
+
+// --- Standard MIDI File writer ---
 function vlq(n) {
   const bytes = [n & 0x7f];
   while ((n >>= 7) > 0) bytes.unshift((n & 0x7f) | 0x80);
@@ -354,11 +463,9 @@ function trackChunk(name, events) {
   return chunk('MTrk', data);
 }
 
+// tracks: [{ name, channel, notes }] with note times in ticks
 function buildMidi(tracks) {
-  const bpm = EXPORT_BARS * 4 * 60 / sweepSeconds;
   const usPerQuarter = Math.round(60e6 / bpm);
-  const ticksPerCol = EXPORT_BARS * 4 * PPQ / dispW;
-
   const tempo = trackChunk('scanlineSonify', [
     { tick: 0, order: 0, data: [0xff, 0x51, 3, (usPerQuarter >> 16) & 255, (usPerQuarter >> 8) & 255, usPerQuarter & 255] },
     { tick: 0, order: 0, data: [0xff, 0x58, 4, 4, 2, 24, 8] },   // 4/4
@@ -367,8 +474,8 @@ function buildMidi(tracks) {
     const ev = [];
     for (const n of notes) {
       const vel = Math.round(20 + 107 * constrain(n.vel, 0, 1));
-      ev.push({ tick: Math.round(n.start * ticksPerCol), order: 1, data: [0x90 | channel, n.pitch, vel] });
-      ev.push({ tick: Math.round(n.end * ticksPerCol), order: 0, data: [0x80 | channel, n.pitch, 0] });
+      ev.push({ tick: n.start, order: 1, data: [0x90 | channel, n.pitch, vel] });
+      ev.push({ tick: n.end, order: 0, data: [0x80 | channel, n.pitch, 0] });
     }
     return trackChunk(name, ev);
   });
@@ -386,86 +493,88 @@ function downloadBytes(bytes, filename) {
 
 let lastExport = '';          // shown in the status box
 
-// The four streams shared by export and live MIDI out:
-//   heard: what you hear in the current mode, all voices folded onto pitches
-//   rgb:   the colour split. Chord mode keeps root/third/fifth; the others use
-//          the timbre split (red, green, blue amounts at the row's own pitch)
-function streamDefs() {
-  const heard = { name: MODE_LABEL[colorMode], channel: 0, mode: colorMode, pick: v => VOICES.map(k => [k, v[k]]) };
-  const split = colorMode === 'chord' ? 'chord' : 'timbre';
-  const keys = split === 'chord' ? ['sine', 'third', 'fifth'] : ['saw', 'sine', 'square'];
-  const names = split === 'chord' ? ['red (root)', 'green (third)', 'blue (fifth)'] : ['red', 'green', 'blue'];
-  const rgb = keys.map((k, i) => ({ name: names[i], channel: i + 1, mode: split, pick: v => [[k, v[k]]] }));
-  return { heard, rgb };
-}
-
 function exportMidi() {
-  const defs = streamDefs();
-  const heard = buildStream(defs.heard.mode, defs.heard.pick);
-  const rgb = defs.rgb.map(d => ({ name: d.name, channel: d.channel, notes: buildStream(d.mode, d.pick) }));
+  const defs = trackDefs().filter(d => d.on);
+  if (!defs.length) { lastExport = 'all tracks off'; return []; }
+  const tracks = defs.map(d => ({ name: `${d.channel + 1} ${d.name}`, channel: d.channel, notes: trackNotes(d) }));
 
   const base = IMG_PATH.split('/').pop().replace(/\.[^.]+$/, '');
-  const tag = [colorMode, pentatonic ? 'penta' : 'chrom', invert ? 'ink' : 'bright',
-    't' + String(Math.round(threshold * 100)).padStart(2, '0'), sweepSeconds + 's'].join('_');
-  downloadBytes(buildMidi([{ name: MODE_LABEL[colorMode], channel: 0, notes: heard }]), `${base}_${tag}.mid`);
-  downloadBytes(buildMidi(rgb), `${base}_${tag}_rgb.mid`);
+  const tag = [colorMode, split, pentatonic ? 'penta' : 'chrom', invert ? 'ink' : 'bright',
+    't' + String(Math.round(threshold * 100)).padStart(2, '0'), bpm + 'bpm', bars + 'bars'].join('_');
+  downloadBytes(buildMidi(tracks), `${base}_${tag}.mid`);
 
-  lastExport = `${heard.length} notes; rgb ${rgb.map(t => t.notes.length).join('/')}`;
-  return { heard, rgb };
+  lastExport = tracks.map(t => t.notes.length).join('/') + ' notes';
+  return tracks;
 }
 
-// ---------- live MIDI out (keys O, K, L) ----------
-// Sends the same notes as the export, live, as the playhead moves, so FL
-// Studio's instruments play the image. Needs a MIDI port: on Windows install
-// loopMIDI (a virtual cable) and enable its port as an input in FL. Without
-// it, Windows' built-in "Microsoft GS Wavetable Synth" plays General MIDI.
-//   O  live MIDI out on/off (browser sines are muted while it's on)
-//   K  next output port
-//   L  what to send: heard (ch 1) / rgb (ch 2-4) / both
-// Velocity is the level when the note starts (the export uses the note's
-// average, which a live note can't know yet).
+// ---------- live MIDI out (keys O, K) ----------
+// Sends the enabled tracks live on channels 1-5 as the playhead moves, so FL
+// Studio's instruments play the image. Needs a MIDI port: on Windows a
+// loopMIDI port, enabled as an input in FL. Without one, Windows' built-in
+// "Microsoft GS Wavetable Synth" plays General MIDI.
+//   free tracks:    every frame, diff what should sound against what is
+//                   sounding; velocity is the level when the note starts
+//   stepped tracks: the same steps as the export, scheduled LOOKAHEAD_MS
+//                   ahead with exact MIDI timestamps, so the rhythm stays on
+//                   the grid instead of on screen frames
+// The image loops, and the step grid runs on across the loop.
 
-const SEND_CHOICES = ['heard', 'rgb', 'both'];
 let midiAccess = null;
 let midiOutputs = [];
 let midiOutIndex = 0;
 let liveOut = false;
-let sendChoice = 'heard';
 let midiStatus = '';
-const liveOn = new Map();     // channel -> Map(pitch -> true): notes sounding in the synth
+const liveOn = new Map();     // free tracks: channel -> Map(pitch -> true) sounding in the synth
+const stepState = new Map();  // stepped tracks: channel -> scheduler state
+const LOOKAHEAD_MS = 100;
 
+// Prefers the first port that isn't Windows' GS synth (e.g. a loopMIDI port).
 function refreshOutputs() {
   const prev = midiOutputs[midiOutIndex] && midiOutputs[midiOutIndex].id;
   midiOutputs = [...midiAccess.outputs.values()];
   let i = midiOutputs.findIndex(o => o.id === prev);
-  if (i < 0) i = midiOutputs.findIndex(o => /loop/i.test(o.name));   // prefer loopMIDI
+  if (i < 0) i = midiOutputs.findIndex(o => !/GS Wavetable/i.test(o.name));
   midiOutIndex = max(0, i);
 }
 
 function currentOutput() { return midiOutputs[midiOutIndex] || null; }
 
+async function requestMidi() {
+  if (midiAccess) return true;
+  if (!navigator.requestMIDIAccess) { midiStatus = 'no Web MIDI: use Chrome or Edge'; return false; }
+  try {
+    midiAccess = await navigator.requestMIDIAccess();
+    midiAccess.onstatechange = () => refreshOutputs();   // e.g. loopMIDI started later
+  } catch (e) { midiStatus = 'MIDI access refused'; return false; }
+  refreshOutputs();
+  return true;
+}
+
 async function toggleLiveOut() {
-  if (liveOut) { allNotesOff(); liveOut = false; return; }
-  if (!navigator.requestMIDIAccess) { midiStatus = 'no Web MIDI: use Chrome or Edge'; return; }
-  if (!midiAccess) {
-    try {
-      midiAccess = await navigator.requestMIDIAccess();
-      midiAccess.onstatechange = () => refreshOutputs();   // e.g. loopMIDI started later
-    } catch (e) { midiStatus = 'MIDI access refused'; return; }
-    refreshOutputs();
-  }
+  if (liveOut) { allNotesOff(); liveOut = false; browserAudio(); return; }
+  if (!(await requestMidi())) return;
   if (!currentOutput()) { midiStatus = 'no MIDI output ports found'; return; }
   midiStatus = '';
   liveOut = true;
+  browserAudio();
   setupGsPrograms();
 }
 
-function nextOutput() {
+// While live MIDI is on the browser's own sound is silent anyway, so suspend
+// it entirely: that releases the audio device for FL.
+function browserAudio() {
+  if (!audio) return;
+  if (liveOut) audio.ctx.suspend();
+  else audio.ctx.resume();
+}
+
+function selectOutput(i) {
   if (!midiOutputs.length) return;
   allNotesOff();
-  midiOutIndex = (midiOutIndex + 1) % midiOutputs.length;
+  midiOutIndex = ((i % midiOutputs.length) + midiOutputs.length) % midiOutputs.length;
   setupGsPrograms();
 }
+function nextOutput() { selectOutput(midiOutIndex + 1); }
 
 // Only for Windows' GS synth, which plays piano on every channel by default:
 // give each channel its own General MIDI sound. Never sent to other ports,
@@ -473,56 +582,256 @@ function nextOutput() {
 function setupGsPrograms() {
   const out = currentOutput();
   if (!out || !/GS Wavetable/i.test(out.name)) return;
-  const programs = [72, 81, 73, 80];   // piccolo; saw lead, flute, square lead
-  programs.forEach((p, ch) => out.send([0xc0 | ch, p]));
+  const programs = [72, 81, 73, 80, 71];   // piccolo; saw lead, flute, square lead; clarinet
+  programs.forEach((p, ch) => send(out, [0xc0 | ch, p]));
 }
 
-function liveStreams() {
-  const d = streamDefs();
-  if (sendChoice === 'heard') return [d.heard];
-  if (sendChoice === 'rgb') return d.rgb;
-  return [d.heard, ...d.rgb];
+function velocity(a) { return Math.round(20 + 107 * constrain(a, 0, 1)); }
+
+// Every MIDI message goes through here. If the port fails (closed, or muted
+// by loopMIDI), live out switches off with a message instead of an error
+// stopping the whole sketch.
+function send(out, data, t) {
+  if (!liveOut && (data[0] & 0xf0) === 0x90) return;   // no new notes once live is off
+  try { out.send(data, t); }
+  catch (e) {
+    liveOut = false; liveOn.clear(); stepState.clear();
+    midiStatus = 'port lost: press O to retry';
+  }
 }
 
-// Called every frame while playing: diff what should sound now against what
-// is sounding, and send only the changes.
+// Chrome stops draw() while the window is hidden (minimized, or covered by
+// FL). Stop every note so nothing hangs; the scheduler resyncs on return.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && liveOut) allNotesOff();
+});
+
+// Free tracks, called every frame while playing.
 function updateLiveMidi(col) {
   const out = currentOutput();
   if (!out) return;
-  const gate = max(threshold, MIN_GATE);
+  const gate = gateLevel();
+  const U = loops * dispW + playX, capCols = dispW * MAX_NOTE_BEATS / (bars * 4);
   const wanted = new Map();   // channel -> Map(pitch -> amplitude)
-  for (const s of liveStreams()) {
+  for (const d of trackDefs()) {
+    if (!d.on || d.len !== 'free') continue;
     const m = new Map();
-    for (const [p, a] of columnPitches(col, s.mode, s.pick)) if (a >= gate) m.set(p, a);
-    wanted.set(s.channel, m);
+    for (const [p, a] of columnPitches(col, d)) if (a >= gate) m.set(p, a);
+    wanted.set(d.channel, m);
   }
-  // note-offs first: notes that stopped, or whose channel is no longer sent
+  // note-offs first: notes that stopped, or whose track was switched off or stepped
   for (const [ch, on] of liveOn) {
     const w = wanted.get(ch) || new Map();
     for (const p of [...on.keys()]) {
-      if (!w.has(p)) { out.send([0x80 | ch, p, 0]); on.delete(p); }
+      if (!w.has(p)) { send(out, [0x80 | ch, p, 0]); on.delete(p); }
     }
   }
   for (const [ch, w] of wanted) {
     if (!liveOn.has(ch)) liveOn.set(ch, new Map());
     const on = liveOn.get(ch);
     for (const [p, a] of w) {
-      if (on.has(p)) continue;
-      out.send([0x90 | ch, p, Math.round(20 + 107 * constrain(a, 0, 1))]);
-      on.set(p, true);
+      if (on.has(p)) {
+        if (U - on.get(p) < capCols) continue;
+        send(out, [0x80 | ch, p, 0]);              // held to the cap: restart
+      }
+      send(out, [0x90 | ch, p, velocity(a)]);
+      on.set(p, U);                                // where the note started
     }
   }
+}
+
+// Stepped tracks, called every frame while playing. Positions are in
+// "unwrapped" columns (loop count * dispW + playX), so step b of the endless
+// grid sits at b * dispW / n, and step index b % n reads the same columns as
+// the export. Every step boundary inside the lookahead window is sent now,
+// timestamped for when the playhead will reach it.
+function scheduleSteps(now) {
+  const out = currentOutput();
+  if (!out) return;
+  const colsPerMs = dispW / (sweepSeconds() * 1000);
+  const U = loops * dispW + playX, horizon = U + LOOKAHEAD_MS * colsPerMs;
+  const gate = gateLevel();
+  for (const d of trackDefs()) {
+    let st = stepState.get(d.channel);
+    const stepped = d.on && d.len !== 'free';
+    if (st && (!stepped || st.len !== d.len || st.bars !== bars)) {
+      endSteps(st, out, now); stepState.delete(d.channel); st = null;
+    }
+    if (!stepped) continue;
+    if (!st) {
+      const ranges = stepRanges(d.len);
+      // start with the step the playhead is in (its time has passed: send now)
+      st = { ch: d.channel, len: d.len, bars, ranges, n: ranges.length, b: floor(U * ranges.length / dispW), sounding: new Map(), lastT: now };
+      stepState.set(d.channel, st);
+    }
+    // More than a step behind (draw() was paused while the window was
+    // hidden): jump to the current step instead of sending every missed one
+    // in a single burst.
+    if ((st.b + 1) * dispW / st.n < U) {
+      endSteps(st, out, now);
+      st.b = floor(U * st.n / dispW);
+    }
+    const ch = d.channel, stepBeats = LENGTH_BEATS[d.len];
+    for (;;) {
+      const Ub = st.b * dispW / st.n;
+      if (Ub >= horizon) break;
+      const t = max(now, now + (Ub - U) / colsPerMs);
+      const [c0, c1] = st.ranges[st.b % st.n];
+      const cols = [];
+      for (let c = c0; c < c1; c++) cols[c] = columnPitches(c, d);
+      const w = new Map();
+      for (const [p, a] of stepValues(cols, c0, c1, d.read)) if (a >= gate) w.set(p, a);
+      // offs before ons at the same timestamp: retrigger ends every note,
+      // tie only ends the ones that stopped
+      for (const p of [...st.sounding.keys()]) {
+        const atCap = (st.b + 1 - st.sounding.get(p)) * stepBeats > MAX_NOTE_BEATS;
+        if (!w.has(p) || !d.tie || atCap) { send(out, [0x80 | ch, p, 0], t); st.sounding.delete(p); }
+      }
+      for (const [p, a] of w) {
+        if (st.sounding.has(p)) continue;
+        send(out, [0x90 | ch, p, velocity(a)], t);
+        st.sounding.set(p, st.b);   // the step the note started on
+      }
+      st.lastT = t;
+      st.b++;
+    }
+  }
+}
+
+// Stop a stepped track's notes: now, and again just after the last message
+// already scheduled (a note-on queued for later would otherwise hang).
+function endSteps(st, out, now) {
+  for (const p of st.sounding.keys()) {
+    send(out, [0x80 | st.ch, p, 0]);
+    send(out, [0x80 | st.ch, p, 0], max(now, st.lastT) + 1);
+  }
+  st.sounding.clear();
 }
 
 function allNotesOff() {
   const out = currentOutput();
   if (out) {
-    for (const [ch, on] of liveOn) {
-      for (const p of on.keys()) out.send([0x80 | ch, p, 0]);
-      out.send([0xb0 | ch, 123, 0]);   // All Notes Off, in case anything was missed
+    const now = performance.now();
+    for (const [ch, on] of liveOn) for (const p of on.keys()) send(out, [0x80 | ch, p, 0]);
+    for (const st of stepState.values()) endSteps(st, out, now);
+    for (let ch = 0; ch < trackSettings.length; ch++) {
+      send(out, [0xb0 | ch, 123, 0]);                          // All Notes Off
+      send(out, [0xb0 | ch, 123, 0], now + LOOKAHEAD_MS + 5);  // after anything queued
     }
   }
   liveOn.clear();
+  stepState.clear();
+}
+
+// ---------- controls under the canvas ----------
+// HTML controls for the MIDI tracks, kept in sync with the keys both ways:
+// they write the same variables the keys do, and are refreshed from those
+// variables every frame (except the one being touched).
+
+let ui = null;
+
+function el(tag, parent, attrs = {}, text = '') {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+// Hand focus back to the page after using a control, so keys work again.
+function onUse(e, type, fn) {
+  e.addEventListener(type, ev => { fn(ev); if (type !== 'input') e.blur(); });
+  if (type === 'input') e.addEventListener('change', () => e.blur());
+}
+function options(select, values, labels = values) {
+  values.forEach((v, i) => el('option', select, { value: v }, String(labels[i])));
+}
+
+function buildControls() {
+  const box = el('div', document.querySelector('main'), { id: 'controls' });
+  const g = el('div', box, { class: 'global' });
+  ui = { tracks: [] };
+
+  const lab = (t) => el('label', g, {}, t);
+  ui.split = el('select', lab('Tracks 2-4 '));
+  options(ui.split, ['thirds', 'rgb'], ['thirds', 'R G B']);
+  onUse(ui.split, 'change', () => { split = ui.split.value; });
+
+  const bpmL = lab('Tempo ');
+  ui.bpm = el('input', bpmL, { type: 'range', min: 40, max: 240, step: 1 });
+  ui.bpmText = el('span', bpmL, { class: 'num' });
+  onUse(ui.bpm, 'input', () => { bpm = Number(ui.bpm.value); presetName = ''; });
+
+  ui.bars = el('select', lab('Bars '));
+  options(ui.bars, BAR_CHOICES);
+  onUse(ui.bars, 'change', () => { bars = Number(ui.bars.value); presetName = ''; });
+  ui.sweep = el('span', g, { class: 'dim' });
+
+  ui.exportBtn = el('button', g, {}, 'Export MIDI (M)');
+  onUse(ui.exportBtn, 'click', () => exportMidi());
+  ui.liveBtn = el('button', g, {});
+  onUse(ui.liveBtn, 'click', () => toggleLiveOut());
+  ui.port = el('select', lab('Port '));
+  ui.portNames = null;
+  onUse(ui.port, 'change', () => selectOutput(Number(ui.port.value)));
+
+  const table = el('table', box);
+  const head = el('tr', table);
+  ['on', 'ch', 'track', 'note length', 'step reads', 'held ink'].forEach(h => el('th', head, {}, h));
+  trackSettings.forEach((t, i) => {
+    const tr = el('tr', table);
+    tr.addEventListener('mousedown', () => { selTrack = i; });
+    const on = el('input', el('td', tr), { type: 'checkbox' });
+    onUse(on, 'change', () => { t.on = on.checked; });
+    el('td', tr, { class: 'dim' }, String(i + 1));
+    const name = el('td', tr);
+    const lenTd = el('td', tr);
+    const len = el('input', lenTd, { type: 'range', min: 0, max: LENGTHS.length - 1, step: 1 });
+    const lenText = el('span', lenTd, { class: 'num' });
+    onUse(len, 'input', () => { t.len = LENGTHS[Number(len.value)]; });
+    const read = el('select', el('td', tr));
+    options(read, READS, ['first column', 'average', 'max']);
+    onUse(read, 'change', () => { t.read = read.value; });
+    const tie = el('select', el('td', tr));
+    options(tie, ['retrigger', 'tie']);
+    onUse(tie, 'change', () => { t.tie = tie.value === 'tie'; });
+    ui.tracks.push({ tr, on, name, len, lenText, read, tie });
+  });
+}
+
+function setIfIdle(e, prop, v) {
+  if (document.activeElement !== e && e[prop] !== v) e[prop] = v;
+}
+
+function syncControls() {
+  if (!ui) return;
+  setIfIdle(ui.split, 'value', split);
+  setIfIdle(ui.bpm, 'value', String(bpm));
+  ui.bpmText.textContent = `${bpm} bpm`;
+  setIfIdle(ui.bars, 'value', String(bars));
+  ui.sweep.textContent = `= ${sweepSeconds().toFixed(1)} s sweep`;
+  ui.liveBtn.textContent = liveOut ? 'Live MIDI: on (O)' : 'Live MIDI: off (O)';
+  ui.liveBtn.classList.toggle('active', liveOut);
+  const names = midiOutputs.map(o => o.name).join('|');
+  if (names !== ui.portNames) {
+    ui.portNames = names;
+    ui.port.innerHTML = '';
+    if (midiOutputs.length) options(ui.port, midiOutputs.map((_, i) => i), midiOutputs.map(o => o.name));
+    else options(ui.port, [''], [midiAccess ? '(no ports)' : '(turn on live MIDI)']);
+  }
+  if (midiOutputs.length) setIfIdle(ui.port, 'value', String(midiOutIndex));
+  const defs = trackDefs();
+  ui.tracks.forEach((u, i) => {
+    const t = trackSettings[i];
+    setIfIdle(u.on, 'checked', t.on);
+    u.name.textContent = defs[i].name;
+    setIfIdle(u.len, 'value', String(LENGTHS.indexOf(t.len)));
+    u.lenText.textContent = t.len === '1' ? 'whole' : t.len;
+    setIfIdle(u.read, 'value', t.read);
+    setIfIdle(u.tie, 'value', t.tie ? 'tie' : 'retrigger');
+    u.read.disabled = u.tie.disabled = t.len === 'free';
+    u.tr.classList.toggle('sel', i === selTrack);
+    u.tr.classList.toggle('off', !t.on);
+  });
 }
 
 // ---------- draw ----------
@@ -530,14 +839,19 @@ function allNotesOff() {
 function draw() {
   background(27);
 
+  // The playhead runs on the same clock as MIDI timestamps (performance.now),
+  // so scheduled steps land where the playhead will be.
+  const now = performance.now();
   if (playing) {
-    playX += dispW / (sweepSeconds * 60) * (deltaTime / (1000 / 60));
-    if (playX >= dispW) { playX = 0; if (liveOut) allNotesOff(); }
+    playX += dispW / (sweepSeconds() * 1000) * (now - lastNow);
+    while (playX >= dispW) { playX -= dispW; loops++; }
   }
+  lastNow = now;
   const col = constrain(floor(playX), 0, dispW - 1);
   if (audio) updateAudio(col);
   else levels = columnVoices(col);
-  if (liveOut && playing) updateLiveMidi(col);
+  if (liveOut && playing) { updateLiveMidi(col); scheduleSteps(now); }
+  syncControls();
 
   if (showGrid) {
     noSmooth();
@@ -607,17 +921,17 @@ function drawStatus() {
     `${invert ? 'ink loud' : 'bright loud'}  (I)`,
     `scale: ${pentatonic ? 'pentatonic' : 'chromatic'}  (P)`,
     `threshold ${threshold.toFixed(2)}  (- =)`,
-    `sweep ${sweepSeconds}s  ([ ])`,
+    `${bpm} bpm x ${bars} bars = ${sweepSeconds().toFixed(1)}s  ([ ] B)`,
     `grid ${showGrid ? 'on' : 'off'}  (G)`,
-    lastExport ? `MIDI: ${lastExport}` : 'export MIDI  (M)',
-    midiStatus ? `MIDI out: ${midiStatus}` :
-      liveOut ? `MIDI out: on, send ${sendChoice}  (O L)` : `MIDI out: off  (O)`,
+    `MIDI tracks: below  (S N UP/DN A T X)`,
+    lastExport ? `export: ${lastExport}  (M)` : 'export MIDI  (M)',
+    midiStatus ? `MIDI out: ${midiStatus}` : `MIDI out: ${liveOut ? 'on' : 'off'}  (O)`,
   ];
   if (liveOut) {
     const name = currentOutput() ? currentOutput().name : '(none)';
     lines.push(`  port: ${name.length > 24 ? name.slice(0, 23) + '…' : name}  (K)`);
   }
-  const w = 215, h = lines.length * 15 + 10;
+  const w = 230, h = lines.length * 15 + 10;
   noStroke();
   fill(0, 160);
   rect(6, 6, w, h, 4);
@@ -630,16 +944,26 @@ function drawStatus() {
 // ---------- input ----------
 
 function keyPressed() {
+  // a control has focus (e.g. mid-drag on a slider): let it have the key
+  const ae = document.activeElement;
+  if (ae && /^(INPUT|SELECT|BUTTON)$/.test(ae.tagName)) return;
   if (key === ' ') {
-    if (!audio) audio = buildAudio();
-    if (audio.ctx.state === 'suspended') audio.ctx.resume();
+    if (!audio) { audio = buildAudio(); browserAudio(); }
+    if (audio.ctx.state === 'suspended' && !liveOut) audio.ctx.resume();
     playing = !playing;
     if (!playing && liveOut) allNotesOff();
     return false;
   }
   if (PRESETS[key]) { applyPreset(PRESETS[key]); return; }
+  if (keyCode === UP_ARROW || keyCode === DOWN_ARROW) {
+    const step = keyCode === UP_ARROW ? 1 : -1;
+    const targets = keyIsDown(SHIFT) ? trackSettings : [trackSettings[selTrack]];
+    for (const t of targets) t.len = LENGTHS[constrain(LENGTHS.indexOf(t.len) + step, 0, LENGTHS.length - 1)];
+    return false;             // don't scroll the page
+  }
   const k = key.toLowerCase();
-  if ('cip=+-_[]'.includes(k)) presetName = '';   // hand-tweaked: no longer the preset
+  if ('cipb=+-_[]'.includes(k)) presetName = '';   // hand-tweaked: no longer the preset
+  const sel = trackSettings[selTrack];
   if (k === 'c') colorMode = COLOR_MODES[(COLOR_MODES.indexOf(colorMode) + 1) % COLOR_MODES.length];
   else if (k === 'i') invert = !invert;
   else if (k === 'p') pentatonic = !pentatonic;
@@ -648,11 +972,16 @@ function keyPressed() {
   else if (k === 'm') exportMidi();
   else if (k === 'o') toggleLiveOut();
   else if (k === 'k') nextOutput();
-  else if (k === 'l') { allNotesOff(); sendChoice = SEND_CHOICES[(SEND_CHOICES.indexOf(sendChoice) + 1) % SEND_CHOICES.length]; }
+  else if (k === 's') split = split === 'thirds' ? 'rgb' : 'thirds';
+  else if (k === 'n') selTrack = (selTrack + 1) % trackSettings.length;
+  else if (k === 'a') sel.read = READS[(READS.indexOf(sel.read) + 1) % READS.length];
+  else if (k === 't') sel.tie = !sel.tie;
+  else if (k === 'x') sel.on = !sel.on;
+  else if (k === 'b') bars = BAR_CHOICES[(BAR_CHOICES.indexOf(bars) + 1) % BAR_CHOICES.length];
   else if (key === '=' || key === '+') threshold = min(0.95, round((threshold + 0.05) * 100) / 100);
   else if (key === '-' || key === '_') threshold = max(0, round((threshold - 0.05) * 100) / 100);
-  else if (key === '[') sweepSeconds = min(240, sweepSeconds + 5);
-  else if (key === ']') sweepSeconds = max(5, sweepSeconds - 5);
+  else if (key === '[') bpm = max(40, bpm - 5);
+  else if (key === ']') bpm = min(240, bpm + 5);
 }
 
 function mousePressed() {
