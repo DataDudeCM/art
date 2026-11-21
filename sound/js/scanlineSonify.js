@@ -25,6 +25,11 @@
 //   R      rewind
 //   click  move the playhead
 //   1      piccolo preset (see PRESETS; add more on 2, 3 ...)
+//   H      browser sound: tracks (the MIDI tracks' notes on sines, so the
+//          track settings are heard) / raw (the original steady tones)
+//
+// Buttons under the canvas also load an image and save / load settings
+// files (JSON); an image or a settings file can be dropped on the page.
 //
 // MIDI: five tracks (see "MIDI tracks" below). The controls under the canvas
 // do the same as these keys.
@@ -71,20 +76,31 @@ let invert = false;
 let pentatonic = false;   // key P
 let threshold = 0;
 let showGrid = false;
+// What the browser plays (key H; live MIDI mutes both):
+//   tracks: the MIDI tracks' notes on a built-in sine synth, so note length,
+//           read, tie and track on/off are heard
+//   raw:    the original sonifier: 36 steady tones whose volumes follow the
+//           ink frame by frame (no notes, so the track settings don't apply)
+const SOUND_MODES = ['tracks', 'raw'];
+let soundMode = 'tracks';
+// Shape of each synth note in 'tracks' sound:
+//   pluck: starts loud and settles to a third of that, so every retriggered
+//          step is heard as a new note even when the ink is held
+//   flat:  steady volume; back-to-back notes of the same pitch blur into one
+const ENVELOPES = ['pluck', 'flat'];
+let envelope = 'pluck';
 
 // Number-key presets: sound settings only (playhead and grid view untouched).
+// They use the same format as saved settings files (see "settings files").
 // Piccolo: found by Chris on doodle2.jpg. A high threshold leaves only the
 // darkest ink, so one or two pentatonic sines sound at a time: a melody line.
-// (Found at a 35 s sweep; 16 bars at 110 BPM is 34.9 s.)
+// (Found at a 35 s sweep in raw sound; 16 bars at 110 BPM is 34.9 s.)
 const PRESETS = {
-  '1': { name: 'piccolo', bpm: 110, bars: 16, threshold: 0.6, invert: true, colorMode: 'gray', pentatonic: true },
+  '1': { name: 'piccolo', bpm: 110, bars: 16, threshold: 0.6, invert: true, colorMode: 'gray', pentatonic: true, soundMode: 'raw' },
 };
 let presetName = '';          // shown until a setting is changed by hand
 
-function applyPreset(p) {
-  ({ bpm, bars, threshold, invert, colorMode, pentatonic } = p);
-  presetName = p.name;
-}
+function applyPreset(p) { applySettings(p); }
 
 let audio = null;             // built on first SPACE (browsers require a gesture)
 let levels = [];              // current per-row levels, for the panel
@@ -109,7 +125,7 @@ function loadImageFile(file) {
 }
 
 function setImage(newImg, name) {
-  if (liveOut) allNotesOff();
+  allNotesOff();
   img = newImg;
   imgName = name;
   imageStatus = '';
@@ -128,7 +144,9 @@ function setupImageDrop() {
   body.addEventListener('drop', e => {
     e.preventDefault();
     body.classList.remove('dragging');
-    loadImageFile(e.dataTransfer.files[0]);
+    const f = e.dataTransfer.files[0];
+    if (f && /\.json$/i.test(f.name)) loadSettingsFile(f);   // a saved settings file
+    else loadImageFile(f);
   });
 }
 
@@ -257,7 +275,7 @@ function buildAudio() {
     }
     rows.push(voices);
   }
-  const a = { ctx, master, rows, tunedFor: null };
+  const a = { ctx, comp, master, rows, tunedFor: null };
   retuneChords(a);
   return a;
 }
@@ -331,7 +349,7 @@ function updateAudio(col) {
   }
   // Uncorrelated tones add roughly by RMS, so scale by sqrt(sum of squares).
   // A single quiet row stays quiet; a full column doesn't clip.
-  const m = playing && !liveOut ? 0.35 / Math.max(1, Math.sqrt(sumSq)) : 0;
+  const m = playing && !liveOut && soundMode === 'raw' ? 0.35 / Math.max(1, Math.sqrt(sumSq)) : 0;
   audio.master.gain.setTargetAtTime(m, t, 0.03);
 }
 
@@ -536,8 +554,8 @@ function buildMidi(tracks) {
   return new Uint8Array([...header, ...tempo, ...chunks.flat()]);
 }
 
-function downloadBytes(bytes, filename) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/midi' }));
+function downloadBytes(bytes, filename, type = 'audio/midi') {
+  const url = URL.createObjectURL(new Blob([bytes], { type }));
   const a = document.createElement('a');
   a.href = url; a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
@@ -608,6 +626,7 @@ async function toggleLiveOut() {
   if (!(await requestMidi())) return;
   if (!currentOutput()) { midiStatus = 'no MIDI output ports found'; return; }
   midiStatus = '';
+  allNotesOff();              // silence the browser synth before switching
   liveOut = true;
   browserAudio();
   setupGsPrograms();
@@ -645,9 +664,10 @@ function velocity(a) { return Math.round(20 + 107 * constrain(a, 0, 1)); }
 // by loopMIDI), live out switches off with a message instead of an error
 // stopping the whole sketch.
 function send(out, data, t) {
-  if (!liveOut && (data[0] & 0xf0) === 0x90) return;   // no new notes once live is off
+  if (out !== activeSink() && (data[0] & 0xf0) === 0x90) return;   // no new notes to a sink that was switched away
   try { out.send(data, t); }
   catch (e) {
+    if (out === trackSynth) return;
     liveOut = false; liveOn.clear(); stepState.clear();
     midiStatus = 'port lost: press O to retry';
   }
@@ -656,12 +676,100 @@ function send(out, data, t) {
 // Chrome stops draw() while the window is hidden (minimized, or covered by
 // FL). Stop every note so nothing hangs; the scheduler resyncs on return.
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden && liveOut) allNotesOff();
+  if (document.hidden) allNotesOff();
 });
+
+// ---------- browser track synth ----------
+// Where the track notes go: the MIDI port while live out is on, otherwise
+// this built-in synth when the browser sound is 'tracks'. The synth takes the
+// same MIDI messages as a port (note on/off with timestamps, All Notes Off),
+// so the free and stepped schedulers below drive both the same way.
+// Every note is a sine with a short fade in and out; velocity sets its
+// volume, and the overall level drops as more notes sound at once.
+
+function activeSink() {
+  if (liveOut) return currentOutput();
+  if (soundMode === 'tracks' && audio) return trackSynth;
+  return null;
+}
+
+const trackSynth = {
+  name: 'browser synth',
+  voices: new Map(),          // ch * 128 + pitch -> { osc, g, start }
+  bus: null,
+
+  ensureBus() {
+    if (!this.bus) {
+      this.bus = audio.ctx.createGain();
+      this.bus.gain.value = 0.5;
+      this.bus.connect(audio.comp);
+    }
+    return this.bus;
+  },
+
+  send(data, t) {
+    if (!audio) return;
+    const ctx = audio.ctx, kind = data[0] & 0xf0, ch = data[0] & 0x0f;
+    const when = ctx.currentTime + (t === undefined ? 0 : max(0, (t - performance.now()) / 1000));
+    if (kind === 0x90 && data[2] > 0) {
+      const key = ch * 128 + data[1];
+      if (this.voices.has(key)) this.stop(this.voices.get(key), when);
+      this.voices.set(key, this.start(data[1], data[2], when));
+    } else if (kind === 0x80 || kind === 0x90) {
+      const key = ch * 128 + data[1];
+      if (this.voices.has(key)) { this.stop(this.voices.get(key), when); this.voices.delete(key); }
+    } else if (kind === 0xb0 && data[1] === 123) {
+      for (const [key, v] of this.voices) {
+        if (Math.floor(key / 128) === ch) { this.stop(v, when); this.voices.delete(key); }
+      }
+    }
+  },
+
+  start(pitch, vel, when) {
+    const ctx = audio.ctx;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = midiToFreq(pitch);
+    const g = ctx.createGain(), peak = 0.3 * vel / 127;
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(peak, when + 0.005);
+    if (envelope === 'pluck') g.gain.setTargetAtTime(peak * 0.33, when + 0.005, 0.05);
+    osc.connect(g).connect(this.ensureBus());
+    osc.start(when);
+    return { osc, g, start: when };
+  },
+
+  stop(v, when) {
+    if (when <= v.start) {                 // stopped before it began: never sound
+      v.g.gain.cancelScheduledValues(0);
+      v.g.gain.value = 0;
+      v.osc.stop(v.start + 0.01);
+      return;
+    }
+    // hold whatever level the note has reached, then fade from there
+    if (v.g.gain.cancelAndHoldAtTime) v.g.gain.cancelAndHoldAtTime(when);
+    else v.g.gain.cancelScheduledValues(when);
+    v.g.gain.setTargetAtTime(0, when, 0.012);
+    v.osc.stop(when + 0.1);
+  },
+
+  // Called every frame: keep the sum of many notes from getting too loud.
+  level() {
+    if (!this.bus) return;
+    const n = this.voices.size;
+    this.bus.gain.setTargetAtTime(0.9 / Math.sqrt(Math.max(1, n)), audio.ctx.currentTime, 0.05);
+  },
+};
+
+function setSoundMode(m) {
+  if (m === soundMode) return;
+  allNotesOff();
+  soundMode = m;
+}
 
 // Free tracks, called every frame while playing.
 function updateLiveMidi(col) {
-  const out = currentOutput();
+  const out = activeSink();
   if (!out) return;
   const gate = gateLevel();
   const U = loops * dispW + playX, capCols = dispW * MAX_NOTE_BEATS / (bars * 4);
@@ -699,7 +807,7 @@ function updateLiveMidi(col) {
 // the export. Every step boundary inside the lookahead window is sent now,
 // timestamped for when the playhead will reach it.
 function scheduleSteps(now) {
-  const out = currentOutput();
+  const out = activeSink();
   if (!out) return;
   const colsPerMs = dispW / (sweepSeconds() * 1000);
   const U = loops * dispW + playX, horizon = U + LOOKAHEAD_MS * colsPerMs;
@@ -762,7 +870,7 @@ function endSteps(st, out, now) {
 }
 
 function allNotesOff() {
-  const out = currentOutput();
+  const out = activeSink();
   if (out) {
     const now = performance.now();
     for (const [ch, on] of liveOn) for (const p of on.keys()) send(out, [0x80 | ch, p, 0]);
@@ -774,6 +882,74 @@ function allNotesOff() {
   }
   liveOn.clear();
   stepState.clear();
+}
+
+// ---------- settings files ----------
+// Every sound setting (not the image itself) saved as a small JSON file, so a
+// discovery can be named, kept beside its MIDI take, and loaded again later.
+// Load with the button, or drop the .json on the page. Number-key presets use
+// the same format; missing fields leave the current value alone.
+
+let settingsStatus = '';
+let presetSnapshot = '';      // the settings as loaded, to tell when they've been changed
+
+function settingsCore() {
+  return { bpm, bars, threshold, invert, colorMode, pentatonic, soundMode, envelope, split,
+    tracks: trackSettings.map(t => ({ on: t.on, len: t.len, read: t.read, tie: t.tie })) };
+}
+
+function currentSettings(name) {
+  return { app: 'scanlineSonify', version: 1, name, image: imgName, ...settingsCore() };
+}
+
+function applySettings(s) {
+  allNotesOff();
+  const num = (v, lo, hi) => typeof v === 'number' && isFinite(v) && v >= lo && v <= hi;
+  if (num(s.bpm, 40, 240)) bpm = Math.round(s.bpm);
+  if (BAR_CHOICES.includes(s.bars)) bars = s.bars;
+  if (num(s.threshold, 0, 0.95)) threshold = s.threshold;
+  if (typeof s.invert === 'boolean') invert = s.invert;
+  if (typeof s.pentatonic === 'boolean') pentatonic = s.pentatonic;
+  if (COLOR_MODES.includes(s.colorMode)) colorMode = s.colorMode;
+  if (SOUND_MODES.includes(s.soundMode)) soundMode = s.soundMode;
+  if (ENVELOPES.includes(s.envelope)) envelope = s.envelope;
+  if (['thirds', 'rgb'].includes(s.split)) split = s.split;
+  if (Array.isArray(s.tracks)) {
+    s.tracks.slice(0, trackSettings.length).forEach((t, i) => {
+      if (!t || typeof t !== 'object') return;
+      const d = trackSettings[i];
+      if (typeof t.on === 'boolean') d.on = t.on;
+      if (LENGTHS.includes(t.len)) d.len = t.len;
+      if (READS.includes(t.read)) d.read = t.read;
+      if (typeof t.tie === 'boolean') d.tie = t.tie;
+    });
+  }
+  presetName = s.name || '';
+  presetSnapshot = JSON.stringify(settingsCore());
+}
+
+function saveSettings() {
+  const base = imgName.replace(/\.[^.]+$/, '');
+  const name = window.prompt('Name for these settings:', presetName || base);
+  if (name === null) return;  // cancelled
+  const slug = (name.trim() || base).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'settings';
+  const json = JSON.stringify(currentSettings(name.trim() || slug), null, 2);
+  downloadBytes(new TextEncoder().encode(json), `${slug}.json`, 'application/json');
+  presetName = name.trim() || slug;
+  presetSnapshot = JSON.stringify(settingsCore());
+  settingsStatus = `saved ${slug}.json`;
+}
+
+async function loadSettingsFile(file) {
+  if (!file) return;
+  try {
+    const s = JSON.parse(await file.text());
+    if (!s || typeof s !== 'object' || (s.app && s.app !== 'scanlineSonify')) throw new Error('not ours');
+    applySettings({ name: file.name.replace(/\.json$/i, ''), ...s });
+    settingsStatus = `loaded ${file.name}` + (s.image && s.image !== imgName ? ` (saved with ${s.image})` : '');
+  } catch (e) {
+    settingsStatus = `not a settings file: ${file.name}`;
+  }
 }
 
 // ---------- controls under the canvas ----------
@@ -801,16 +977,36 @@ function options(select, values, labels = values) {
 
 function buildControls() {
   const box = el('div', document.querySelector('main'), { id: 'controls' });
-  const g = el('div', box, { class: 'global' });
   ui = { tracks: [] };
 
-  const file = el('input', g, { type: 'file', accept: 'image/*', style: 'display:none' });
-  const loadBtn = el('button', g, {}, 'Load image…');
-  loadBtn.addEventListener('click', () => { loadBtn.blur(); file.click(); });
-  file.addEventListener('change', () => { loadImageFile(file.files[0]); file.value = ''; file.blur(); });
-  ui.imgName = el('span', g, { class: 'dim', title: 'or drop an image file anywhere on the page' });
+  // row 1: files (image and settings)
+  const f = el('div', box, { class: 'global' });
+  const fileButton = (label, accept, onFile) => {
+    const input = el('input', f, { type: 'file', accept, style: 'display:none' });
+    const btn = el('button', f, {}, label);
+    btn.addEventListener('click', () => { btn.blur(); input.click(); });
+    input.addEventListener('change', () => { onFile(input.files[0]); input.value = ''; input.blur(); });
+    return btn;
+  };
+  fileButton('Load image…', 'image/*', loadImageFile);
+  ui.imgName = el('span', f, { class: 'dim', title: 'or drop an image file anywhere on the page' });
+  const saveBtn = el('button', f, {}, 'Save settings…');
+  onUse(saveBtn, 'click', () => saveSettings());
+  fileButton('Load settings…', '.json,application/json', loadSettingsFile);
+  ui.settingsStatus = el('span', f, { class: 'dim' });
 
+  // row 2: sound, time and output
+  const g = el('div', box, { class: 'global' });
   const lab = (t) => el('label', g, {}, t);
+  ui.sound = el('select', lab('Browser sound '));
+  options(ui.sound, SOUND_MODES, ['tracks', 'raw (steady tones)']);
+  ui.sound.title = 'tracks: hear the track settings; raw: the original sonifier (H)';
+  onUse(ui.sound, 'change', () => setSoundMode(ui.sound.value));
+  ui.envelope = el('select', lab('Synth notes '));
+  options(ui.envelope, ENVELOPES, ['pluck', 'flat']);
+  ui.envelope.title = 'pluck: every note is heard, even repeats; flat: steady tones (tracks sound only)';
+  onUse(ui.envelope, 'change', () => { envelope = ui.envelope.value; });
+
   ui.split = el('select', lab('Tracks 2-4 '));
   options(ui.split, ['thirds', 'rgb'], ['thirds', 'R G B']);
   onUse(ui.split, 'change', () => { split = ui.split.value; });
@@ -865,6 +1061,12 @@ function syncControls() {
   if (!ui) return;
   ui.imgName.textContent = imageStatus || `${imgName} (or drop an image here)`;
   ui.imgName.classList.toggle('warn', !!imageStatus);
+  ui.settingsStatus.textContent = settingsStatus;
+  ui.settingsStatus.classList.toggle('warn', /^not/.test(settingsStatus));
+  if (presetName && presetSnapshot && JSON.stringify(settingsCore()) !== presetSnapshot) presetName = '';
+  setIfIdle(ui.sound, 'value', soundMode);
+  setIfIdle(ui.envelope, 'value', envelope);
+  ui.envelope.disabled = soundMode !== 'tracks';
   setIfIdle(ui.split, 'value', split);
   setIfIdle(ui.bpm, 'value', String(bpm));
   ui.bpmText.textContent = `${bpm} bpm`;
@@ -911,7 +1113,8 @@ function draw() {
   const col = constrain(floor(playX), 0, dispW - 1);
   if (audio) updateAudio(col);
   else levels = columnVoices(col);
-  if (liveOut && playing) { updateLiveMidi(col); scheduleSteps(now); }
+  if (playing && activeSink()) { updateLiveMidi(col); scheduleSteps(now); }
+  if (audio) trackSynth.level();
   syncControls();
 
   if (showGrid) {
@@ -978,6 +1181,7 @@ function drawStatus() {
   const lines = [
     (playing ? 'playing' : (audio ? 'paused: SPACE' : 'SPACE to start sound')) +
       (presetName ? `  [${presetName}]` : ''),
+    `browser sound: ${soundMode}${liveOut ? ' (muted: live MIDI)' : ''}  (H)`,
     `mode: ${MODE_LABEL[colorMode]}  (C)`,
     `${invert ? 'ink loud' : 'bright loud'}  (I)`,
     `scale: ${pentatonic ? 'pentatonic' : 'chromatic'}  (P)`,
@@ -1012,7 +1216,7 @@ function keyPressed() {
     if (!audio) { audio = buildAudio(); browserAudio(); }
     if (audio.ctx.state === 'suspended' && !liveOut) audio.ctx.resume();
     playing = !playing;
-    if (!playing && liveOut) allNotesOff();
+    if (!playing) allNotesOff();
     return false;
   }
   if (PRESETS[key]) { applyPreset(PRESETS[key]); return; }
@@ -1023,13 +1227,14 @@ function keyPressed() {
     return false;             // don't scroll the page
   }
   const k = key.toLowerCase();
-  if ('cipb=+-_[]'.includes(k)) presetName = '';   // hand-tweaked: no longer the preset
+  if ('cipbhsatx=+-_[]'.includes(k)) presetName = '';   // hand-tweaked: no longer the preset
   const sel = trackSettings[selTrack];
   if (k === 'c') colorMode = COLOR_MODES[(COLOR_MODES.indexOf(colorMode) + 1) % COLOR_MODES.length];
   else if (k === 'i') invert = !invert;
   else if (k === 'p') pentatonic = !pentatonic;
   else if (k === 'g') showGrid = !showGrid;
-  else if (k === 'r') { playX = 0; if (liveOut) allNotesOff(); }
+  else if (k === 'r') { playX = 0; allNotesOff(); }
+  else if (k === 'h') setSoundMode(soundMode === 'tracks' ? 'raw' : 'tracks');
   else if (k === 'm') exportMidi();
   else if (k === 'o') toggleLiveOut();
   else if (k === 'k') nextOutput();
@@ -1048,6 +1253,6 @@ function keyPressed() {
 function mousePressed() {
   if (mouseX >= 0 && mouseX < dispW && mouseY >= 0 && mouseY < height) {
     playX = mouseX;
-    if (liveOut) allNotesOff();
+    allNotesOff();
   }
 }
