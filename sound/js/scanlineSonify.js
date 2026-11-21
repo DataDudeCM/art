@@ -93,6 +93,45 @@ function preload() {
   img = loadImage(IMG_PATH);
 }
 
+// ---------- loading an image ----------
+// IMG_PATH is the image at start-up. Drop an image file anywhere on the page,
+// or use the "Load image" button, to swap it.
+let imgName = IMG_PATH.split('/').pop();   // used in export filenames
+let imageStatus = '';
+
+function loadImageFile(file) {
+  if (!file || !/^image\//.test(file.type)) { imageStatus = `not an image: ${file ? file.name : '?'}`; return; }
+  const url = URL.createObjectURL(file);
+  loadImage(url, newImg => {
+    URL.revokeObjectURL(url);
+    setImage(newImg, file.name);
+  }, () => { URL.revokeObjectURL(url); imageStatus = `could not read ${file.name}`; });
+}
+
+function setImage(newImg, name) {
+  if (liveOut) allNotesOff();
+  img = newImg;
+  imgName = name;
+  imageStatus = '';
+  lastExport = '';
+  dispW = round(DISPLAY_H * img.width / img.height);
+  resizeCanvas(dispW + PANEL_W, DISPLAY_H);
+  buildGrid();
+  playX = 0;
+  loops = 0;
+}
+
+function setupImageDrop() {
+  const body = document.body;
+  body.addEventListener('dragover', e => { e.preventDefault(); body.classList.add('dragging'); });
+  body.addEventListener('dragleave', e => { if (e.target === body || !body.contains(e.relatedTarget)) body.classList.remove('dragging'); });
+  body.addEventListener('drop', e => {
+    e.preventDefault();
+    body.classList.remove('dragging');
+    loadImageFile(e.dataTransfer.files[0]);
+  });
+}
+
 function setup() {
   dispW = round(DISPLAY_H * img.width / img.height);
   const c = createCanvas(dispW + PANEL_W, DISPLAY_H);
@@ -100,6 +139,7 @@ function setup() {
   buildGrid();
   textFont('Arial');
   buildControls();
+  setupImageDrop();
 }
 
 // Box-average the full-resolution image into dispW columns x ROWS rows.
@@ -112,16 +152,29 @@ function buildGrid() {
     sums.push([]);
     for (let r = 0; r < ROWS; r++) sums[c].push([0, 0, 0, 0]);
   }
-  for (let y = 0; y < H; y++) {
-    const r = min(ROWS - 1, floor(y * ROWS / H));
-    for (let x = 0; x < W; x++) {
-      const c = min(dispW - 1, floor(x * dispW / W));
-      const i = 4 * (y * W + x);
-      const s = sums[c][r];
-      s[0] += img.pixels[i];
-      s[1] += img.pixels[i + 1];
-      s[2] += img.pixels[i + 2];
-      s[3]++;
+  // Each cell sums the source pixels that fall inside it (integer maths, so
+  // big images split exactly as before). An image smaller than the grid
+  // would leave some cells with no pixels at all: those borrow the nearest.
+  const span = (k, src, dst) => {
+    const a = Math.floor((k * src + dst - 1) / dst), b = Math.floor(((k + 1) * src + dst - 1) / dst);
+    if (b > a) return [a, b];
+    const n = min(src - 1, Math.floor(k * src / dst));
+    return [n, n + 1];
+  };
+  const xs = Array.from({ length: dispW }, (_, c) => span(c, W, dispW));
+  for (let r = 0; r < ROWS; r++) {
+    const [y0, y1] = span(r, H, ROWS);
+    for (let y = y0; y < y1; y++) {
+      for (let c = 0; c < dispW; c++) {
+        const s = sums[c][r];
+        for (let x = xs[c][0]; x < xs[c][1]; x++) {
+          const i = 4 * (y * W + x);
+          s[0] += img.pixels[i];
+          s[1] += img.pixels[i + 1];
+          s[2] += img.pixels[i + 2];
+          s[3]++;
+        }
+      }
     }
   }
   grid = sums.map(col => col.map(([R, G, B, n]) => {
@@ -498,7 +551,7 @@ function exportMidi() {
   if (!defs.length) { lastExport = 'all tracks off'; return []; }
   const tracks = defs.map(d => ({ name: `${d.channel + 1} ${d.name}`, channel: d.channel, notes: trackNotes(d) }));
 
-  const base = IMG_PATH.split('/').pop().replace(/\.[^.]+$/, '');
+  const base = imgName.replace(/\.[^.]+$/, '');
   const tag = [colorMode, split, pentatonic ? 'penta' : 'chrom', invert ? 'ink' : 'bright',
     't' + String(Math.round(threshold * 100)).padStart(2, '0'), bpm + 'bpm', bars + 'bars'].join('_');
   downloadBytes(buildMidi(tracks), `${base}_${tag}.mid`);
@@ -751,6 +804,12 @@ function buildControls() {
   const g = el('div', box, { class: 'global' });
   ui = { tracks: [] };
 
+  const file = el('input', g, { type: 'file', accept: 'image/*', style: 'display:none' });
+  const loadBtn = el('button', g, {}, 'Load image…');
+  loadBtn.addEventListener('click', () => { loadBtn.blur(); file.click(); });
+  file.addEventListener('change', () => { loadImageFile(file.files[0]); file.value = ''; file.blur(); });
+  ui.imgName = el('span', g, { class: 'dim', title: 'or drop an image file anywhere on the page' });
+
   const lab = (t) => el('label', g, {}, t);
   ui.split = el('select', lab('Tracks 2-4 '));
   options(ui.split, ['thirds', 'rgb'], ['thirds', 'R G B']);
@@ -804,6 +863,8 @@ function setIfIdle(e, prop, v) {
 
 function syncControls() {
   if (!ui) return;
+  ui.imgName.textContent = imageStatus || `${imgName} (or drop an image here)`;
+  ui.imgName.classList.toggle('warn', !!imageStatus);
   setIfIdle(ui.split, 'value', split);
   setIfIdle(ui.bpm, 'value', String(bpm));
   ui.bpmText.textContent = `${bpm} bpm`;
