@@ -38,7 +38,7 @@
 //   UP/DN  note length of the selected track: free, 1/32 ... whole
 //          (hold SHIFT to set all five tracks)
 //   A      how a step reads the image: first column / average / max
-//   T      held ink: retrigger every step / tie into one note
+//   T      held ink: retrigger every step / tie into one note / ink length
 //   X      selected track on/off (off tracks are not sent or exported)
 //   M      export one 5-track MIDI file with the current settings
 //   O      live MIDI out on/off, to FL Studio via loopMIDI
@@ -387,7 +387,59 @@ const BAND = [0, 1, 2].map(b => new Set(Array.from({ length: 12 }, (_, i) => b *
 
 let split = 'thirds';         // key S: 'thirds' or 'rgb'
 let selTrack = 0;             // key N
-const trackSettings = [0, 1, 2, 3, 4].map(() => ({ on: true, len: 'free', read: 'max', tie: false }));
+const trackSettings = [0, 1, 2, 3, 4].map(() => ({ on: true, len: 'free', read: 'max', hold: 'retrigger', voices: 'all' }));
+
+// Held ink, for stepped tracks (key T):
+//   retrigger: every step with ink plays a new note one step long
+//   tie:       held ink joins into one note, as long as the ink (in steps)
+//   ink:       a note starts where ink starts and lasts as long as the ink,
+//              snapped to the nearest musical length (see INK_BEATS)
+const HOLDS = ['retrigger', 'tie', 'ink'];
+const HOLD_LABEL = { retrigger: 'retrigger', tie: 'tie', ink: 'ink length' };
+
+// Ink length: the musical lengths a note may snap to, in beats: 1/32, 1/16,
+// dotted 1/16, 1/8, dotted 1/8, 1/4, dotted 1/4, 1/2, dotted 1/2, whole,
+// 2 and 4 whole notes. Only lengths that are whole steps of the track's
+// note length (its shortest note) are used. Ties go to the shorter length,
+// and a note never runs into the next note of the same pitch.
+const INK_BEATS = [0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16];
+function inkLengthSteps(stepBeats) {
+  return INK_BEATS.map(b => b / stepBeats)
+    .filter(k => k >= 1 - 1e-9 && Math.abs(k - Math.round(k)) < 1e-9).map(Math.round);
+}
+// The notes, as [startStep, endStep), for a run of ink on pitch p that starts
+// at step i. active(j) gives the sounding pitches at step j (0 <= j < n).
+// Runs longer than the longest length (the 4-whole-note cap) restart.
+function planInkRun(active, i, p, n, lens) {
+  const maxSteps = lens[lens.length - 1];
+  let run = 0;
+  while (i + run < n && active(i + run).has(p)) run++;
+  const notes = [];
+  let s = i, left = run;
+  while (left > maxSteps) { notes.push([s, s + maxSteps]); s += maxSteps; left -= maxSteps; }
+  let gap = 0;                 // silent steps after the run, before the pitch's next ink
+  while (gap < maxSteps && s + left + gap < n && !active(s + left + gap).has(p)) gap++;
+  let best = lens[0];
+  for (const L of lens) {
+    if (L > left + gap) break;
+    if (Math.abs(L - left) < Math.abs(best - left)) best = L;
+  }
+  notes.push([s, s + best]);
+  return notes;
+}
+
+// Voices: how many notes a track may sound at once. 'all', or keep only the
+// loudest 1-4 (equal levels: the higher pitch wins). Voices 1 turns any track
+// into a single melody line, whatever the image's density.
+const VOICE_CHOICES = ['all', 1, 2, 3, 4];
+function soundingPitches(levels, gate, voices) {
+  const on = [...levels].filter(([, a]) => a >= gate);
+  if (voices !== 'all' && on.length > voices) {
+    on.sort((x, y) => y[1] - x[1] || y[0] - x[0]);
+    on.length = voices;
+  }
+  return new Map(on);
+}
 
 // The five track definitions for the current settings. Each has the sound
 // source (mode, pick, rows, transpose) plus its trackSettings entry.
@@ -479,9 +531,9 @@ function trackNotes(def) {
   const cols = [];
   for (let c = 0; c < dispW; c++) cols.push(columnPitches(c, def));
   if (def.len === 'free') {
-    const tpc = totalTicks() / dispW;
+    const tpc = totalTicks() / dispW, gate = gateLevel();
     const out = [];
-    for (const n of gateNotes(cols)) {
+    for (const n of gateNotes(cols.map(m => soundingPitches(m, gate, def.voices)))) {
       const s = Math.round(n.start * tpc), e = Math.round(n.end * tpc);
       for (let t = s; t < e; t += MAX_NOTE_TICKS) out.push({ ...n, start: t, end: min(e, t + MAX_NOTE_TICKS) });
     }
@@ -489,12 +541,24 @@ function trackNotes(def) {
   }
   const gate = gateLevel(), stepTicks = LENGTH_BEATS[def.len] * PPQ;
   const notes = [];
+  if (def.hold === 'ink') {
+    const act = stepRanges(def.len).map(([c0, c1]) => soundingPitches(stepValues(cols, c0, c1, def.read), gate, def.voices));
+    const lens = inkLengthSteps(LENGTH_BEATS[def.len]);
+    act.forEach((m, i) => {
+      for (const [p, a] of m) {
+        if (i > 0 && act[i - 1].has(p)) continue;   // not where this ink starts
+        for (const [s, e] of planInkRun(j => act[j], i, p, act.length, lens)) {
+          notes.push({ pitch: p, start: s * stepTicks, end: e * stepTicks, vel: a });
+        }
+      }
+    });
+    return notes;
+  }
   let open = new Map();       // pitch -> note sounding in the previous step (for tie)
   stepRanges(def.len).forEach(([c0, c1], i) => {
     const next = new Map();
-    for (const [m, a] of stepValues(cols, c0, c1, def.read)) {
-      if (a < gate) continue;
-      let n = def.tie ? open.get(m) : null;
+    for (const [m, a] of soundingPitches(stepValues(cols, c0, c1, def.read), gate, def.voices)) {
+      let n = def.hold === 'tie' ? open.get(m) : null;
       if (n && (i + 1) * stepTicks - n.start > MAX_NOTE_TICKS) n = null;   // at the cap: restart
       if (n) n.end = (i + 1) * stepTicks;
       else { n = { pitch: m, start: i * stepTicks, end: (i + 1) * stepTicks, vel: a }; notes.push(n); }
@@ -777,7 +841,7 @@ function updateLiveMidi(col) {
   for (const d of trackDefs()) {
     if (!d.on || d.len !== 'free') continue;
     const m = new Map();
-    for (const [p, a] of columnPitches(col, d)) if (a >= gate) m.set(p, a);
+    for (const [p, a] of soundingPitches(columnPitches(col, d), gate, d.voices)) m.set(p, a);
     wanted.set(d.channel, m);
   }
   // note-offs first: notes that stopped, or whose track was switched off or stepped
@@ -815,14 +879,15 @@ function scheduleSteps(now) {
   for (const d of trackDefs()) {
     let st = stepState.get(d.channel);
     const stepped = d.on && d.len !== 'free';
-    if (st && (!stepped || st.len !== d.len || st.bars !== bars)) {
+    if (st && (!stepped || st.len !== d.len || st.bars !== bars || st.hold !== d.hold)) {
       endSteps(st, out, now); stepState.delete(d.channel); st = null;
     }
     if (!stepped) continue;
     if (!st) {
       const ranges = stepRanges(d.len);
       // start with the step the playhead is in (its time has passed: send now)
-      st = { ch: d.channel, len: d.len, bars, ranges, n: ranges.length, b: floor(U * ranges.length / dispW), sounding: new Map(), lastT: now };
+      st = { ch: d.channel, len: d.len, bars, hold: d.hold, ranges, n: ranges.length, b: floor(U * ranges.length / dispW),
+        sounding: new Map(), lastT: now, planned: [], act: new Map(), sig: '', fresh: true };
       stepState.set(d.channel, st);
     }
     // More than a step behind (draw() was paused while the window was
@@ -831,22 +896,59 @@ function scheduleSteps(now) {
     if ((st.b + 1) * dispW / st.n < U) {
       endSteps(st, out, now);
       st.b = floor(U * st.n / dispW);
+      st.fresh = true;
     }
     const ch = d.channel, stepBeats = LENGTH_BEATS[d.len];
+    // The sounding pitches at step index i (0 <= i < n), cached until a
+    // setting that changes them does.
+    const sig = JSON.stringify([threshold, invert, colorMode, pentatonic, d.name, d.read, d.voices]);
+    if (sig !== st.sig) { st.act.clear(); st.sig = sig; }
+    const active = i => {
+      if (!st.act.has(i)) {
+        const [c0, c1] = st.ranges[i];
+        const cols = [];
+        for (let c = c0; c < c1; c++) cols[c] = columnPitches(c, d);
+        st.act.set(i, soundingPitches(stepValues(cols, c0, c1, d.read), gate, d.voices));
+      }
+      return st.act.get(i);
+    };
     for (;;) {
       const Ub = st.b * dispW / st.n;
       if (Ub >= horizon) break;
       const t = max(now, now + (Ub - U) / colsPerMs);
-      const [c0, c1] = st.ranges[st.b % st.n];
-      const cols = [];
-      for (let c = c0; c < c1; c++) cols[c] = columnPitches(c, d);
-      const w = new Map();
-      for (const [p, a] of stepValues(cols, c0, c1, d.read)) if (a >= gate) w.set(p, a);
+      const i = st.b % st.n;
+      const w = active(i);
+      if (d.hold === 'ink') {
+        // ink length: notes are planned whole when their ink starts, then
+        // switched on and off as the playhead reaches their steps
+        st.planned = st.planned.filter(nt => {
+          if (nt.e !== st.b) return true;
+          send(out, [0x80 | ch, nt.p, 0], t); st.sounding.delete(nt.p);
+          return false;
+        });
+        const base = st.b - i, lens = inkLengthSteps(stepBeats);
+        for (const [p, a] of w) {
+          const starts = st.fresh ? !st.sounding.has(p) : (i === 0 || !active(i - 1).has(p));
+          if (!starts) continue;
+          // only after a setting changed mid-note: end the old note first
+          if (st.sounding.has(p)) { send(out, [0x80 | ch, p, 0], t); st.sounding.delete(p); }
+          st.planned = st.planned.filter(nt => nt.p !== p);
+          for (const [s, e] of planInkRun(active, i, p, st.n, lens)) st.planned.push({ p, s: base + s, e: base + e, vel: a });
+        }
+        for (const nt of st.planned) {
+          if (nt.s !== st.b) continue;
+          send(out, [0x90 | ch, nt.p, velocity(nt.vel)], t); st.sounding.set(nt.p, st.b);
+        }
+        st.fresh = false;
+        st.lastT = t;
+        st.b++;
+        continue;
+      }
       // offs before ons at the same timestamp: retrigger ends every note,
       // tie only ends the ones that stopped
       for (const p of [...st.sounding.keys()]) {
         const atCap = (st.b + 1 - st.sounding.get(p)) * stepBeats > MAX_NOTE_BEATS;
-        if (!w.has(p) || !d.tie || atCap) { send(out, [0x80 | ch, p, 0], t); st.sounding.delete(p); }
+        if (!w.has(p) || d.hold !== 'tie' || atCap) { send(out, [0x80 | ch, p, 0], t); st.sounding.delete(p); }
       }
       for (const [p, a] of w) {
         if (st.sounding.has(p)) continue;
@@ -867,6 +969,7 @@ function endSteps(st, out, now) {
     send(out, [0x80 | st.ch, p, 0], max(now, st.lastT) + 1);
   }
   st.sounding.clear();
+  st.planned = [];
 }
 
 function allNotesOff() {
@@ -895,7 +998,7 @@ let presetSnapshot = '';      // the settings as loaded, to tell when they've be
 
 function settingsCore() {
   return { bpm, bars, threshold, invert, colorMode, pentatonic, soundMode, envelope, split,
-    tracks: trackSettings.map(t => ({ on: t.on, len: t.len, read: t.read, tie: t.tie })) };
+    tracks: trackSettings.map(t => ({ on: t.on, len: t.len, read: t.read, hold: t.hold, voices: t.voices })) };
 }
 
 function currentSettings(name) {
@@ -921,7 +1024,9 @@ function applySettings(s) {
       if (typeof t.on === 'boolean') d.on = t.on;
       if (LENGTHS.includes(t.len)) d.len = t.len;
       if (READS.includes(t.read)) d.read = t.read;
-      if (typeof t.tie === 'boolean') d.tie = t.tie;
+      if (HOLDS.includes(t.hold)) d.hold = t.hold;
+      else if (typeof t.tie === 'boolean') d.hold = t.tie ? 'tie' : 'retrigger';   // files saved before 'hold'
+      if (VOICE_CHOICES.includes(t.voices)) d.voices = t.voices;
     });
   }
   presetName = s.name || '';
@@ -1031,7 +1136,7 @@ function buildControls() {
 
   const table = el('table', box);
   const head = el('tr', table);
-  ['on', 'ch', 'track', 'note length', 'step reads', 'held ink'].forEach(h => el('th', head, {}, h));
+  ['on', 'ch', 'track', 'voices', 'note length', 'step reads', 'held ink'].forEach(h => el('th', head, {}, h));
   trackSettings.forEach((t, i) => {
     const tr = el('tr', table);
     tr.addEventListener('mousedown', () => { selTrack = i; });
@@ -1039,6 +1144,10 @@ function buildControls() {
     onUse(on, 'change', () => { t.on = on.checked; });
     el('td', tr, { class: 'dim' }, String(i + 1));
     const name = el('td', tr);
+    const voices = el('select', el('td', tr));
+    options(voices, VOICE_CHOICES, ['all', '1 (melody)', '2', '3', '4']);
+    voices.title = 'notes this track may sound at once; the loudest are kept';
+    onUse(voices, 'change', () => { t.voices = voices.value === 'all' ? 'all' : Number(voices.value); });
     const lenTd = el('td', tr);
     const len = el('input', lenTd, { type: 'range', min: 0, max: LENGTHS.length - 1, step: 1 });
     const lenText = el('span', lenTd, { class: 'num' });
@@ -1047,9 +1156,10 @@ function buildControls() {
     options(read, READS, ['first column', 'average', 'max']);
     onUse(read, 'change', () => { t.read = read.value; });
     const tie = el('select', el('td', tr));
-    options(tie, ['retrigger', 'tie']);
-    onUse(tie, 'change', () => { t.tie = tie.value === 'tie'; });
-    ui.tracks.push({ tr, on, name, len, lenText, read, tie });
+    options(tie, HOLDS, HOLDS.map(h => HOLD_LABEL[h]));
+    tie.title = 'retrigger: a note every step; tie: one note as long as the ink; ink length: as long as the ink, snapped to a musical length';
+    onUse(tie, 'change', () => { t.hold = tie.value; });
+    ui.tracks.push({ tr, on, name, voices, len, lenText, read, tie });
   });
 }
 
@@ -1089,8 +1199,9 @@ function syncControls() {
     u.name.textContent = defs[i].name;
     setIfIdle(u.len, 'value', String(LENGTHS.indexOf(t.len)));
     u.lenText.textContent = t.len === '1' ? 'whole' : t.len;
+    setIfIdle(u.voices, 'value', String(t.voices));
     setIfIdle(u.read, 'value', t.read);
-    setIfIdle(u.tie, 'value', t.tie ? 'tie' : 'retrigger');
+    setIfIdle(u.tie, 'value', t.hold);
     u.read.disabled = u.tie.disabled = t.len === 'free';
     u.tr.classList.toggle('sel', i === selTrack);
     u.tr.classList.toggle('off', !t.on);
@@ -1213,7 +1324,7 @@ function keyPressed() {
   const ae = document.activeElement;
   if (ae && /^(INPUT|SELECT|BUTTON)$/.test(ae.tagName)) return;
   if (key === ' ') {
-    if (!audio) { audio = buildAudio(); browserAudio(); }
+    if (!audio) { audio = buildAudio(); browserAudio(); lastNow = performance.now(); }   // building audio takes a moment: don't let the playhead jump
     if (audio.ctx.state === 'suspended' && !liveOut) audio.ctx.resume();
     playing = !playing;
     if (!playing) allNotesOff();
@@ -1241,7 +1352,7 @@ function keyPressed() {
   else if (k === 's') split = split === 'thirds' ? 'rgb' : 'thirds';
   else if (k === 'n') selTrack = (selTrack + 1) % trackSettings.length;
   else if (k === 'a') sel.read = READS[(READS.indexOf(sel.read) + 1) % READS.length];
-  else if (k === 't') sel.tie = !sel.tie;
+  else if (k === 't') sel.hold = HOLDS[(HOLDS.indexOf(sel.hold) + 1) % HOLDS.length];
   else if (k === 'x') sel.on = !sel.on;
   else if (k === 'b') bars = BAR_CHOICES[(BAR_CHOICES.indexOf(bars) + 1) % BAR_CHOICES.length];
   else if (key === '=' || key === '+') threshold = min(0.95, round((threshold + 0.05) * 100) / 100);
