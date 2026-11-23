@@ -274,6 +274,23 @@ const PALETTES = {
     ]
   },
 
+  // All purples, white to deep violet, ordered as a gradient (light first).
+  // Lightness steps down evenly so lerps between neighbors stay smooth.
+  // Made for purple wing gradients.
+  violetSmoke: {
+    name: "Violet Smoke",
+    tags: ["cool", "smoke", "soft", "purple"],
+    colors: [
+      { hex: "#ffffff", role: "paper" },
+      { hex: "#e8dcff", role: "highlight" },
+      { hex: "#c9aaff", role: "light" },
+      { hex: "#a77cf5", role: "accent" },
+      { hex: "#8448e0", role: "accent" },
+      { hex: "#5f25b8", role: "shadow" },
+      { hex: "#3c1477", role: "dark" }
+    ]
+  },
+
   neonPortrait: {
     name: "Neon Portrait",
     tags: ["portrait", "neon", "cool", "warm"],
