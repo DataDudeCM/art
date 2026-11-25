@@ -8,10 +8,13 @@ common/tilesets/, or render straight to a PNG.
   python view.py plumbing --size 60x60 --out board.png    no window, just the PNG
   python view.py plumbing --size 60x60 --out board.png --entropy   plus board-entropy.png
   python view.py mondrian --match edge --tol 0.15     neighbours fit by edge brightness, not edge codes
+  python view.py plumbing --match sections --tol 0.1  the same, section by section along each side
 
 --match picks which sides may touch: strings (edge codes, the default), edge
-(brightness of the outer 20% of each side within --tol), tile (whole-tile
-brightness within --tol), or several joined with + (strings+edge).
+(brightness of the outer 20% of each side within --tol), sections (that strip
+cut into pieces along the side, each within --tol; --sections sets how many,
+default the edge-code length), tile (whole-tile brightness within --tol), or
+several joined with + (strings+edge).
 
 Window keys: Backspace = new seed, S = save PNG to out/, Space = pause, Esc = quit.
 The seed is printed and shown in the title, so a picture can be made again.
@@ -94,10 +97,10 @@ def spread_bar(values, bins=20):
     return "".join(BARS[0 if c == 0 else max(1, round(c / top * 8))] for c in counts)
 
 
-def list_sets(bg=None, match="strings", tol=0.1):
+def list_sets(bg=None, match="strings", tol=0.1, sections=None):
     print(f"{'tile set':22} {'variants':>8}   brightness     black {'':12} white    edges")
     for name in available():
-        ts = TileSet(name, match=match, tol=tol, bg=bg)
+        ts = TileSet(name, match=match, tol=tol, bg=bg, sections=sections)
         lum = ts.brightness(bg)
         edge = [b for sides in ts.edge_brightness(bg) for b in sides]
         flag = "  *" if ts.transparent() else ""
@@ -174,12 +177,14 @@ def window(ts, args, weight_fn=None, size=None, title=None):
 
 
 def add_match_args(ap):
-    """--match and --tol, shared with picture.py."""
+    """--match, --tol and --sections, shared with picture.py."""
     ap.add_argument("--match", default="strings",
-                    help="which sides may touch: strings, edge, tile, or several joined with + "
+                    help="which sides may touch: strings, edge, sections, tile, or several joined with + "
                          "(e.g. strings+edge). Default strings")
     ap.add_argument("--tol", type=float, default=0.1,
-                    help="brightness difference (0-1) allowed by the edge and tile rules (default 0.1)")
+                    help="brightness difference (0-1) allowed by the edge, sections and tile rules (default 0.1)")
+    ap.add_argument("--sections", type=int,
+                    help="pieces per side for --match sections (default: the length of the set's edge codes)")
 
 
 def main():
@@ -199,9 +204,9 @@ def main():
     args = ap.parse_args()
 
     if args.list or not args.tileset:
-        list_sets(args.bg, args.match, args.tol)
+        list_sets(args.bg, args.match, args.tol, args.sections)
         return
-    ts = TileSet(args.tileset, match=args.match, tol=args.tol, bg=args.bg)
+    ts = TileSet(args.tileset, match=args.match, tol=args.tol, bg=args.bg, sections=args.sections)
     if args.out:
         t0 = time.time()
         solver = Solver(ts, *args.size, seed=args.seed)

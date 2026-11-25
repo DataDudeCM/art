@@ -163,7 +163,8 @@ def main():
     add_match_args(ap)
     args = ap.parse_args()
 
-    ts = TileSet(args.tileset or DEFAULT_SET[args.mode], match=args.match, tol=args.tol, bg=args.bg)
+    ts = TileSet(args.tileset or DEFAULT_SET[args.mode], match=args.match, tol=args.tol, bg=args.bg,
+                 sections=args.sections)
     if args.flat:
         for v in ts.variants:
             v.weight = 1.0

@@ -28,7 +28,7 @@ python view.py plumbing --size 60x60 --bg gray --out board.png    no window, jus
 - `--bg` is a colour (`white`, `gray`, `"#d8d4cc"`) or an image path. It shows behind transparent tiles such as plumbing.
 - `--cell` sets the pixels per tile in saved PNGs.
 
-### Match rules: `--match` and `--tol`
+### Match rules: `--match`, `--tol` and `--sections`
 
 `--match` decides which sides may touch. It also works in `picture.py`.
 
@@ -36,17 +36,22 @@ python view.py plumbing --size 60x60 --bg gray --out board.png    no window, jus
 |---|---|
 | `strings` (default) | the edge codes fit (one is the other reversed) |
 | `edge` | the outer 20% strips of the two touching sides are within `--tol` in brightness |
+| `sections` | the same strips, cut into sections along the side, are within `--tol` section by section (read clockwise, like edge codes) |
 | `tile` | the two tiles' overall brightness is within `--tol` |
 
-Join rules with `+` to require all of them: `strings+edge`, `strings+tile`, `edge+tile`. `--tol` is on a 0–1 scale, default 0.1. Brightness is measured from the images each time the set loads (over `--bg` for transparent tiles), so nothing is stored in `tileset.json`.
+Join rules with `+` to require all of them: `strings+edge`, `strings+sections`, `edge+tile`. `--tol` is on a 0–1 scale, default 0.1. Brightness is measured from the images each time the set loads (over `--bg` for transparent tiles), so nothing is stored in `tileset.json`.
 
 ```
 python view.py circuit2 --match edge --size 40x30
 python view.py mondrian --match strings+tile --tol 0.15
+python view.py plumbing --match sections --bg black          sections = edge-code length (3)
+python view.py plumbing --match sections --sections 6 --bg black
 python view.py --list --match edge --tol 0.05      warnings for sides that fit nothing under these rules
 ```
 
-- `edge` and `tile` ignore edge codes, so lines no longer join up; expect texture and tone fields.
+- `edge`, `sections` and `tile` ignore edge codes. `edge` works as a stand-in for codes only when lines cross every side at one spot (circuit2 at `--tol 0.05` joins up; plumbing doesn't). `sections` keeps track of where along the side a line crosses, so plumbing mostly joins up, though about 7% of the pairs it allows break the codes (pipes of similar brightness, e.g. a thick and a thin one, can meet). `tile` gives texture and tone fields.
+- `--sections` defaults to the length of the set's edge codes (`"ASA"` = 3); `--sections 1` is the same as `edge`.
+- Every edge in a set must have the same number of letters; the loader stops and names the odd one out.
 - With `tile`, neighbours differ by at most `--tol`, so if the set's brightness has a gap wider than `--tol`, one board stays on one side of it. `edge` does the same unless some tile has a dark side and a light side to bridge the gap. Mondrian at 0.1 loses its yellow and white under both. `--list` shows each set's brightness and edge ranges.
 - Too small a `--tol` gives restarts or "no solution"; too large and the rule does nothing.
 

@@ -8,8 +8,12 @@ Which sides may touch is set by `match`, a "+"-joined list of rules that must
 all hold (default "strings"):
   strings  edge codes fit: one is the other reversed
   edge     the two edge strips (outer 20% of each side) are within `tol` in brightness
+  sections like edge, but each strip is cut into `sections` pieces along its
+           length (default: the length of the edge codes) and every piece must
+           be within `tol` of its partner, so position along the side counts
   tile     the two tiles' overall brightness is within `tol`
 e.g. "strings+edge". Brightness is 0-1, measured over `bg` for transparent tiles.
+All edge codes in a set must be the same length (1, 2, 3, 4... sections).
 
 No pygame here: images are Pillow RGBA, so the solver and headless renders
 work without a window.
@@ -24,7 +28,7 @@ from PIL import Image
 ART = Path(__file__).resolve().parents[2]
 TILESETS = ART / "common" / "tilesets"
 OPPOSITE = (2, 3, 0, 1)  # top<->bottom, right<->left
-MATCH_RULES = ("strings", "edge", "tile")
+MATCH_RULES = ("strings", "edge", "sections", "tile")
 EDGE_STRIP = 0.2  # fraction of the tile measured for an edge's brightness
 DEFAULT_BG = "#202020"
 
@@ -72,7 +76,7 @@ def _mean(grey):
 
 
 class TileSet:
-    def __init__(self, name_or_path, match="strings", tol=0.1, bg=None):
+    def __init__(self, name_or_path, match="strings", tol=0.1, bg=None, sections=None):
         path = Path(name_or_path)
         if not path.exists():
             path = TILESETS / str(name_or_path)
@@ -83,6 +87,14 @@ class TileSet:
         self.dir = path.parent
         spec = json.loads(path.read_text(encoding="utf-8"))
         self.name = spec.get("name", self.dir.name)
+
+        lengths = {len(e) for t in spec["tiles"] for e in t["edges"]}
+        if len(lengths) > 1:
+            common = max(lengths, key=lambda n: sum(len(e) == n for t in spec["tiles"] for e in t["edges"]))
+            odd = next((t["file"], e) for t in spec["tiles"] for e in t["edges"] if len(e) != common)
+            raise SystemExit(f"{self.name}: {odd[0]}: edge '{odd[1]}' is {len(odd[1])} long, "
+                             f"the rest of the set is {common}. Every edge in a set needs the same number of sections.")
+        self.edge_length = lengths.pop() if lengths else 1
 
         self.variants = []
         for t in spec["tiles"]:
@@ -101,6 +113,7 @@ class TileSet:
         self.match = parse_match(match)
         self.tol = tol
         self.bg = bg
+        self.sections = sections or self.edge_length
         self._build_compat()
 
     def _build_compat(self):
@@ -108,6 +121,7 @@ class TileSet:
         rules = self.match
         lum = self.brightness(self.bg) if "tile" in rules else None
         edge = self.edge_brightness(self.bg) if "edge" in rules else None
+        prof = self.edge_profile(self.bg, self.sections) if "sections" in rules else None
         tol = self.tol + 1e-9  # so a tolerance of exactly the gap counts as a fit
         n = len(self.variants)
         self.compat = [[0] * 4 for _ in range(n)]
@@ -119,6 +133,9 @@ class TileSet:
                     if "strings" in rules and a.edges[d] != b.edges[o][::-1]:
                         continue
                     if edge is not None and abs(edge[i][d] - edge[j][o]) > tol:
+                        continue
+                    if prof is not None and any(abs(x - y) > tol
+                                                for x, y in zip(prof[i][d], reversed(prof[j][o]))):
                         continue
                     if lum is not None and abs(lum[i] - lum[j]) > tol:
                         continue
@@ -145,6 +162,27 @@ class TileSet:
             out.append(tuple(_mean(g.crop(b)) for b in boxes))
         return out
 
+    def edge_profile(self, bg=None, n=None):
+        """Per-section edge brightness: for each variant, (top, right, bottom, left),
+        each a tuple of n values (0-1). Each side's EDGE_STRIP is cut into n pieces
+        along its length and read clockwise, like edge codes: top left>right,
+        right top>bottom, bottom right>left, left bottom>top. So two sides fit
+        when one profile is the other reversed (within a tolerance)."""
+        n = n or self.edge_length
+        out = []
+        for v in self.variants:
+            g = _grey(v.image, bg)
+            w, h = g.size
+            sw, sh = max(1, round(w * EDGE_STRIP)), max(1, round(h * EDGE_STRIP))
+            xs = [round(i * w / n) for i in range(n + 1)]
+            ys = [round(i * h / n) for i in range(n + 1)]
+            top = [(xs[i], 0, xs[i + 1], sh) for i in range(n)]
+            right = [(w - sw, ys[i], w, ys[i + 1]) for i in range(n)]
+            bottom = [(xs[i], h - sh, xs[i + 1], h) for i in reversed(range(n))]
+            left = [(0, ys[i], sw, ys[i + 1]) for i in reversed(range(n))]
+            out.append(tuple(tuple(_mean(g.crop(b)) for b in side) for side in (top, right, bottom, left)))
+        return out
+
     def transparent(self):
         """True if any tile has see-through pixels (so brightness depends on the background)."""
         return any(v.image.getextrema()[3][0] < 255 for v in self.variants)
@@ -159,5 +197,7 @@ class TileSet:
             for d in range(4):
                 if not self.compat[i][d]:
                     rule = "" if self.match == ["strings"] else f" under --match {'+'.join(self.match)} --tol {self.tol:g}"
+                    if "sections" in self.match and self.sections != self.edge_length:
+                        rule += f" --sections {self.sections}"
                     out.append(f"{v.file}: {sides[d]} edge {v.edges[d]} matches no tile{rule}")
         return out
