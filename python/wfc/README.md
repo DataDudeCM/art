@@ -28,6 +28,28 @@ python view.py plumbing --size 60x60 --bg gray --out board.png    no window, jus
 - `--bg` is a colour (`white`, `gray`, `"#d8d4cc"`) or an image path. It shows behind transparent tiles such as plumbing.
 - `--cell` sets the pixels per tile in saved PNGs.
 
+### Match rules: `--match` and `--tol`
+
+`--match` decides which sides may touch. It also works in `picture.py`.
+
+| `--match` | Two sides fit when |
+|---|---|
+| `strings` (default) | the edge codes fit (one is the other reversed) |
+| `edge` | the outer 20% strips of the two touching sides are within `--tol` in brightness |
+| `tile` | the two tiles' overall brightness is within `--tol` |
+
+Join rules with `+` to require all of them: `strings+edge`, `strings+tile`, `edge+tile`. `--tol` is on a 0–1 scale, default 0.1. Brightness is measured from the images each time the set loads (over `--bg` for transparent tiles), so nothing is stored in `tileset.json`.
+
+```
+python view.py circuit2 --match edge --size 40x30
+python view.py mondrian --match strings+tile --tol 0.15
+python view.py --list --match edge --tol 0.05      warnings for sides that fit nothing under these rules
+```
+
+- `edge` and `tile` ignore edge codes, so lines no longer join up; expect texture and tone fields.
+- With `tile`, neighbours differ by at most `--tol`, so if the set's brightness has a gap wider than `--tol`, one board stays on one side of it. `edge` does the same unless some tile has a dark side and a light side to bridge the gap. Mondrian at 0.1 loses its yellow and white under both. `--list` shows each set's brightness and edge ranges.
+- Too small a `--tol` gives restarts or "no solution"; too large and the rule does nothing.
+
 ## Pictures: `picture.py`
 
 Any image steers which tile goes in each cell. Every tile still obeys the edge rules; the picture only tilts which legal tile is picked.

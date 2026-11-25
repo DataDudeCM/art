@@ -30,7 +30,7 @@ from PIL import Image, ImageDraw, ImageOps
 
 from solver import Solver
 from tileset import TileSet
-from view import render
+from view import add_match_args, render
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_SET = {"tone": "circuit2", "material": "carbon-silicon"}
@@ -160,9 +160,10 @@ def main():
     mat.add_argument("--outside", default="silicon", help="tile note favoured outside the face")
     mat.add_argument("--hard", action="store_true", help="forbid the wrong material entirely")
     mat.add_argument("--edge", type=float, default=1.0, help="multiply electrode tiles along the outline")
+    add_match_args(ap)
     args = ap.parse_args()
 
-    ts = TileSet(args.tileset or DEFAULT_SET[args.mode])
+    ts = TileSet(args.tileset or DEFAULT_SET[args.mode], match=args.match, tol=args.tol, bg=args.bg)
     if args.flat:
         for v in ts.variants:
             v.weight = 1.0

@@ -7,6 +7,11 @@ common/tilesets/, or render straight to a PNG.
   python view.py circuit2 --size 40x30 --seed 7
   python view.py plumbing --size 60x60 --out board.png    no window, just the PNG
   python view.py plumbing --size 60x60 --out board.png --entropy   plus board-entropy.png
+  python view.py mondrian --match edge --tol 0.15     neighbours fit by edge brightness, not edge codes
+
+--match picks which sides may touch: strings (edge codes, the default), edge
+(brightness of the outer 20% of each side within --tol), tile (whole-tile
+brightness within --tol), or several joined with + (strings+edge).
 
 Window keys: Backspace = new seed, S = save PNG to out/, Space = pause, Esc = quit.
 The seed is printed and shown in the title, so a picture can be made again.
@@ -89,16 +94,21 @@ def spread_bar(values, bins=20):
     return "".join(BARS[0 if c == 0 else max(1, round(c / top * 8))] for c in counts)
 
 
-def list_sets(bg=None):
-    print(f"{'tile set':22} {'variants':>8}   brightness     black {'':12} white")
+def list_sets(bg=None, match="strings", tol=0.1):
+    print(f"{'tile set':22} {'variants':>8}   brightness     black {'':12} white    edges")
     for name in available():
-        ts = TileSet(name)
+        ts = TileSet(name, match=match, tol=tol, bg=bg)
         lum = ts.brightness(bg)
+        edge = [b for sides in ts.edge_brightness(bg) for b in sides]
         flag = "  *" if ts.transparent() else ""
-        print(f"{name:22} {len(ts):8}   {min(lum):.2f} - {max(lum):.2f}    |{spread_bar(lum)}|{flag}")
+        print(f"{name:22} {len(ts):8}   {min(lum):.2f} - {max(lum):.2f}    |{spread_bar(lum)}|"
+              f"   {min(edge):.2f} - {max(edge):.2f}{flag}")
         for warning in ts.lint():
             print("    warning:", warning)
-    print(f"\n* has transparent tiles: brightness measured over --bg ({bg or '#202020'}); "
+    print("\nedges: brightness range of the outer 20% strips, used by --match edge.")
+    if match != "strings":
+        print(f"warnings are for --match {match} --tol {tol:g}.")
+    print(f"* has transparent tiles: brightness measured over --bg ({bg or '#202020'}); "
           "a different background changes it.")
 
 
@@ -163,6 +173,15 @@ def window(ts, args, weight_fn=None, size=None, title=None):
         clock.tick(60)
 
 
+def add_match_args(ap):
+    """--match and --tol, shared with picture.py."""
+    ap.add_argument("--match", default="strings",
+                    help="which sides may touch: strings, edge, tile, or several joined with + "
+                         "(e.g. strings+edge). Default strings")
+    ap.add_argument("--tol", type=float, default=0.1,
+                    help="brightness difference (0-1) allowed by the edge and tile rules (default 0.1)")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("tileset", nargs="?", help="name of a folder in common/tilesets/")
@@ -176,12 +195,13 @@ def main():
     ap.add_argument("--speed", type=int, help="collapses per frame (default: scales with grid)")
     ap.add_argument("--entropy", action="store_true",
                     help="also save <name>-entropy.png: options each cell had when decided (black = forced)")
+    add_match_args(ap)
     args = ap.parse_args()
 
     if args.list or not args.tileset:
-        list_sets(args.bg)
+        list_sets(args.bg, args.match, args.tol)
         return
-    ts = TileSet(args.tileset)
+    ts = TileSet(args.tileset, match=args.match, tol=args.tol, bg=args.bg)
     if args.out:
         t0 = time.time()
         solver = Solver(ts, *args.size, seed=args.seed)
